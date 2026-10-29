@@ -3,6 +3,7 @@ from app.core.config import get_settings, Settings
 from app.core.markets import (
     MARKETS,
     MarketConfig,
+    get_dividend_withholding_rate,
     get_market_benchmark_candidates,
     get_market_config,
 )
@@ -13,6 +14,7 @@ __all__ = [
     "Settings",
     "MARKETS",
     "MarketConfig",
+    "get_dividend_withholding_rate",
     "get_market_benchmark_candidates",
     "get_market_config",
     "decode_access_token",

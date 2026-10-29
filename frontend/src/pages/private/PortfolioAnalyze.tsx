@@ -11,7 +11,9 @@ import {
   YAxis,
 } from 'recharts';
 import {
+  AlertTriangle,
   ArrowLeft,
+  Coins,
   Loader2,
   TrendingUp,
   TrendingDown,
@@ -56,8 +58,30 @@ interface AnalysisTotals {
   in_the_safe: number;
   realized_pl: number;
   unrealized_pl: number;
+  dividend_income: number;
   total_pl: number;
   total_pl_pct: number;
+}
+
+interface DividendReceipt {
+  ex_date: string;
+  ticker: string;
+  quantity: number;
+  gross_per_share: number;
+  withholding_rate: number;
+  gross_amount: number;
+  net_amount: number;
+}
+
+interface DividendSummary {
+  total_gross: number;
+  total_net: number;
+  receipts: DividendReceipt[];
+}
+
+interface AnalysisWarning {
+  code: 'dividends_unavailable' | 'splits_unavailable';
+  ticker: string;
 }
 
 interface PerformancePoint {
@@ -82,7 +106,9 @@ interface AnalysisResponse {
   performance_series: PerformanceSeries;
   current_holdings: CurrentHolding[];
   closed_positions: ClosedPosition[];
+  dividends: DividendSummary;
   totals: AnalysisTotals;
+  warnings: AnalysisWarning[];
 }
 
 const plColor = (value: number) =>
@@ -137,6 +163,22 @@ export function PortfolioAnalyze() {
   const pct = (v: number) =>
     `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`;
 
+  const fmtDate = (isoDate: string) =>
+    new Intl.DateTimeFormat(dateLocale, {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    }).format(parseIsoDate(isoDate));
+
+  const fmtRate = (v: number) =>
+    new Intl.NumberFormat(numberLocale, {
+      style: 'percent',
+      maximumFractionDigits: 2,
+    }).format(v);
+
+  const displayTicker = (ticker: string) =>
+    toDisplayTicker(ticker, portfolio?.market ?? 'BIST');
+
   // ── Render ───────────────────────────────────────────
 
   return (
@@ -187,6 +229,28 @@ export function PortfolioAnalyze() {
       {/* Content */}
       {!isLoading && analysis && (
         <>
+          {analysis.warnings.length > 0 && (
+            <div
+              className="rounded-lg border p-4 mb-6 flex gap-3"
+              style={{
+                borderColor: 'hsl(38 92% 50%)',
+                backgroundColor: 'hsl(38 92% 50% / 0.1)',
+              }}
+            >
+              <AlertTriangle className="h-5 w-5 shrink-0" style={{ color: 'hsl(38 92% 40%)' }} />
+              <div className="text-sm">
+                <p className="font-medium mb-1">{t('analyze.warnings.title')}</p>
+                <ul className="list-disc pl-4">
+                  {analysis.warnings.map((w) => (
+                    <li key={`${w.code}-${w.ticker}`}>
+                      {t(`analyze.warnings.${w.code}`, { ticker: displayTicker(w.ticker) })}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
           <PerformanceChart
             series={analysis.performance_series}
             numberLocale={numberLocale}
@@ -195,7 +259,7 @@ export function PortfolioAnalyze() {
           />
 
           {/* ── Summary Cards ─────────────────────────── */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 mb-8">
             {/* Total Invested (from pocket) */}
             <SummaryCard
               icon={<Wallet className="h-5 w-5 text-primary" />}
@@ -213,6 +277,14 @@ export function PortfolioAnalyze() {
               icon={<PiggyBank className="h-5 w-5 text-primary" />}
               label={t('analyze.inTheSafe')}
               value={fmt(analysis.totals.in_the_safe)}
+            />
+            {/* Dividend Income (net, already included in Total P/L) */}
+            <SummaryCard
+              icon={<Coins className="h-5 w-5 text-primary" />}
+              label={t('analyze.dividendIncome')}
+              value={fmt(analysis.totals.dividend_income)}
+              sub={t('analyze.dividendIncomeSub', { gross: fmt(analysis.dividends.total_gross) })}
+              color={analysis.dividends.total_gross > 0 ? undefined : 'hsl(var(--muted-foreground))'}
             />
             {/* Total P/L */}
             <SummaryCard
@@ -400,6 +472,115 @@ export function PortfolioAnalyze() {
                       </tr>
                     ))}
                   </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* ── Dividends ─────────────────────────────── */}
+          <h2 className="text-xl font-semibold mt-8 mb-1">{t('analyze.dividends')}</h2>
+          <p className="text-sm mb-4" style={{ color: 'hsl(var(--muted-foreground))' }}>
+            {t('analyze.dividendsHint')}
+          </p>
+
+          {analysis.dividends.receipts.length === 0 ? (
+            <div
+              className="rounded-lg border-2 border-dashed p-8 text-center"
+              style={{ borderColor: 'hsl(var(--border))' }}
+            >
+              <p style={{ color: 'hsl(var(--muted-foreground))' }}>
+                {t('analyze.noDividends')}
+              </p>
+            </div>
+          ) : (
+            <div
+              className="rounded-lg border overflow-hidden"
+              style={{ borderColor: 'hsl(var(--border))' }}
+            >
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr style={{ backgroundColor: 'hsl(var(--muted) / 0.5)' }}>
+                      <th className="text-left px-4 py-3 text-sm font-medium">
+                        {t('analyze.table.exDate')}
+                      </th>
+                      <th className="text-left px-4 py-3 text-sm font-medium">
+                        {t('analyze.table.ticker')}
+                      </th>
+                      <th className="text-right px-4 py-3 text-sm font-medium">
+                        {t('analyze.table.shares')}
+                      </th>
+                      <th className="text-right px-4 py-3 text-sm font-medium">
+                        {t('analyze.table.grossPerShare')}
+                      </th>
+                      <th className="text-right px-4 py-3 text-sm font-medium">
+                        {t('analyze.table.gross')}
+                      </th>
+                      <th className="text-right px-4 py-3 text-sm font-medium">
+                        {t('analyze.table.withholding')}
+                      </th>
+                      <th className="text-right px-4 py-3 text-sm font-medium">
+                        {t('analyze.table.net')}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {analysis.dividends.receipts.map((d) => (
+                      <tr
+                        key={`${d.ticker}-${d.ex_date}`}
+                        className="border-t transition-colors hover:bg-muted/50"
+                        style={{ borderColor: 'hsl(var(--border))' }}
+                      >
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          {fmtDate(d.ex_date)}
+                        </td>
+                        <td className="px-4 py-3 font-semibold">
+                          {displayTicker(d.ticker)}
+                        </td>
+                        <td className="text-right px-4 py-3">
+                          {fmtNumber(d.quantity)}
+                        </td>
+                        <td className="text-right px-4 py-3">
+                          {fmt(d.gross_per_share)}
+                        </td>
+                        <td className="text-right px-4 py-3">
+                          {fmt(d.gross_amount)}
+                        </td>
+                        <td className="text-right px-4 py-3" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                          {fmtRate(d.withholding_rate)}
+                        </td>
+                        <td
+                          className="text-right px-4 py-3 font-medium"
+                          style={{ color: plColor(d.net_amount) }}
+                        >
+                          {fmt(d.net_amount)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr
+                      className="border-t font-semibold"
+                      style={{
+                        borderColor: 'hsl(var(--border))',
+                        backgroundColor: 'hsl(var(--muted) / 0.3)',
+                      }}
+                    >
+                      <td className="px-4 py-3" colSpan={4}>
+                        {t('analyze.table.sum')}
+                      </td>
+                      <td className="text-right px-4 py-3">
+                        {fmt(analysis.dividends.total_gross)}
+                      </td>
+                      <td />
+                      <td
+                        className="text-right px-4 py-3"
+                        style={{ color: plColor(analysis.dividends.total_net) }}
+                      >
+                        {fmt(analysis.dividends.total_net)}
+                      </td>
+                    </tr>
+                  </tfoot>
                 </table>
               </div>
             </div>

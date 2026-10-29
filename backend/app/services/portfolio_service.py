@@ -1,16 +1,24 @@
 """
-Backfill market prices for a portfolio's holdings.
+Portfolio analysis: market-price backfill, split adjustments, P/L and the
+daily performance series.
 
-Logic per ticker:
+Price basis
+-----------
+``market_prices.close`` stores Yahoo's *raw* close (``auto_adjust=False``).
+Yahoo restates raw closes for stock splits but **not** for dividends, which
+matches how transactions are stored (``adjusted_quantity`` /
+``adjusted_price`` are split-adjusted only). Cash dividends are counted
+separately as income via the ledger (see ``app.services.ledger``).
+
+Backfill logic per ticker:
 1. Replay buy/sell transactions chronologically to find date ranges
    where the user holds ≥ 1 share.
-2. For each range, download daily close prices from yfinance
-   (always excluding today).
-3. Before writing, detect stock splits from yfinance split events in
-   the downloaded window. If a split is newer than the latest stored
-   market-price date, delete stored prices for that ticker and
-   re-insert the fresh data.
-4. Insert with ON CONFLICT DO NOTHING so re-runs are safe.
+2. Download daily raw closes for those ranges (always excluding today).
+3. Compare the download with what is already stored. If stored closes
+   disagree (a split happened since, or legacy dividend-adjusted rows),
+   rewrite *every* stored date of the ticker in one transaction, so other
+   portfolios sharing the same rows are fixed too. Otherwise just insert
+   the missing dates.
 """
 
 from datetime import date, timedelta
@@ -20,10 +28,42 @@ import pandas as pd
 import yfinance as yf
 from sqlalchemy import bindparam, text
 from sqlalchemy.orm import Session
-from app.core.markets import get_market_benchmark_candidates
+
+from app.core.markets import (
+    get_dividend_withholding_rate,
+    get_market_benchmark_candidates,
+)
+from app.services.corporate_actions import (
+    fetch_corporate_actions,
+    split_factor_between_dates,
+)
+from app.services.ledger import (
+    DividendEvent,
+    Ledger,
+    LedgerTransaction,
+    group_by_date,
+    replay,
+)
 
 SPLIT_PRICE_SCALE = Decimal("0.00000001")
 SPLIT_QUANTITY_SCALE = Decimal("0.00000001")
+
+# Raw closes keep 6 decimals: split-restated history is not tick-aligned
+# (e.g. 227.40 / 7 = 32.485714).
+CLOSE_DECIMALS = 6
+
+# A stored close differing from a fresh download by more than both
+# thresholds means the stored history is on a different basis.
+PRICE_MISMATCH_ABS = Decimal("0.01")
+PRICE_MISMATCH_REL = Decimal("0.0005")
+
+
+class CorporateActionsUnavailable(Exception):
+    """Split/dividend data could not be fetched for a ticker."""
+
+    def __init__(self, ticker: str):
+        super().__init__(f"Corporate actions unavailable for {ticker}")
+        self.ticker = ticker
 
 
 # ------------------------------------------------------------------
@@ -33,13 +73,15 @@ SPLIT_QUANTITY_SCALE = Decimal("0.00000001")
 def backfill_portfolio_prices(db: Session, portfolio_id: int) -> dict:
     """Download & store missing market prices for every ticker in the portfolio.
 
-    Returns a short summary dict (ticker → number of rows written).
+    Returns a short summary dict (ticker → number of rows written) plus the
+    tickers whose stored history was rewritten.
     """
     tickers = _distinct_tickers(db, portfolio_id)
     if not tickers:
         return {"tickers_processed": 0}
 
     summary: dict[str, int] = {}
+    refreshed: list[str] = []
 
     for ticker in tickers:
         hold_ranges = _holding_ranges(db, portfolio_id, ticker)
@@ -56,20 +98,22 @@ def backfill_portfolio_prices(db: Session, portfolio_id: int) -> dict:
             summary[ticker] = 0
             continue
 
-        # Keep only dates that fall inside a holding range
-        prices = _filter_to_ranges(prices, hold_ranges)
-        if prices.empty:
-            summary[ticker] = 0
+        stored = _stored_prices(db, ticker)
+        if _prices_disagree(stored, prices):
+            summary[ticker] = _rewrite_ticker_history(
+                db, ticker, stored, prices, hold_ranges
+            )
+            refreshed.append(ticker)
             continue
 
-        # Split detection
-        _handle_split_detection(db, ticker, prices)
+        prices = _filter_to_ranges(prices, hold_ranges)
+        summary[ticker] = _upsert_prices(db, ticker, prices, overwrite=False)
 
-        # Upsert rows
-        written = _upsert_prices(db, ticker, prices)
-        summary[ticker] = written
-
-    return {"tickers_processed": len(tickers), "details": summary}
+    return {
+        "tickers_processed": len(tickers),
+        "details": summary,
+        "refreshed_tickers": refreshed,
+    }
 
 
 def calculate_adjusted_transaction_price(
@@ -84,16 +128,10 @@ def calculate_adjusted_transaction_price(
       - ``split_factor`` is the cumulative product of split ratios
         in ``(txn_date, as_of]``.
       - ``adjusted_price`` is ``price / split_factor``.
+
+    Raises ``CorporateActionsUnavailable`` if split data cannot be fetched.
     """
-    effective_as_of = as_of or date.today()
-    split_events = _fetch_split_events(ticker)
-    split_factor = _split_factor_between_dates(
-        split_events, txn_date, effective_as_of
-    )
-
-    if split_factor <= 0:
-        split_factor = Decimal(1)
-
+    split_factor = _split_factor_for(ticker, txn_date, as_of or date.today())
     adjusted_price = price / split_factor if split_factor != 1 else price
     return _quantize_price(adjusted_price), split_factor
 
@@ -105,15 +143,14 @@ def calculate_adjusted_transaction_values(
     txn_date: date,
     as_of: date | None = None,
 ) -> tuple[Decimal, Decimal, Decimal]:
-    """Calculate split-adjusted quantity & price as of the given date."""
-    effective_as_of = as_of or date.today()
-    split_events = _fetch_split_events(ticker)
-    split_factor = _split_factor_between_dates(
-        split_events, txn_date, effective_as_of
-    )
+    """Calculate split-adjusted quantity & price as of the given date.
 
-    if split_factor <= 0:
-        split_factor = Decimal(1)
+    Cash dividends are not applied to transaction fields because they are
+    cash-flow events (not share-count events).
+
+    Raises ``CorporateActionsUnavailable`` if split data cannot be fetched.
+    """
+    split_factor = _split_factor_for(ticker, txn_date, as_of or date.today())
 
     adjusted_quantity = (
         quantity * split_factor if split_factor != 1 else quantity
@@ -127,7 +164,11 @@ def calculate_adjusted_transaction_values(
 
 
 def refresh_portfolio_adjusted_prices(db: Session, portfolio_id: int) -> dict:
-    """Refresh split-adjusted transaction fields for a portfolio."""
+    """Refresh split-adjusted transaction fields for a portfolio.
+
+    Tickers whose split data cannot be fetched are left untouched (and
+    listed in ``tickers_failed``) instead of being reset to raw values.
+    """
     rows = db.execute(
         text(
             """
@@ -145,10 +186,11 @@ def refresh_portfolio_adjusted_prices(db: Session, portfolio_id: int) -> dict:
             "transactions_processed": 0,
             "transactions_updated": 0,
             "tickers_processed": 0,
+            "tickers_failed": [],
         }
 
     as_of = date.today()
-    split_cache: dict[str, list[tuple[date, Decimal]]] = {}
+    split_cache: dict[str, tuple[tuple[date, Decimal], ...] | None] = {}
     updates: list[dict[str, Decimal | int]] = []
 
     for (
@@ -160,14 +202,17 @@ def refresh_portfolio_adjusted_prices(db: Session, portfolio_id: int) -> dict:
         adjusted_price,
         txn_date,
     ) in rows:
+        if ticker not in split_cache:
+            actions = fetch_corporate_actions(ticker)
+            split_cache[ticker] = actions.splits if actions is not None else None
+
+        split_events = split_cache[ticker]
+        if split_events is None:
+            continue
+
         base_quantity = Decimal(str(quantity))
         base_price = Decimal(str(price))
-        split_events = split_cache.get(ticker)
-        if split_events is None:
-            split_events = _fetch_split_events(ticker)
-            split_cache[ticker] = split_events
-
-        split_factor = _split_factor_between_dates(split_events, txn_date, as_of)
+        split_factor = split_factor_between_dates(split_events, txn_date, as_of)
         new_adjusted_quantity = (
             base_quantity * split_factor if split_factor != 1 else base_quantity
         )
@@ -220,10 +265,12 @@ def refresh_portfolio_adjusted_prices(db: Session, portfolio_id: int) -> dict:
         else:
             updated_count = result.rowcount
 
+    failed = sorted(t for t, splits in split_cache.items() if splits is None)
     return {
         "transactions_processed": len(rows),
         "transactions_updated": updated_count,
-        "tickers_processed": len(split_cache),
+        "tickers_processed": len(split_cache) - len(failed),
+        "tickers_failed": failed,
     }
 
 
@@ -235,39 +282,17 @@ def calculate_portfolio_performance_series(db: Session, portfolio_id: int) -> di
       - end = yesterday (today is excluded)
 
     Method:
-      - Replays transactions chronologically with the same average-cost and
-        pocket/safe logic used in totals.
+      - Replays transactions and cash dividends with the shared ledger, so
+        the series uses exactly the same math as the metric cards.
       - On each included trading day, computes index as:
           100 + (total_pl_pct_of_that_day)
-      This keeps chart values consistent with metric-card math.
     """
     yesterday = date.today() - timedelta(days=1)
-    tx_rows = db.execute(
-        text(
-            """
-            SELECT
-                date,
-                ticker,
-                operation,
-                COALESCE(adjusted_quantity, quantity),
-                COALESCE(adjusted_price, price)
-            FROM transactions
-            WHERE portfolio_id = :pid
-            ORDER BY date, id
-            """
-        ),
-        {"pid": portfolio_id},
-    ).fetchall()
+    transactions = _load_ledger_transactions(db, portfolio_id)
 
-    if not tx_rows:
-        return {"start_date": None, "end_date": None, "points": []}
-
-    first_buy_date = None
-    for txn_date, _, operation, _, _ in tx_rows:
-        if operation.lower() == "buy":
-            first_buy_date = txn_date
-            break
-
+    first_buy_date = next(
+        (txn.date for txn in transactions if txn.operation == "buy"), None
+    )
     if first_buy_date is None:
         return {"start_date": None, "end_date": None, "points": []}
 
@@ -278,37 +303,14 @@ def calculate_portfolio_performance_series(db: Session, portfolio_id: int) -> di
             "points": [],
         }
 
-    tickers = sorted({ticker for _, ticker, _, _, _ in tx_rows})
+    tickers = sorted({txn.ticker for txn in transactions})
+    dividends, _ = _load_dividend_events(db, portfolio_id, tickers, yesterday)
     prices_by_date = _market_prices_by_date(
         db,
         tickers=tickers,
         start_date=first_buy_date,
         end_date=yesterday,
     )
-
-    txns_by_date: dict[date, list[tuple[str, str, Decimal, Decimal]]] = {}
-    for txn_date, ticker, operation, quantity, price in tx_rows:
-        if txn_date < first_buy_date or txn_date > yesterday:
-            continue
-
-        txns_by_date.setdefault(txn_date, []).append(
-            (
-                ticker,
-                operation.lower(),
-                Decimal(str(quantity)),
-                Decimal(str(price)),
-            )
-        )
-
-    base_value = Decimal(100)
-    holdings_qty: dict[str, Decimal] = {}
-    holdings_cost: dict[str, Decimal] = {}
-    realized_pl_by_ticker: dict[str, Decimal] = {}
-    latest_closes: dict[str, Decimal] = {}
-    pocket = Decimal(0)
-    safe = Decimal(0)
-    points: list[dict] = []
-
     open_days = _market_open_days(
         db,
         portfolio_id=portfolio_id,
@@ -317,74 +319,37 @@ def calculate_portfolio_performance_series(db: Session, portfolio_id: int) -> di
         tickers=tickers,
     )
 
+    events_by_day = group_by_date(
+        (txn for txn in transactions if txn.date <= yesterday), dividends
+    )
+
+    base_value = Decimal(100)
+    ledger = Ledger()
+    latest_closes: dict[str, Decimal] = {}
+    points: list[dict] = []
+
+    # Events before the first buy (e.g. stray sells) still move the cash.
+    for day in sorted(d for d in events_by_day if d < first_buy_date):
+        ledger.apply_day(*events_by_day[day])
+
     current_day = first_buy_date
     while current_day <= yesterday:
-        day_prices = prices_by_date.get(current_day, [])
+        day_events = events_by_day.get(current_day)
+        if day_events is not None:
+            ledger.apply_day(*day_events)
 
-        for ticker, operation, quantity, price in txns_by_date.get(
-            current_day, []
-        ):
-            amount = quantity * price
-            current_qty = holdings_qty.get(ticker, Decimal(0))
-            current_cost = holdings_cost.get(ticker, Decimal(0))
-
-            if operation == "buy":
-                holdings_qty[ticker] = current_qty + quantity
-                holdings_cost[ticker] = current_cost + amount
-
-                from_safe = min(safe, amount)
-                from_pocket = amount - from_safe
-                safe -= from_safe
-                pocket += from_pocket
-                continue
-
-            if current_qty > 0:
-                avg_cost = current_cost / current_qty
-                sell_cost = quantity * avg_cost
-                realized_pl = quantity * (price - avg_cost)
-                realized_pl_by_ticker[ticker] = (
-                    realized_pl_by_ticker.get(ticker, Decimal(0))
-                    + realized_pl
-                )
-
-                next_qty = current_qty - quantity
-                next_cost = current_cost - sell_cost
-                if next_qty <= 0:
-                    holdings_qty.pop(ticker, None)
-                    holdings_cost.pop(ticker, None)
-                else:
-                    holdings_qty[ticker] = next_qty
-                    holdings_cost[ticker] = next_cost
-            else:
-                # Keep realized logic in line with _ticker_pl:
-                # sells with no position do not alter realized/cost-basis.
-                pass
-
-            safe += amount
-
-        for ticker, close in day_prices:
+        for ticker, close in prices_by_date.get(current_day, []):
             latest_closes[ticker] = close
 
         if current_day in open_days:
-            realized_total = sum(realized_pl_by_ticker.values(), Decimal(0))
-            unrealized_total = Decimal(0)
-
-            for ticker, quantity in holdings_qty.items():
-                if quantity <= 0:
-                    continue
-
-                latest_price = latest_closes.get(ticker)
-                if latest_price is None:
-                    continue
-
-                cost_basis = holdings_cost.get(ticker, Decimal(0))
-                avg_cost = cost_basis / quantity
-                unrealized_total += quantity * (latest_price - avg_cost)
-
-            total_pl = realized_total + unrealized_total
+            total_pl = (
+                ledger.realized_total
+                + ledger.dividend_total
+                + ledger.unrealized_total(latest_closes)
+            )
             pl_pct = (
-                (total_pl / pocket) * Decimal(100)
-                if pocket > 0
+                (total_pl / ledger.pocket) * Decimal(100)
+                if ledger.pocket > 0
                 else Decimal(0)
             )
             index_value = base_value + pl_pct
@@ -418,146 +383,184 @@ def calculate_portfolio_performance_series(db: Session, portfolio_id: int) -> di
 def calculate_portfolio_pl(db: Session, portfolio_id: int) -> dict:
     """Calculate profit/loss for every ticker in the portfolio.
 
-    Uses the **average cost** method.
-    Tracks *pocket* (money from outside) vs *safe* (reinvested proceeds)
-    across the whole portfolio chronologically.
+    Uses the **average cost** method and the pocket/safe cash model of the
+    shared ledger. Total P/L = realized + unrealized + net dividends.
 
     A single ticker can appear in *both* current_holdings (if shares are
     still held) and closed_positions (if any shares were sold).
     """
-    tickers = _distinct_tickers(db, portfolio_id)
-    if not tickers:
+    transactions = _load_ledger_transactions(db, portfolio_id)
+    if not transactions:
         return {
             "current_holdings": [],
             "closed_positions": [],
+            "dividends": _dividends_payload(Ledger()),
             "totals": _empty_totals(),
+            "warnings": [],
         }
+
+    yesterday = date.today() - timedelta(days=1)
+    tickers = sorted({txn.ticker for txn in transactions})
+    dividends, failed_tickers = _load_dividend_events(
+        db, portfolio_id, tickers, yesterday
+    )
+    ledger = replay(transactions, dividends)
 
     current_holdings: list[dict] = []
     closed_positions: list[dict] = []
 
     for ticker in tickers:
-        result = _ticker_pl(db, portfolio_id, ticker)
+        position = ledger.positions.get(ticker)
+        if position is None:
+            continue
 
         # If there was any realized P/L, show in closed positions
-        if result["total_sold_value"] > 0:
-            invested_in_sold = result["total_sold_cost"]
-            realized = result["realized_pl"]
+        if position.sold_value > 0:
             realized_pct = (
-                float(realized / Decimal(str(invested_in_sold)) * 100)
-                if invested_in_sold > 0
+                float(position.realized_pl / position.sold_cost * 100)
+                if position.sold_cost > 0
                 else 0.0
             )
             closed_positions.append({
                 "ticker": ticker,
-                "total_invested": float(invested_in_sold),
-                "total_returned": float(result["total_sold_value"]),
-                "realized_pl": float(realized),
+                "total_invested": float(position.sold_cost),
+                "total_returned": float(position.sold_value),
+                "realized_pl": float(position.realized_pl),
                 "realized_pl_pct": round(realized_pct, 2),
             })
 
         # If shares are still held, show in current holdings
-        if result["quantity"] > 0:
+        if position.quantity > 0:
+            latest_price = _latest_price(db, ticker)
+            if latest_price is not None:
+                current_value = position.quantity * latest_price
+                unrealized = position.quantity * (latest_price - position.avg_cost)
+            else:
+                current_value = position.cost_basis
+                unrealized = Decimal(0)
+
             unrealized_pct = (
-                float(
-                    Decimal(str(result["unrealized_pl"]))
-                    / Decimal(str(result["current_cost_basis"]))
-                    * 100
-                )
-                if result["current_cost_basis"] > 0
+                float(unrealized / position.cost_basis * 100)
+                if position.cost_basis > 0
                 else 0.0
             )
             current_holdings.append({
                 "ticker": ticker,
-                "quantity": float(result["quantity"]),
-                "avg_cost": float(result["avg_cost"]),
-                "current_price": float(result["current_price"]) if result["current_price"] else None,
-                "current_value": float(result["current_value"]),
-                "cost_basis": float(result["current_cost_basis"]),
-                "unrealized_pl": float(result["unrealized_pl"]),
+                "quantity": float(position.quantity),
+                "avg_cost": float(position.avg_cost),
+                "current_price": float(latest_price) if latest_price else None,
+                "current_value": float(current_value),
+                "cost_basis": float(position.cost_basis),
+                "unrealized_pl": float(unrealized),
                 "unrealized_pl_pct": round(unrealized_pct, 2),
             })
 
-    pocket, safe = _portfolio_cash_flow(db, portfolio_id)
-    totals = _aggregate_totals(current_holdings, closed_positions, pocket, safe)
+    totals = _aggregate_totals(
+        current_holdings,
+        closed_positions,
+        dividend_income=ledger.dividend_total,
+        pocket=ledger.pocket,
+        safe=ledger.safe,
+    )
+    warnings = [
+        {"code": "dividends_unavailable", "ticker": ticker}
+        for ticker in failed_tickers
+    ]
     return {
         "current_holdings": current_holdings,
         "closed_positions": closed_positions,
+        "dividends": _dividends_payload(ledger),
         "totals": totals,
+        "warnings": warnings,
     }
+
+
+# ------------------------------------------------------------------
+# Ledger inputs
+# ------------------------------------------------------------------
+
+def _load_ledger_transactions(
+    db: Session, portfolio_id: int
+) -> list[LedgerTransaction]:
+    rows = db.execute(
+        text(
+            """
+            SELECT
+                date,
+                ticker,
+                operation,
+                COALESCE(adjusted_quantity, quantity),
+                COALESCE(adjusted_price, price)
+            FROM transactions
+            WHERE portfolio_id = :pid
+            ORDER BY date, id
+            """
+        ),
+        {"pid": portfolio_id},
+    ).fetchall()
+
+    return [
+        LedgerTransaction(
+            date=txn_date,
+            ticker=ticker,
+            operation="buy" if operation.lower() == "buy" else "sell",
+            quantity=Decimal(str(quantity)),
+            price=Decimal(str(price)),
+        )
+        for txn_date, ticker, operation, quantity, price in rows
+    ]
+
+
+def _load_dividend_events(
+    db: Session,
+    portfolio_id: int,
+    tickers: list[str],
+    until: date,
+) -> tuple[list[DividendEvent], list[str]]:
+    """Cash dividends with ex-date ≤ ``until`` and the tickers that failed.
+
+    ``until`` matches the price horizon (yesterday): a dividend going ex
+    today is not credited yet because today's price drop is not in the
+    valuation either.
+    """
+    market = _portfolio_market(db, portfolio_id)
+    events: list[DividendEvent] = []
+    failed: list[str] = []
+
+    for ticker in tickers:
+        actions = fetch_corporate_actions(ticker)
+        if actions is None:
+            failed.append(ticker)
+            continue
+
+        for ex_date, gross_per_share in actions.dividends:
+            if ex_date > until:
+                continue
+            events.append(
+                DividendEvent(
+                    ex_date=ex_date,
+                    ticker=ticker,
+                    gross_per_share=gross_per_share,
+                    withholding_rate=get_dividend_withholding_rate(market, ex_date),
+                )
+            )
+
+    events.sort(key=lambda e: (e.ex_date, e.ticker))
+    return events, failed
+
+
+def _split_factor_for(ticker: str, txn_date: date, as_of: date) -> Decimal:
+    actions = fetch_corporate_actions(ticker)
+    if actions is None:
+        raise CorporateActionsUnavailable(ticker)
+
+    split_factor = split_factor_between_dates(actions.splits, txn_date, as_of)
+    return split_factor if split_factor > 0 else Decimal(1)
 
 
 # ------------------------------------------------------------------
 # P/L helpers
 # ------------------------------------------------------------------
-
-def _ticker_pl(db: Session, portfolio_id: int, ticker: str) -> dict:
-    """Compute P/L components for a single ticker using average cost.
-
-    Returns raw data that the caller splits into current-holding
-    and/or closed-position records.
-    """
-    rows = db.execute(
-        text(
-            """
-            SELECT operation, COALESCE(adjusted_quantity, quantity), COALESCE(adjusted_price, price), date
-            FROM transactions
-            WHERE portfolio_id = :pid AND ticker = :ticker
-            ORDER BY date, id
-            """
-        ),
-        {"pid": portfolio_id, "ticker": ticker},
-    ).fetchall()
-
-    qty = Decimal(0)        # shares currently held
-    cost_basis = Decimal(0) # total cost of held shares
-    realized = Decimal(0)   # cumulative realized P/L
-    total_sold_value = Decimal(0)  # total proceeds from sells
-    total_sold_cost = Decimal(0)   # cost basis of sold shares
-
-    for operation, effective_quantity, effective_price, txn_date in rows:
-        q = Decimal(str(effective_quantity))
-        p = Decimal(str(effective_price))
-
-        if operation.lower() == "buy":
-            cost_basis += q * p
-            qty += q
-        else:  # sell
-            if qty > 0:
-                avg_cost = cost_basis / qty
-                sell_cost = q * avg_cost
-                realized += q * (p - avg_cost)
-                total_sold_value += q * p
-                total_sold_cost += sell_cost
-                cost_basis -= sell_cost
-                qty -= q
-
-    # Current (unrealized) valuation — use yesterday's close
-    latest_price = _latest_price(db, ticker)
-    current_value = Decimal(0)
-    unrealized = Decimal(0)
-    avg_cost_now = Decimal(0)
-
-    if qty > 0:
-        avg_cost_now = cost_basis / qty
-        if latest_price is not None:
-            current_value = qty * latest_price
-            unrealized = qty * (latest_price - avg_cost_now)
-        else:
-            current_value = cost_basis
-
-    return {
-        "quantity": qty,
-        "avg_cost": avg_cost_now,
-        "current_price": latest_price,
-        "current_value": current_value,
-        "current_cost_basis": float(cost_basis),
-        "unrealized_pl": unrealized,
-        "realized_pl": realized,
-        "total_sold_value": float(total_sold_value),
-        "total_sold_cost": float(total_sold_cost),
-    }
-
 
 def _latest_price(db: Session, ticker: str) -> Decimal | None:
     """Get the most recent close price from market_prices (before today)."""
@@ -578,6 +581,7 @@ def _latest_price(db: Session, ticker: str) -> Decimal | None:
 def _aggregate_totals(
     current_holdings: list[dict],
     closed_positions: list[dict],
+    dividend_income: Decimal,
     pocket: Decimal,
     safe: Decimal,
 ) -> dict:
@@ -585,7 +589,8 @@ def _aggregate_totals(
     portfolio_value = sum(h["current_value"] for h in current_holdings)
     realized = sum(c["realized_pl"] for c in closed_positions)
     unrealized = sum(h["unrealized_pl"] for h in current_holdings)
-    total_pl = realized + unrealized
+    dividends = float(dividend_income)
+    total_pl = realized + unrealized + dividends
     total_pl_pct = (
         float(total_pl / float(pocket) * 100) if pocket > 0 else 0.0
     )
@@ -596,6 +601,7 @@ def _aggregate_totals(
         "in_the_safe": round(float(safe), 2),
         "realized_pl": round(realized, 2),
         "unrealized_pl": round(unrealized, 2),
+        "dividend_income": round(dividends, 2),
         "total_pl": round(total_pl, 2),
         "total_pl_pct": round(total_pl_pct, 2),
     }
@@ -608,49 +614,34 @@ def _empty_totals() -> dict:
         "in_the_safe": 0,
         "realized_pl": 0,
         "unrealized_pl": 0,
+        "dividend_income": 0,
         "total_pl": 0,
         "total_pl_pct": 0,
     }
 
 
-def _portfolio_cash_flow(
-    db: Session, portfolio_id: int
-) -> tuple[Decimal, Decimal]:
-    """Track money from pocket vs money in the safe.
-
-    Process *all* portfolio transactions chronologically.
-    On buy  → use cash in safe first; only the remainder is from pocket.
-    On sell → proceeds go into the safe.
-
-    Returns ``(pocket, safe)``.
-    """
-    rows = db.execute(
-        text(
-            """
-            SELECT operation, COALESCE(adjusted_quantity, quantity), COALESCE(adjusted_price, price)
-            FROM transactions
-            WHERE portfolio_id = :pid
-            ORDER BY date, id
-            """
-        ),
-        {"pid": portfolio_id},
-    ).fetchall()
-
-    pocket = Decimal(0)
-    safe = Decimal(0)
-
-    for operation, effective_quantity, price in rows:
-        quantity = effective_quantity
-        amount = Decimal(str(quantity)) * Decimal(str(price))
-        if operation.lower() == "buy":
-            from_safe = min(safe, amount)
-            from_pocket = amount - from_safe
-            safe -= from_safe
-            pocket += from_pocket
-        else:  # sell
-            safe += amount
-
-    return pocket, safe
+def _dividends_payload(ledger: Ledger) -> dict:
+    receipts = sorted(
+        ledger.dividend_receipts, key=lambda r: (r.ex_date, r.ticker), reverse=True
+    )
+    total_gross = sum((r.gross_amount for r in receipts), Decimal(0))
+    total_net = sum((r.net_amount for r in receipts), Decimal(0))
+    return {
+        "total_gross": round(float(total_gross), 2),
+        "total_net": round(float(total_net), 2),
+        "receipts": [
+            {
+                "ex_date": r.ex_date.isoformat(),
+                "ticker": r.ticker,
+                "quantity": float(r.quantity),
+                "gross_per_share": float(r.gross_per_share),
+                "withholding_rate": float(r.withholding_rate),
+                "gross_amount": round(float(r.gross_amount), 2),
+                "net_amount": round(float(r.net_amount), 2),
+            }
+            for r in receipts
+        ],
+    }
 
 
 # ------------------------------------------------------------------
@@ -760,7 +751,7 @@ def _holding_ranges(
             SELECT operation, COALESCE(adjusted_quantity, quantity), date
             FROM transactions
             WHERE portfolio_id = :pid AND ticker = :ticker
-            ORDER BY date
+            ORDER BY date, id
             """
         ),
         {"pid": portfolio_id, "ticker": ticker},
@@ -798,7 +789,7 @@ def _holding_ranges(
 
 
 def _download_prices(ticker: str, start: date, end: date) -> pd.DataFrame:
-    """Download daily close prices from yfinance.
+    """Download daily raw (split-restated, not dividend-adjusted) closes.
 
     Returns a DataFrame with columns ``date`` and ``close``.
     ``end`` is *inclusive* in our semantics; yfinance ``end`` is exclusive,
@@ -806,7 +797,13 @@ def _download_prices(ticker: str, start: date, end: date) -> pd.DataFrame:
     """
     yf_end = end + timedelta(days=1)
     try:
-        df = yf.download(ticker, start=str(start), end=str(yf_end), progress=False)
+        df = yf.download(
+            ticker,
+            start=str(start),
+            end=str(yf_end),
+            auto_adjust=False,
+            progress=False,
+        )
     except Exception:
         return pd.DataFrame()
 
@@ -821,7 +818,7 @@ def _download_prices(ticker: str, start: date, end: date) -> pd.DataFrame:
     df = df[["Date", "Close"]].dropna(subset=["Close"])
     df = df.rename(columns={"Date": "date", "Close": "close"})
     df["date"] = pd.to_datetime(df["date"]).dt.date
-    df["close"] = df["close"].apply(lambda x: round(float(x), 2))
+    df["close"] = df["close"].apply(lambda x: round(float(x), CLOSE_DECIMALS))
 
     # Exclude today
     today = date.today()
@@ -839,57 +836,69 @@ def _filter_to_ranges(
     return prices[mask].reset_index(drop=True)
 
 
-def _handle_split_detection(
-    db: Session, ticker: str, fresh_prices: pd.DataFrame
-) -> None:
-    """Detect new splits in the downloaded window and refresh ticker prices."""
-    if fresh_prices.empty:
-        return
-
-    window_start = fresh_prices["date"].min()
-    window_end = fresh_prices["date"].max()
-
-    split_events = _fetch_split_events(ticker)
-    if not split_events:
-        return
-
-    in_window_splits = [
-        split_date
-        for split_date, _ in split_events
-        if window_start <= split_date <= window_end
-    ]
-    if not in_window_splits:
-        return
-
-    # Find the latest date for this ticker that we already have in the DB
-    row = db.execute(
-        text(
-            """
-            SELECT date FROM market_prices
-            WHERE ticker = :ticker
-            ORDER BY date DESC
-            LIMIT 1
-            """
-        ),
+def _stored_prices(db: Session, ticker: str) -> dict[date, Decimal]:
+    rows = db.execute(
+        text("SELECT date, close FROM market_prices WHERE ticker = :ticker"),
         {"ticker": ticker},
-    ).fetchone()
-
-    if row is None:
-        return  # Nothing stored yet — no split check needed
-
-    latest_stored_date = row[0]
-
-    if any(split_date > latest_stored_date for split_date in in_window_splits):
-        # New split detected — wipe and let the caller re-insert
-        db.execute(
-            text("DELETE FROM market_prices WHERE ticker = :ticker"),
-            {"ticker": ticker},
-        )
-        db.commit()
+    ).fetchall()
+    return {price_date: Decimal(str(close)) for price_date, close in rows}
 
 
-def _upsert_prices(db: Session, ticker: str, prices: pd.DataFrame) -> int:
-    """Insert prices with ON CONFLICT DO NOTHING. Returns rows actually written."""
+def _prices_disagree(stored: dict[date, Decimal], fresh: pd.DataFrame) -> bool:
+    """True if any overlapping date has a materially different close."""
+    if not stored or fresh.empty:
+        return False
+
+    for price_date, close in zip(fresh["date"], fresh["close"]):
+        stored_close = stored.get(price_date)
+        if stored_close is None:
+            continue
+
+        fresh_close = Decimal(str(close))
+        diff = abs(stored_close - fresh_close)
+        if diff > PRICE_MISMATCH_ABS and diff > abs(fresh_close) * PRICE_MISMATCH_REL:
+            return True
+    return False
+
+
+def _rewrite_ticker_history(
+    db: Session,
+    ticker: str,
+    stored: dict[date, Decimal],
+    window_prices: pd.DataFrame,
+    hold_ranges: list[tuple[date, date]],
+) -> int:
+    """Overwrite every stored date of ``ticker`` plus this portfolio's ranges.
+
+    Runs as a single transaction, so readers never see a half-written
+    history and other portfolios' dates are refreshed rather than deleted.
+    """
+    window_start = window_prices["date"].min()
+    window_end = window_prices["date"].max()
+    full_start = min(window_start, min(stored))
+    full_end = max(window_end, max(stored))
+
+    if full_start < window_start or full_end > window_end:
+        prices = _download_prices(ticker, full_start, full_end)
+        if prices.empty:
+            return 0
+    else:
+        prices = window_prices
+
+    in_ranges = _filter_to_ranges(prices, hold_ranges)
+    already_stored = prices[prices["date"].isin(list(stored))]
+    rows = (
+        pd.concat([in_ranges, already_stored])
+        .drop_duplicates(subset=["date"])
+        .reset_index(drop=True)
+    )
+    return _upsert_prices(db, ticker, rows, overwrite=True)
+
+
+def _upsert_prices(
+    db: Session, ticker: str, prices: pd.DataFrame, overwrite: bool
+) -> int:
+    """Insert prices; on conflict keep (``overwrite=False``) or replace them."""
     if prices.empty:
         return 0
 
@@ -897,64 +906,22 @@ def _upsert_prices(db: Session, ticker: str, prices: pd.DataFrame) -> int:
         {"ticker": ticker, "date": r["date"], "close": r["close"]}
         for _, r in prices.iterrows()
     ]
+    on_conflict = (
+        "DO UPDATE SET close = EXCLUDED.close" if overwrite else "DO NOTHING"
+    )
 
     result = db.execute(
         text(
-            """
+            f"""
             INSERT INTO market_prices (ticker, date, close)
             VALUES (:ticker, :date, :close)
-            ON CONFLICT (ticker, date) DO NOTHING
+            ON CONFLICT (ticker, date) {on_conflict}
             """
         ),
         values,
     )
     db.commit()
     return result.rowcount
-
-
-def _fetch_split_events(ticker: str) -> list[tuple[date, Decimal]]:
-    """Return ticker split events as ``(split_date, ratio)``."""
-    try:
-        split_series = yf.Ticker(ticker).splits
-    except Exception:
-        return []
-
-    if split_series is None or split_series.empty:
-        return []
-
-    split_events: list[tuple[date, Decimal]] = []
-    for split_ts, split_ratio in split_series.items():
-        if pd.isna(split_ratio):
-            continue
-
-        ratio = Decimal(str(split_ratio))
-        if ratio <= 0:
-            continue
-
-        split_dt = pd.to_datetime(split_ts, errors="coerce")
-        if pd.isna(split_dt):
-            continue
-
-        split_events.append((split_dt.date(), ratio))
-
-    split_events.sort(key=lambda x: x[0])
-    return split_events
-
-
-def _split_factor_between_dates(
-    split_events: list[tuple[date, Decimal]],
-    start_date: date,
-    end_date: date,
-) -> Decimal:
-    """Cumulative split factor for ``(start_date, end_date]``."""
-    if end_date <= start_date or not split_events:
-        return Decimal(1)
-
-    factor = Decimal(1)
-    for split_date, ratio in split_events:
-        if start_date < split_date <= end_date:
-            factor *= ratio
-    return factor
 
 
 def _quantize_price(value: Decimal) -> Decimal:

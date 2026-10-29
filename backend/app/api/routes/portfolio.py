@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import CurrentUser
 from app.db import get_db
 from app.services.portfolio_service import (
+    CorporateActionsUnavailable,
     backfill_portfolio_prices,
     calculate_adjusted_transaction_values,
     calculate_portfolio_performance_series,
@@ -40,9 +41,11 @@ async def analyze_portfolio(
 ):
     """
     Analyze a portfolio:
-      Step 1 — backfill market_prices for every holding.
+      Step 1 — backfill raw (dividend-unadjusted) market_prices for every
+               holding, rewriting stored history if its basis changed.
       Step 2 — refresh split-adjusted transaction prices.
-      Step 3 — calculate profit/loss (average cost method).
+      Step 3 — calculate profit/loss (average cost method), including net
+               cash dividends credited on their ex-dates.
     """
     _ensure_portfolio_ownership(db, portfolio_id, str(current_user.id))
 
@@ -60,12 +63,18 @@ async def analyze_portfolio(
         db, portfolio_id
     )
 
+    split_warnings = [
+        {"code": "splits_unavailable", "ticker": ticker}
+        for ticker in adjusted_price_result["tickers_failed"]
+    ]
+
     return {
         "portfolio_id": portfolio_id,
         "backfill": backfill_result,
         "adjusted_prices": adjusted_price_result,
         "performance_series": performance_series,
         **pl_result,
+        "warnings": split_warnings + pl_result["warnings"],
     }
 
 
@@ -83,12 +92,18 @@ async def get_adjusted_transaction_price(
     _ensure_portfolio_ownership(db, portfolio_id, str(current_user.id))
 
     normalized_ticker = ticker.strip().upper()
-    adjusted_quantity, adjusted_price, split_factor = calculate_adjusted_transaction_values(
-        ticker=normalized_ticker,
-        quantity=quantity,
-        price=price,
-        txn_date=txn_date,
-    )
+    try:
+        adjusted_quantity, adjusted_price, split_factor = calculate_adjusted_transaction_values(
+            ticker=normalized_ticker,
+            quantity=quantity,
+            price=price,
+            txn_date=txn_date,
+        )
+    except CorporateActionsUnavailable as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Split data is temporarily unavailable for {exc.ticker}",
+        ) from exc
 
     return {
         "portfolio_id": portfolio_id,

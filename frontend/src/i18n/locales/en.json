@@ -76,7 +76,7 @@
   "analyze": {
     "backToDashboard": "Back to Dashboard",
     "title": "{{name}} — Analysis",
-    "subtitle": "Average cost method · prices exclude today",
+    "subtitle": "Average cost method · prices exclude today · dividends net of withholding tax",
     "chart": {
       "title": "Performance Chart (Base 100)",
       "range": "From {{start}} to {{end}}",
@@ -92,10 +92,20 @@
     "portfolioValue": "Portfolio Value",
     "inTheSafe": "In the Safe",
     "totalPl": "Total P/L",
+    "dividendIncome": "Dividend Income",
+    "dividendIncomeSub": "Gross {{gross}}",
     "currentHoldings": "Current Holdings",
     "closedPositions": "Closed Positions",
     "noCurrentHoldings": "No stocks currently held.",
     "noClosedPositions": "No closed positions yet.",
+    "dividends": "Dividends Received",
+    "dividendsHint": "Credited on the ex-date to shares held the day before, net of withholding tax, into the safe.",
+    "noDividends": "No dividends received yet.",
+    "warnings": {
+      "title": "Some market data could not be loaded. Results may be incomplete.",
+      "dividends_unavailable": "Dividends for {{ticker}} are missing.",
+      "splits_unavailable": "Split adjustments for {{ticker}} could not be refreshed."
+    },
     "table": {
       "ticker": "Ticker",
       "qty": "Quantity",
@@ -107,7 +117,14 @@
       "unrealized": "Unrealized P/L",
       "realized": "Realized P/L",
       "total": "Total P/L",
-      "pct": "%"
+      "pct": "%",
+      "exDate": "Ex-Date",
+      "shares": "Shares",
+      "grossPerShare": "Gross / Share",
+      "withholding": "Withholding",
+      "gross": "Gross",
+      "net": "Net",
+      "sum": "Total"
     }
   },
   "myPortfolios": {
