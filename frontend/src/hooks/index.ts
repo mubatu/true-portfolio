@@ -1,2 +1,3 @@
-export { useAuth, AuthProvider, ProtectedLayout } from './useAuth';
-export { useTheme, ThemeProvider } from './useTheme';
+export { useAuth } from './useAuth';
+export { useTheme } from './useTheme';
+export { useDocumentTitle } from './useDocumentTitle';

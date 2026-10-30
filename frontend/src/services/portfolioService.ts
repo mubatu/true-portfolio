@@ -10,28 +10,45 @@ export interface Portfolio {
   market: Market;
   slug: string;
   created_at: string;
+  /** Trial portfolio: left out of the Overview. */
+  is_experimental?: boolean;
+  /** Shown on Explore to everyone, as percentages only. */
+  is_public?: boolean;
   transaction_count?: number;
 }
+
+/** ``rights_sale``: selling rüçhan rights (quantity = rights, price = per right). */
+export type TransactionOperation = 'buy' | 'sell' | 'rights_sale';
 
 export interface Transaction {
   id: number;
   portfolio_id: number;
   ticker: string;
-  operation: 'buy' | 'sell';
+  operation: TransactionOperation;
   quantity: number;
   adjusted_quantity?: number | null;
   price: number;
   adjusted_price?: number | null;
+  /** Fraction of quantity × price, e.g. 0.0002 = on binde 2. */
+  commission_rate: number;
   date: string;
   created_at: string;
 }
 
-export interface CreatePortfolioInput {
+/** Default broker commission for new trades: on binde 2 (0.02%). */
+export const DEFAULT_COMMISSION_RATE = 0.0002;
+
+export interface PortfolioSettings {
+  is_public: boolean;
+  is_experimental: boolean;
+}
+
+export interface CreatePortfolioInput extends PortfolioSettings {
   name: string;
   market: Market;
 }
 
-export interface UpdatePortfolioInput {
+export interface UpdatePortfolioInput extends PortfolioSettings {
   id: number;
   name: string;
 }
@@ -39,18 +56,20 @@ export interface UpdatePortfolioInput {
 export interface CreateTransactionInput {
   portfolio_id: number;
   ticker: string;
-  operation: 'buy' | 'sell';
+  operation: TransactionOperation;
   quantity: number;
   price: number;
+  commission_rate: number;
   date: string;
 }
 
 export interface UpdateTransactionInput {
   id: number;
   ticker: string;
-  operation: 'buy' | 'sell';
+  operation: TransactionOperation;
   quantity: number;
   price: number;
+  commission_rate: number;
   date: string;
 }
 
@@ -77,7 +96,8 @@ export async function getPortfolios(): Promise<Portfolio[]> {
   }
 
   // Transform the data to include transaction_count
-  return (portfolios || []).map((p: any) => ({
+  type PortfolioRow = Portfolio & { transactions?: { count: number }[] };
+  return ((portfolios || []) as PortfolioRow[]).map((p) => ({
     ...p,
     transaction_count: p.transactions?.[0]?.count || 0,
   }));
@@ -143,6 +163,8 @@ export async function createPortfolio(input: CreatePortfolioInput): Promise<Port
     .insert({
       name: input.name,
       market: input.market,
+      is_public: input.is_public,
+      is_experimental: input.is_experimental,
       user_id: user.id,
     })
     .select()
@@ -184,6 +206,8 @@ export async function updatePortfolio(input: UpdatePortfolioInput): Promise<Port
     .from('portfolios')
     .update({
       name: input.name,
+      is_public: input.is_public,
+      is_experimental: input.is_experimental,
     })
     .eq('id', input.id)
     .eq('user_id', user.id)
@@ -334,6 +358,7 @@ export async function createTransaction(input: CreateTransactionInput): Promise<
       adjusted_quantity: adjusted.adjustedQuantity,
       price: input.price,
       adjusted_price: adjusted.adjustedPrice,
+      commission_rate: input.commission_rate,
       date: input.date,
     })
     .select()
@@ -422,6 +447,7 @@ export async function updateTransaction(input: UpdateTransactionInput): Promise<
       adjusted_quantity: adjusted.adjustedQuantity,
       price: input.price,
       adjusted_price: adjusted.adjustedPrice,
+      commission_rate: input.commission_rate,
       date: input.date,
     })
     .eq('id', input.id)

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { supabase } from './supabase';
+import type { AnalysisResponse } from '@/components/analysis/types';
 
 // Create axios instance with base configuration
 export const apiClient = axios.create({
@@ -49,60 +50,124 @@ export const getMe = async () => {
   return response.data;
 };
 
-// Portfolio
-export const getPortfolios = async () => {
-  const response = await apiClient.get('/portfolios');
+// Analysis (portfolio/transaction CRUD goes straight to Supabase, see services/portfolioService.ts)
+export const analyzePortfolio = async (portfolioId: number): Promise<AnalysisResponse> => {
+  const response = await apiClient.get<AnalysisResponse>(`/portfolios/${portfolioId}/analyze`);
   return response.data;
 };
 
-export const getPortfolioById = async (id: string) => {
-  const response = await apiClient.get(`/portfolios/${id}`);
+// Rights issues (bedelli sermaye artırımı)
+export interface RightsIssue {
+  ticker: string;
+  ex_date: string;
+  /** New shares per existing share (1 = %100); null until the terms are entered. */
+  ratio: number | null;
+  subscription_price: number | null;
+  price_factor: number;
+  source: 'manual' | 'detected';
+  needs_review: boolean;
+  /** Shares the portfolio held at the close before the ex-date. */
+  entitled_shares: number;
+  rights: number | null;
+}
+
+export interface RightsIssueInput {
+  ticker: string;
+  ex_date: string;
+  ratio: number;
+  subscription_price: number;
+}
+
+export const getRightsIssues = async (portfolioId: number): Promise<RightsIssue[]> => {
+  const response = await apiClient.get<RightsIssue[]>(`/portfolios/${portfolioId}/rights-issues`);
   return response.data;
 };
 
-export const getPortfolioSummary = async (id: string) => {
-  const response = await apiClient.get(`/portfolios/${id}/summary`);
+export const saveRightsIssue = async (
+  portfolioId: number,
+  input: RightsIssueInput
+): Promise<RightsIssue> => {
+  const response = await apiClient.post<RightsIssue>(`/portfolios/${portfolioId}/rights-issues`, input);
   return response.data;
 };
 
-export const createPortfolio = async (name: string, description?: string) => {
-  const response = await apiClient.post('/portfolios', { name, description });
+export const deleteRightsIssue = async (portfolioId: number, ticker: string, exDate: string) => {
+  await apiClient.delete(
+    `/portfolios/${portfolioId}/rights-issues/${encodeURIComponent(ticker)}/${exDate}`
+  );
+};
+
+/** Stored price range of a TEFAS fund (prices come from uploaded Excel files). */
+export interface FundPrices {
+  ticker: string;
+  first_date: string | null;
+  last_date: string | null;
+  days: number;
+}
+
+export const getFundPrices = async (portfolioId: number): Promise<FundPrices[]> => {
+  const response = await apiClient.get<FundPrices[]>(`/portfolios/${portfolioId}/fund-prices`);
   return response.data;
 };
 
-// Transactions
-export const getTransactions = async (portfolioId: string) => {
-  const response = await apiClient.get(`/portfolios/${portfolioId}/transactions`);
+export const uploadFundPrices = async (
+  portfolioId: number,
+  fundCode: string,
+  file: File
+): Promise<FundPrices> => {
+  const body = new FormData();
+  body.append('fund_code', fundCode);
+  body.append('file', file);
+  // Unset the JSON default so the browser adds the multipart boundary.
+  const response = await apiClient.post<FundPrices>(`/portfolios/${portfolioId}/fund-prices`, body, {
+    headers: { 'Content-Type': undefined },
+  });
   return response.data;
 };
 
-export const createTransaction = async (
-  portfolioId: string,
-  data: {
-    symbol: string;
-    type: 'buy' | 'sell';
-    quantity: number;
-    price: number;
-    date: string;
-  }
-) => {
-  const response = await apiClient.post(`/portfolios/${portfolioId}/transactions`, data);
+// Explore: public portfolios, open to everyone. The backend sends
+// percentages only (app/services/explore.py), never amounts.
+export interface PublicOwner {
+  /** "Batuhan B."; null when the owner has no name. */
+  display_name: string | null;
+  initials: string | null;
+}
+
+export interface PublicPortfolioSummary {
+  slug: string;
+  name: string;
+  market: string;
+  is_experimental: boolean;
+  owner: PublicOwner;
+  start_date: string | null;
+  end_date: string | null;
+  /** Unit price return since the start, %. */
+  return_pct: number | null;
+  return_1m_pct: number | null;
+  return_1y_pct: number | null;
+  /** Last 90 days of cumulative time-weighted return, %. */
+  sparkline: number[];
+}
+
+export interface PublicPoint {
+  date: string;
+  twr_pct: number;
+  benchmark_close: number | null;
+  usd_close: number | null;
+  gold_close: number | null;
+}
+
+export interface PublicPortfolioDetail extends Omit<PublicPortfolioSummary, 'sparkline'> {
+  points: PublicPoint[];
+  allocation: { positions: { ticker: string; weight_pct: number }[]; cash_pct: number };
+}
+
+export const getPublicPortfolios = async (): Promise<PublicPortfolioSummary[]> => {
+  const response = await apiClient.get<PublicPortfolioSummary[]>('/explore/portfolios');
   return response.data;
 };
 
-// Analysis
-export const analyzePortfolio = async (portfolioId: number) => {
-  const response = await apiClient.get(`/portfolios/${portfolioId}/analyze`);
-  return response.data;
-};
-
-// Stocks
-export const searchStocks = async (query: string) => {
-  const response = await apiClient.get(`/stocks/search?q=${query}`);
-  return response.data;
-};
-
-export const getStockPrice = async (symbol: string) => {
-  const response = await apiClient.get(`/stocks/${symbol}/price`);
+export const getPublicPortfolio = async (slug: string): Promise<PublicPortfolioDetail> => {
+  const response = await apiClient.get<PublicPortfolioDetail>(`/explore/portfolios/${encodeURIComponent(slug)}`);
   return response.data;
 };

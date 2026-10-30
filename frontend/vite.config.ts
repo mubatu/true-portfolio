@@ -11,4 +11,18 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Long-lived vendor chunks: app changes don't invalidate them.
+        manualChunks: {
+          react: ['react', 'react-dom', 'react-dom/client', 'react-router-dom'],
+          charts: ['recharts'],
+          supabase: ['@supabase/supabase-js'],
+          data: ['@tanstack/react-query', 'axios'],
+          i18n: ['i18next', 'react-i18next', 'i18next-browser-languagedetector'],
+        },
+      },
+    },
+  },
 })

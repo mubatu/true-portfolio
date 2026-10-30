@@ -22,21 +22,20 @@ export const LOCALES: LocaleConfig[] = [
  * Get Intl locale from i18n language code
  */
 export const getLocale = (languageCode: string): string => {
-  const config = LOCALES.find((l) => l.code === languageCode);
-  return config?.locale || 'en-US';
+  return getLocaleConfig(languageCode)?.locale || 'en-US';
 };
 
 /**
  * Get date locale from i18n language code
  */
 export const getDateLocale = (languageCode: string): string => {
-  const config = LOCALES.find((l) => l.code === languageCode);
-  return config?.dateLocale || 'en-US';
+  return getLocaleConfig(languageCode)?.dateLocale || 'en-US';
 };
 
 /**
- * Get locale config by code
+ * Get locale config by code ("tr-TR" is treated as "tr")
  */
-export const getLocaleConfig = (languageCode: string): LocaleConfig | undefined => {
-  return LOCALES.find((l) => l.code === languageCode);
-};
+export function getLocaleConfig(languageCode: string): LocaleConfig | undefined {
+  const base = languageCode.split('-')[0];
+  return LOCALES.find((l) => l.code === base);
+}

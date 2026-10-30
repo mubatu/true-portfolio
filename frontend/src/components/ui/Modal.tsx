@@ -51,7 +51,8 @@ export function Modal({ isOpen, onClose, title, children, footer }: ModalProps) 
     >
       <div
         ref={modalRef}
-        className="w-full max-w-md rounded-lg border shadow-lg animate-in fade-in zoom-in-95 duration-200"
+        // Never taller than the screen: the body scrolls, title and buttons stay.
+        className="flex w-full max-w-md max-h-full flex-col rounded-lg border shadow-lg animate-in fade-in zoom-in-95 duration-200"
         style={{
           backgroundColor: 'hsl(var(--background))',
           borderColor: 'hsl(var(--border))',
@@ -59,7 +60,7 @@ export function Modal({ isOpen, onClose, title, children, footer }: ModalProps) 
       >
         {/* Header */}
         <div
-          className="flex items-center justify-between px-6 py-4 border-b"
+          className="flex shrink-0 items-center justify-between px-6 py-4 border-b"
           style={{ borderColor: 'hsl(var(--border))' }}
         >
           <h2 className="text-lg font-semibold">{title}</h2>
@@ -74,12 +75,12 @@ export function Modal({ isOpen, onClose, title, children, footer }: ModalProps) 
         </div>
 
         {/* Content */}
-        <div className="px-6 py-4">{children}</div>
+        <div className="min-h-0 overflow-y-auto px-6 py-4">{children}</div>
 
         {/* Footer */}
         {footer && (
           <div
-            className="flex justify-end gap-3 px-6 py-4 border-t"
+            className="flex shrink-0 justify-end gap-3 px-6 py-4 border-t"
             style={{ borderColor: 'hsl(var(--border))' }}
           >
             {footer}

@@ -1,0 +1,634 @@
+{
+  "common": {
+    "appName": "True Portfolio",
+    "signIn": "Giriş Yap",
+    "signOut": "Çıkış Yap",
+    "myPortfolios": "Portföylerim",
+    "getStarted": "Hemen Başla",
+    "learnMore": "Daha Fazla Bilgi",
+    "cancel": "İptal",
+    "create": "Oluştur",
+    "save": "Kaydet",
+    "delete": "Sil",
+    "edit": "Düzenle",
+    "loading": "Yükleniyor...",
+    "error": "Bir hata oluştu",
+    "noData": "Veri yok",
+    "toggleTheme": "Temayı değiştir",
+    "language": "Dil",
+    "mainNav": "Ana menü",
+    "retry": "Tekrar dene"
+  },
+  "landing": {
+    "hero": {
+      "eyebrow": "BIST hisseleri ve TEFAS fonları için",
+      "title": "Portföylerinin",
+      "titleHighlight": "gerçek performansını gör",
+      "subtitle": "Yatırımlarının sadece güncel kâr/zararını değil geçmişten bugüne nasıl ilerlediğini tıpkı bir fon gibi takip etmeni sağlar.",
+      "howItWorks": "Nasıl çalışır?",
+      "points": {
+        "bist": "BIST hisseleri ve TEFAS fonları",
+        "dividends": "Temettü ve stopaj otomatik",
+        "splits": "Bölünme ve bedelli düzeltmeleri",
+        "compare": "BIST 100, altın ve dolarla kıyas"
+      }
+    },
+    "preview": {
+      "unitPrice": "Pay fiyatı",
+      "vs": {
+        "bist": "BIST 100'e göre",
+        "gold": "Altına göre",
+        "usd": "Dolara göre"
+      },
+      "ahead": "+{{value}} puan"
+    },
+    "features": {
+      "title": "İhtiyacın olan her şey, sade bir ekranda",
+      "subtitle": "Aracı kurum ekstrelerinde kaybolmadan portföyünün gerçek performansını gör.",
+      "items": {
+        "fund": {
+          "title": "Fon gibi pay fiyatı",
+          "description": "Para ekleyip çekmen performansı bozmaz; pay fiyatı 1,0000'dan başlar ve yalnızca getiriyle hareket eder."
+        },
+        "compare": {
+          "title": "BIST 100, altın, dolar",
+          "description": "Aynı parayı endekse, altına ya da dolara koysan ne olurdu? Her dönem için puan farkıyla gör."
+        },
+        "dividends": {
+          "title": "Temettü ve stopaj",
+          "description": "Temettüler hak kullanım gününde, stopaj düşülmüş net tutarla kasana eklenir."
+        },
+        "corporate": {
+          "title": "Bölünme ve bedelli",
+          "description": "Bedelsiz, bedelli ve bölünmelerden sonra fiyatlar ve lotlar otomatik düzeltilir."
+        },
+        "tefas": {
+          "title": "TEFAS fonları",
+          "description": "Fonlarını da ekle; TEFAS Excel'ini yükle, gerisini uygulama halletsin."
+        },
+        "perStock": {
+          "title": "Hisse bazında K/Z",
+          "description": "Her hissenin gerçekleşen, gerçekleşmemiş ve temettü kârı; kapananların alış ve satış ortalamaları."
+        }
+      }
+    },
+    "steps": {
+      "title": "Üç adımda başla",
+      "step": "Adım {{n}}",
+      "items": {
+        "create": {
+          "title": "Portföy oluştur",
+          "description": "BIST ya da TEFAS portföyü aç, istediğin kadar portföy tut."
+        },
+        "trades": {
+          "title": "İşlemlerini gir",
+          "description": "Alım, satım ve komisyonları gir; piyasa verisi otomatik gelir."
+        },
+        "insights": {
+          "title": "Sonuçları gör",
+          "description": "Pay fiyatı, getiriler, öne çıkanlar ve hisse bazında kâr/zarar hazır."
+        }
+      }
+    },
+    "footer": {
+      "copyright": "© 2026 True Portfolio. Tüm hakları saklıdır."
+    },
+    "showcase": {
+      "title": "Keşfet'te öne çıkanlar",
+      "seeAll": "Tümünü gör",
+      "more": "Keşfet'te {{count}} portföy daha var"
+    }
+  },
+  "auth": {
+    "welcome": "Hoş geldin",
+    "welcomeBack": "Tekrar hoş geldin",
+    "enterEmail": "Devam etmek için e-posta adresini gir",
+    "loginSubtitle": "Bu e-posta adresiyle kayıtlı bir hesap var. Lütfen şifreni gir.",
+    "registerSubtitle": "Bu e-posta adresiyle kayıtlı bir hesap bulunamadı. Hesap oluşturmak için aşağıdaki formu doldur.",
+    "email": "E-posta",
+    "emailPlaceholder": "ornek@eposta.com",
+    "password": "Şifre",
+    "passwordPlaceholder": "Şifreni gir",
+    "createPasswordPlaceholder": "Bir şifre oluştur",
+    "name": "Ad Soyad",
+    "namePlaceholder": "Adın ve soyadın",
+    "continue": "Devam Et",
+    "back": "Geri",
+    "signIn": "Giriş Yap",
+    "createAccount": "Hesap Oluştur",
+    "errors": {
+      "emailCheck": "E-posta doğrulanamadı. Lütfen tekrar dene.",
+      "invalidCredentials": "E-posta veya şifre hatalı.",
+      "registrationFailed": "Kayıt başarısız oldu. Lütfen tekrar dene.",
+      "invalid_credentials": "E-posta veya şifre hatalı.",
+      "email_not_confirmed": "E-posta adresin henüz doğrulanmamış. Gelen kutundaki bağlantıya tıkla.",
+      "user_already_exists": "Bu e-posta adresiyle zaten bir hesap var.",
+      "email_exists": "Bu e-posta adresiyle zaten bir hesap var.",
+      "weak_password": "Şifre yeterince güçlü değil.",
+      "same_password": "Yeni şifre eskisiyle aynı olamaz.",
+      "email_address_invalid": "Geçerli bir e-posta adresi gir.",
+      "signup_disabled": "Şu anda yeni kayıt alınmıyor.",
+      "over_request_rate_limit": "Çok fazla deneme yapıldı. Birkaç dakika sonra tekrar dene.",
+      "over_email_send_rate_limit": "Çok fazla e-posta gönderildi. Birkaç dakika sonra tekrar dene.",
+      "reauthentication_needed": "Bu işlem için yeniden giriş yapman gerekiyor.",
+      "session_expired": "Oturumun sona erdi. Tekrar giriş yap.",
+      "session_not_found": "Oturumun sona erdi. Tekrar giriş yap.",
+      "network": "Sunucuya ulaşılamadı. İnternet bağlantını kontrol et."
+    },
+    "brand": {
+      "title": "Yatırımlarının geçmişini netleştir.",
+      "points": {
+        "fund": "Portföyün bir fon gibi fiyatlanır, para ekleyip çıkarmak getiriyi bozmaz.",
+        "compare": "BIST 100, altın ve dolarla her dönem için kıyasla.",
+        "automatic": "Temettü, stopaj, bölünme ve bedelliler otomatik hesaplanır."
+      }
+    },
+    "secureNote": "Bağlantın şifrelenir; şifren yalnızca geri çevrilemez biçimde (hash) saklanır.",
+    "showPassword": "Şifreyi göster",
+    "hidePassword": "Şifreyi gizle"
+  },
+  "analyze": {
+    "subtitle": "Ortalama maliyet yöntemi · fiyatlar bugünü içermez · temettüler stopaj düşülmüş net · komisyon dahil",
+    "chart": {
+      "titles": {
+        "unit": "Pay Fiyatı",
+        "value": "Toplam Değer",
+        "pl": "Kâr / Zarar"
+      },
+      "rangeLabel": "Dönem",
+      "modeLabel": "Grafik",
+      "modes": {
+        "unit": "Pay fiyatı",
+        "value": "Değer ve yatırılan",
+        "pl": "K/Z (₺)"
+      },
+      "compareLabel": "Karşılaştır",
+      "comparisons": {
+        "benchmark": "BIST 100",
+        "gold": "Altın",
+        "usd": "Dolar"
+      },
+      "portfolioUnit": "Portföy pay fiyatı",
+      "comparisonLines": {
+        "benchmark": "BIST 100 (aynı başlangıçtan)",
+        "gold": "Altın (aynı başlangıçtan)",
+        "usd": "Dolar (aynı başlangıçtan)"
+      },
+      "sinceRangeStart": "Dönem başından beri",
+      "hints": {
+        "unit": "Bir fon grafiği gibi: pay fiyatı o gün elinde tuttuğun hisselerin performansıyla hareket eder. Yeşil nokta dönemin zirvesi, kırmızı nokta dibi; gölgeli alan en büyük düşüş. Kesikli çizgiler aynı para BIST 100'e, altına ya da dolara yatırılsaydı ne olacağını gösterir. BIST 100 fiyat endeksidir (temettü içermez); altının TL fiyatı ons altın vadelisi ve dolar kurundan hesaplanır.",
+        "value": "Toplam değer (hisseler + kasadaki nakit) ile dışarıdan yatırdığın para (kesikli çizgi).",
+        "pl": "Her gün itibarıyla birikimli kâr/zarar: gerçekleşen + gerçekleşmemiş + temettü."
+      },
+      "noData": "Bu dönem için geçmiş performans verisi yok.",
+      "dailyReturnLabel": "Günlük getiri",
+      "dailyShort": "günlük",
+      "portfoliosLabel": "Portföyler",
+      "portfoliosHint": "Portföy çizgileri, her portföyün kendi pay fiyatını ilk alımından (ya da dönemin başından) itibaren gösterir; o günkü toplam pay fiyatından başlar. Sonunda toplamın üstünde kalan portföy, o süre boyunca toplamdan iyi gitmiştir."
+    },
+    "totalInvested": "Yatırılan Para",
+    "totalPl": "Toplam K/Z",
+    "dividendIncome": "Temettü (net)",
+    "dividendIncomeSub": "Stopaj öncesi {{gross}}",
+    "dividends": "Alınan Temettüler",
+    "dividendsHint": "Hak kullanım tarihinde, bir önceki gün elde tutulan hisseler için stopaj düşülmüş net tutar olarak kasaya eklenir.",
+    "noDividends": "Henüz temettü alınmamış.",
+    "warnings": {
+      "title": "Bazı piyasa verileri yüklenemedi. Sonuçlar eksik olabilir.",
+      "market_data_unavailable": "{{ticker}} için piyasa verisi güncellenemedi; kayıtlı son veriler gösteriliyor.",
+      "rights_issue_review": "{{ticker}} için bir bedelli sermaye artırımı kaydı kontrol bekliyor; İşlemler sayfasındaki Bedelli bölümünden şartlarını gir veya onayla.",
+      "fund_prices_outdated": "{{ticker}} için yüklü fon fiyatları eksik veya güncel değil; TEFAS'tan güncel Excel'i İşlemler sayfasındaki Fon Fiyatları bölümünden yükle."
+    },
+    "table": {
+      "ticker": "Hisse",
+      "qty": "Adet",
+      "avgCost": "Ort. Maliyet",
+      "price": "Fiyat",
+      "value": "Değer",
+      "invested": "Maliyet",
+      "returned": "Satış Tutarı",
+      "unrealized": "Gerçekleşmemiş K/Z",
+      "realized": "Gerçekleşen K/Z",
+      "total": "Toplam K/Z",
+      "pct": "%",
+      "exDate": "Hak Kullanım",
+      "shares": "Adet",
+      "grossPerShare": "Brüt / Hisse",
+      "withholding": "Stopaj",
+      "gross": "Brüt",
+      "net": "Net",
+      "sum": "Toplam"
+    },
+    "performance": {
+      "ranges": {
+        "1M": "1A",
+        "3M": "3A",
+        "6M": "6A",
+        "YTD": "YB",
+        "1Y": "1Y",
+        "ALL": "Tümü"
+      },
+      "return": "Getiri",
+      "returnHint": "Zaman ağırlıklı getiri: ne zaman para eklediğinden etkilenmeyen, yatırımlarının kendi performansı.",
+      "vsBenchmark": "BIST 100: {{value}} ({{diff}} puan)",
+      "maxDrawdown": "En Büyük Düşüş",
+      "drawdownHint": "Bir zirveden sonraki en dip noktaya kadar yaşanan en büyük düşüş; zaman ağırlıklı getiri üzerinden ölçülür.",
+      "drawdownSpan": "{{from}} → {{to}}",
+      "start": "başlangıç",
+      "recovered": "{{date}} tarihinde toparlandı",
+      "notRecovered": "Henüz toparlanmadı · zirveden {{value}}",
+      "noDrawdown": "Bu dönemde düşüş yok",
+      "portfolio": "Portföy",
+      "benchmark": "BIST 100",
+      "totalPl": "Toplam K/Z",
+      "totalValue": "Toplam değer",
+      "invested": "Yatırılan"
+    },
+    "refresh": "Yenile",
+    "loading": "Piyasa verileri güncelleniyor; günün ilk açılışında bu birkaç saniye sürebilir…",
+    "loadError": "Analiz yüklenemedi.",
+    "empty": {
+      "title": "Henüz analiz edilecek işlem yok",
+      "description": "Portföyün fon gibi grafiğini, getirilerini ve hisse bazında kâr/zararını görmek için ilk alış işlemini ekle."
+    },
+    "fund": {
+      "overview": "Portföy özeti",
+      "unitPrice": "Pay fiyatı",
+      "asOf": "{{date}} kapanışı",
+      "sinceStart": "başlangıçtan beri",
+      "unitPriceHint": "Portföyün bir yatırım fonu gibi fiyatlanır: 1,0000'dan başlar ve sadece performansla değişir. Para eklemek ya da çıkarmak pay fiyatını etkilemez.",
+      "size": "Toplam değer",
+      "holdingsPart": "Hisse {{value}}",
+      "cashPart": "Nakit {{value}}",
+      "currentValue": "Güncel Toplam Değer"
+    },
+    "returns": {
+      "title": "Getiriler",
+      "hint": "Getiri: grafikte seçili dönemde pay fiyatındaki değişim; para ekleyip çıkarmaktan etkilenmez. Aynı parayla: portföye para koyduğun her gün aynı tutarla hisse yerine bunları alsaydın bugünkü kâr/zararın.",
+      "periods": {
+        "1M": "1 Ay",
+        "3M": "3 Ay",
+        "6M": "6 Ay",
+        "YTD": "Yılbaşından",
+        "1Y": "1 Yıl",
+        "ALL": "Başlangıçtan"
+      },
+      "volatility": "Yıllık oynaklık",
+      "volatilityHint": "Günlük getirilerin standart sapmasının yıllık karşılığı; ne kadar yüksekse portföy o kadar dalgalı.",
+      "bestDay": "En iyi gün",
+      "worstDay": "En kötü gün",
+      "returnIn": "Getiri · {{period}}",
+      "sameMoney": "Aynı parayla K/Z",
+      "sameMoneyHint": "Başlangıçtan bugüne: portföye dışarıdan para girdiği her gün aynı TL tutarla o günün kapanışından alınmış gibi hesaplanır. Portföy satırı gerçek toplam kâr/zararın. BIST 100 fiyat endeksidir (temettü içermez)."
+    },
+    "positions": {
+      "title": "Hisse Bazında Kâr / Zarar",
+      "hint": "Gerçekleşmemiş: eldeki hisselerin bugünkü kârı. Gerçekleşen: satışlarla (rüçhan satışları dahil) kesinleşen kâr. Kapanan hisselerde adet satılan adeti, fiyat ortalama alış → ortalama satış fiyatını gösterir. Komisyonlar dahildir.",
+      "filterLabel": "Hisseler",
+      "filters": {
+        "all": "Tümü ({{count}})",
+        "open": "Elde ({{count}})",
+        "closed": "Kapanan ({{count}})"
+      },
+      "empty": "Bu filtrede hisse yok.",
+      "weight": "Ağırlık",
+      "dividends": "Temettü",
+      "totalPct": "Getiri",
+      "closed": "Kapandı",
+      "closedOn": "Kapandı {{date}}",
+      "short": { "unrealized": "Gerçekleşmemiş", "realized": "Gerçekleşen" },
+      "closedPricesHint": "Satılan adet; ortalama alış maliyeti → ortalama satış fiyatı (komisyonlar dahil, kapandığı günün bölünme bazında)."
+    },
+    "allocation": {
+      "title": "Dağılım",
+      "cash": "Kasadaki nakit",
+      "other": "Diğer ({{count}})"
+    },
+    "insights": {
+      "title": "Öne Çıkanlar",
+      "hint": "Grafik ve tablolardan çıkan sonuçlar, başlangıçtan bugüne.",
+      "bestWorst": "Kazandıran ve kaybettiren",
+      "best": "En çok kazandıran",
+      "worst": "En çok kaybettiren",
+      "noWinner": "Henüz kâr eden hisse yok.",
+      "fromPeak": "Zirveden uzaklık",
+      "atPeak": "Zirvede",
+      "maxDrawdown": "En büyük düşüş {{value}} ({{date}})",
+      "noDrawdown": "Hiç düşüş yaşanmadı.",
+      "concentration": "Yoğunlaşma",
+      "topHoldings": "{{total}} hissenin en büyük {{count}} tanesinde",
+      "noOpen": "Elde hisse yok.",
+      "days": "En iyi ve en kötü gün",
+      "noDays": "Henüz yeterli gün yok."
+    },
+    "daily": {
+      "today": "Bugün",
+      "yesterday": "Dün",
+      "hint": "{{date}} kapanışında pay fiyatının bir önceki işlem gününe göre değişimi"
+    },
+    "unrealizedPl": "Gerçekleşmemiş K/Z",
+    "unrealizedPlSub": "Elde tutulan varlıklarda",
+    "realizedPl": "Gerçekleşen K/Z",
+    "realizedPlSub": "Satışlardan",
+    "plEquation": "Yatırılan para + gerçekleşen K/Z + net temettü + gerçekleşmemiş K/Z = güncel toplam değer. Gerçekleşen K/Z + net temettü + gerçekleşmemiş K/Z = toplam K/Z.",
+    "commissionNote": "Ödenen {{commission}} komisyon maliyetlere dahildir."
+  },
+  "overview": {
+    "title": "Genel Bakış",
+    "subtitle": "Tüm portföylerin tek bir fon gibi: toplam büyüklük, kâr/zarar ve getiri. Deneysel portföyler dahil değil.",
+    "experimentalExcluded": "{{count}} deneysel portföy hariç",
+    "loadError": "Şu portföylerin analizi yüklenemedi: {{names}}",
+    "allocation": "Portföy Dağılımı",
+    "footnote": "Pay fiyatı ve getiriler, portföylerin günlük toplam değerinden para girişlerinin etkisi arındırılarak hesaplanır.",
+    "empty": {
+      "title": "Gösterilecek portföy yok",
+      "description": "Genel Bakış, işlemi olan portföylerinin toplamını gösterir. Bir portföy oluşturup ilk alışını ekle.",
+      "allExperimental": "İşlemi olan portföylerinin hepsi deneysel olarak işaretli. Genel Bakış'a dahil etmek istediklerinin işaretini Portföylerim'den kaldırabilirsin."
+    },
+    "table": {
+      "title": "Portföy Bazında Kâr / Zarar",
+      "hint": "Her portföyün büyüklüğü (nakit dahil), toplamdaki payı, yatırılan para ve kâr/zarar dağılımı. Pay fiyatı getirisi para girişlerinden arındırılmış performanstır.",
+      "portfolio": "Portföy",
+      "unitReturn": "Pay fiyatı getirisi"
+    },
+    "insights": {
+      "noWinner": "Henüz kâr eden portföy yok.",
+      "largest": "En büyük portföyde ({{total}} portföyden)",
+      "noOpen": "Değeri olan portföy yok."
+    }
+  },
+  "portfolioSettings": {
+    "title": "Portföy ayarları",
+    "visibility": "Görünürlük",
+    "type": "Tür",
+    "private": {
+      "label": "Bana özel",
+      "description": "Yalnızca sen görürsün."
+    },
+    "public": {
+      "label": "Herkese açık",
+      "description": "Keşfet'te herkes görür, yalnızca yüzde olarak. Tutarlar ve işlemler gösterilmez."
+    },
+    "experimental": {
+      "label": "Deneysel",
+      "description": "Deneme ya da sanal portföy. Kendi analizi durur ama Genel Bakış'a dahil edilmez."
+    },
+    "delete": {
+      "title": "Portföyü sil",
+      "description": "Portföy ve tüm işlemleri kalıcı olarak silinir."
+    },
+    "short": "Ayarlar"
+  },
+  "explore": {
+    "title": "Keşfet",
+    "subtitle": "Kullanıcıların herkese açık paylaştığı portföyler. Başlangıçtan bu yana getirisi en yüksek olan en üstte.",
+    "amountsHidden": "Tutarlar gizlidir; yalnızca yüzdeler gösterilir.",
+    "amountsHiddenDetail": "Tutarlar ve işlemler gizlidir. Pay fiyatı 1,0000'dan başlar ve para girişlerinden arındırılmış performansı gösterir.",
+    "loadError": "Portföyler yüklenemedi.",
+    "notFound": "Bu portföy bulunamadı ya da artık herkese açık değil.",
+    "backToList": "Keşfet'e dön",
+    "empty": {
+      "title": "Henüz herkese açık portföy yok",
+      "description": "Bir portföyünü ayarlarından \"Herkese açık\" yaparak ilk paylaşan sen ol."
+    },
+    "anonymous": "İsimsiz",
+    "sinceStart": "Başlangıçtan beri",
+    "horizon": "Başlangıç {{start}} · {{duration}}",
+    "duration": {
+      "years": "{{count}} yıl",
+      "months": "{{count}} ay",
+      "days": "{{count}} gün"
+    },
+    "allocation": "Güncel Dağılım",
+    "holdings": "{{count}} varlık",
+    "returnsHint": "Grafikte seçili dönemde pay fiyatındaki değişim; para ekleyip çıkarmaktan etkilenmez. Altında aynı dönemde BIST 100, altın ve dolar.",
+    "openMine": "Senin portföyün: tam analiz",
+    "share": {
+      "label": "Bağlantıyı paylaş",
+      "short": "Paylaş",
+      "copied": "Bağlantı kopyalandı",
+      "failed": "Kopyalanamadı",
+      "text": "{{name}} portföyünün performansına göz at"
+    }
+  },
+  "myPortfolios": {
+    "title": "Portföylerim",
+    "subtitle": "Tüm portföylerinin performansı tek bakışta. Analizine ve işlemlerine buradan ulaş.",
+    "createNew": "Yeni Portföy",
+    "empty": {
+      "title": "Henüz portföyün yok",
+      "description": "İlk portföyünü oluştur, işlemlerini ekle; performansını burada bir fon gibi takip et."
+    },
+    "card": {
+      "transactions": "{{count}} işlem",
+      "noTransactions": "İşlem yok",
+      "addFirst": "İlk işlemini ekle"
+    },
+    "create": {
+      "title": "Yeni Portföy Oluştur",
+      "namePlaceholder": "örn. Uzun Vade, Temettü Hisseleri",
+      "nameLabel": "Portföy Adı",
+      "marketLabel": "Piyasa"
+    },
+    "edit": {
+      "title": "Portföyü Yeniden Adlandır",
+      "nameLabel": "Portföy Adı",
+      "namePlaceholder": "Portföy adını gir"
+    },
+    "noTrades": "Henüz işlem yok. Analizi görmek için ilk alışını ekle.",
+    "sparklineLabel": "Son 90 işlem günündeki pay fiyatı",
+    "experimental": {
+      "title": "Deneysel portföyler",
+      "hint": "Denemeler ve sanal portföyler. Kendi analizleri durur ama Genel Bakış'a dahil edilmezler."
+    },
+    "trendLabel": "Başlangıçtan bugüne pay fiyatı"
+  },
+  "portfolio": {
+    "title": "Portföy Detayı",
+    "notFound": "Portföy bulunamadı.",
+    "viewing": "Görüntülenen portföy: {{id}}",
+    "back": "Portföylerime Dön",
+    "marketTag": "Piyasa: {{market}}",
+    "addTransaction": "İşlem Ekle",
+    "transactions": {
+      "title": "İşlemler",
+      "empty": {
+        "title": "Henüz işlem yok",
+        "description": "Bu portföyü takip etmeye başlamak için ilk işlemini ekle."
+      },
+      "ticker": "Hisse",
+      "operation": "İşlem",
+      "market": "Piyasa",
+      "quantity": "Adet",
+      "adjustedQuantity": "Düzeltilmiş Adet",
+      "price": "Fiyat",
+      "adjustedPrice": "Düzeltilmiş Fiyat",
+      "total": "Tutar",
+      "date": "Tarih",
+      "buy": "Alış",
+      "sell": "Satış",
+      "rights_sale": "Rüçhan Satışı",
+      "commission": "kom. {{amount}} ({{rate}})",
+      "adjustedLine": "Bölünme sonrası {{quantity}} × {{price}}",
+      "adjustedHint": "Bölünme ve bedelsizlerden sonraki bugünkü karşılığı; hesaplar bunu kullanır.",
+      "count_one": "{{count}} işlem",
+      "count_other": "{{count}} işlem"
+    },
+    "addTransactionModal": {
+      "title": "İşlem Ekle",
+      "marketLabel": "Piyasa",
+      "tickerLabel": "Hisse Kodu",
+      "tickerPlaceholder": "örn. THYAO, SISE, AKBNK",
+      "operationLabel": "İşlem",
+      "quantityLabel": "Adet",
+      "quantityPlaceholder": "Hisse adedi",
+      "rightsQuantityLabel": "Hak Adedi",
+      "priceLabel": "Hisse Başına Fiyat",
+      "pricePlaceholder": "Fiyat",
+      "commissionLabel": "Komisyon oranı (%)",
+      "commissionHint": "Aracı kurumunun bu işlem için aldığı oran; on binde 2 = 0,02.",
+      "commissionAmount": "Komisyon: ₺{{amount}}",
+      "commissionInvalid": "0 ile %{{max}} arasında bir oran gir.",
+      "rightsPriceLabel": "Hak Başına Satış Fiyatı",
+      "dateLabel": "İşlem Tarihi",
+      "fund": {
+        "tickerLabel": "Fon Kodu",
+        "tickerPlaceholder": "örn. IPB, KPC, IDH",
+        "quantityLabel": "Pay Adedi",
+        "quantityPlaceholder": "Pay adedi",
+        "priceLabel": "Pay Fiyatı"
+      }
+    },
+    "editTransactionModal": {
+      "title": "İşlemi Düzenle"
+    },
+    "deleteTransactionConfirm": {
+      "title": "İşlemi Sil",
+      "message": "Bu işlem kalıcı olarak silinecek ve analiz bu işlem olmadan yeniden hesaplanacak. Bu işlem geri alınamaz.",
+      "confirm": "İşlemi Sil"
+    },
+    "deleteConfirm": {
+      "title": "Portföyü Sil",
+      "message": "\"{{name}}\" portföyünü silmek istediğine emin misin? Bu işlem geri alınamaz ve tüm işlemler kalıcı olarak silinir.",
+      "confirm": "Portföyü Sil"
+    },
+    "tabs": {
+      "label": "Portföy görünümleri",
+      "analysis": "Analiz",
+      "transactions": "İşlemler"
+    }
+  },
+  "profile": {
+    "title": "Profil",
+    "subtitle": "Hesabını, şifreni ve tercihlerini buradan yönet.",
+    "noName": "İsimsiz kullanıcı",
+    "memberSince": "{{date}} tarihinden beri üye",
+    "saved": "Kaydedildi",
+    "stats": {
+      "portfolios": "Portföy",
+      "transactions": "İşlem"
+    },
+    "account": {
+      "title": "Hesap bilgileri",
+      "description": "Uygulamada görünen adın.",
+      "emailHint": "E-posta adresi değiştirilemez."
+    },
+    "password": {
+      "title": "Şifre",
+      "description": "Yeni bir şifre belirle.",
+      "new": "Yeni şifre",
+      "confirm": "Yeni şifre (tekrar)",
+      "mismatch": "Şifreler eşleşmiyor.",
+      "submit": "Şifreyi değiştir",
+      "changed": "Şifren değiştirildi"
+    },
+    "preferences": {
+      "title": "Tercihler",
+      "description": "Bu cihazda geçerli görünüm ayarları.",
+      "languageHint": "Arayüz dili",
+      "theme": "Tema",
+      "themeHint": "Açık ya da koyu görünüm",
+      "light": "Açık",
+      "dark": "Koyu"
+    },
+    "session": {
+      "title": "Oturum",
+      "description": "Bu cihazdaki oturumunu kapat."
+    }
+  },
+  "password": {
+    "requirements": {
+      "minLength": "En az 8 karakter",
+      "uppercase": "En az bir büyük harf",
+      "lowercase": "En az bir küçük harf",
+      "number": "En az bir rakam",
+      "special": "En az bir özel karakter (!@#$%^&*)"
+    },
+    "strength": {
+      "label": "Şifre gücü",
+      "weak": "Zayıf",
+      "medium": "Orta",
+      "strong": "Güçlü"
+    }
+  },
+  "rightsIssues": {
+    "title": "Bedelli Sermaye Artırımları",
+    "hint": "Yahoo bedelli artırımları bildirmez, onun yerine eski fiyatları sessizce düşürür. Burada kayıtlı her bedelli için geçmiş fiyatlar gerçek değerlerine döndürülür. Haklarını kullandıysan \"Kullandım\", sattıysan \"Sattım\" ile işlemi ekle; hiçbir şey yapmadıysan ek bir işlem gerekmez.",
+    "add": "Bedelli Ekle",
+    "empty": "Bu portföydeki hisseler için kayıtlı bir bedelli sermaye artırımı yok.",
+    "detected": "Otomatik tespit",
+    "needsReview": "Kontrol et",
+    "terms": "%{{ratio}} bedelli · pay başına {{price}}",
+    "missingTerms": "Şartlar girilmedi",
+    "entitled": "o gün elde {{shares}} hisse",
+    "rights_one": "{{rights}} hak",
+    "rights_other": "{{rights}} hak",
+    "exercised": "Kullandım",
+    "sold": "Sattım",
+    "form": {
+      "title": "Bedelli Sermaye Artırımı Ekle",
+      "editTitle": "Bedelli Sermaye Artırımını Düzenle",
+      "hint": "Bilgileri KAP'taki \"Sermaye Artırımı - Azaltımı İşlemlerine İlişkin Bildirim\" duyurusundan alabilirsin.",
+      "ticker": "Hisse",
+      "exDate": "Rüçhan hakkı kullanım başlangıç tarihi",
+      "ratio": "Bedelli oranı (%)",
+      "price": "Pay başına kullanım fiyatı (₺)"
+    },
+    "errors": {
+      "ticker_not_in_portfolio": "Bu hisse portföyde yok.",
+      "ex_date_in_future": "Tarih bugünden sonra olamaz; bedelli başladıktan sonra gir.",
+      "invalid_terms": "Oran veya fiyat geçersiz.",
+      "not_held_on_ex_date": "Bu tarihten önceki gün portföyde bu hisse yoktu.",
+      "not_found": "Kayıt bulunamadı."
+    },
+    "deleteConfirm": {
+      "title": "Bedelli Kaydını Sil",
+      "message": "{{ticker}} için {{date}} tarihli bedelli kaydı silinecek. Bu kayıt hisseyi tutan tüm portföyleri etkiler; silinirse geçmiş fiyatlar yeniden Yahoo'nun düşürülmüş haline döner."
+    }
+  },
+  "fundPrices": {
+    "title": "Fon Fiyatları",
+    "upload": "Fiyat Yükle",
+    "hint": "Fonların günlük fiyatı Yahoo'da yok. TEFAS'ta Fon Verileri sayfasında fonu seçip tarih aralığını girin, Excel'i indirin ve buradan yükleyin. Güncel kalması için arada bir yeniden yükleyin; yeni dosya eskisiyle birleştirilir.",
+    "empty": "Henüz fon yok. Önce bir alış işlemi ekle, sonra fiyatlarını yükle.",
+    "range": "{{from}} – {{to}} · {{days}} gün",
+    "missing": "Fiyat yüklenmedi",
+    "form": {
+      "title": "TEFAS Fiyatlarını Yükle",
+      "hint": "TEFAS → Fon Verileri → fonu seç → Excel. Fiyatlar fonu tutan tüm portföylerde kullanılır.",
+      "file": "Excel dosyası",
+      "code": "Fon kodu",
+      "codeHint": "Dosyanın içinde fon kodu yok; dosya adından dolduruldu, kontrol et.",
+      "submit": "Yükle"
+    },
+    "errors": {
+      "not_excel": "Dosya okunamadı; TEFAS'tan indirilen .xlsx dosyasını seç.",
+      "no_price_table": "Dosyada Tarih / Fiyat tablosu bulunamadı.",
+      "no_prices": "Dosyada fiyat yok.",
+      "bad_row": "Dosyada okunamayan bir satır var.",
+      "invalid_fund_code": "Fon kodu 3 karakter olmalı (ör. IPB).",
+      "not_fund_portfolio": "Fiyat yükleme yalnızca TEFAS portföylerinde var.",
+      "file_too_large": "Dosya çok büyük; tek bir fonun Excel'ini yükle."
+    }
+  }
+}

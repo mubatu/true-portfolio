@@ -1,472 +1,151 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Briefcase, Loader2, Trash2, ChevronRight, Pencil } from 'lucide-react';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useQueries, useQuery } from '@tanstack/react-query';
+import { Briefcase, FlaskConical, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Modal } from '@/components/ui/Modal';
-import { MARKETS, type Market } from '@/config';
-import {
-  getPortfolios,
-  createPortfolio,
-  updatePortfolio,
-  deletePortfolio,
-  type Portfolio,
-} from '@/services/portfolioService';
+import { useFormatters } from '@/components/analysis/format';
+import { PortfolioCard } from '@/components/portfolio/PortfolioCard';
+import { CreatePortfolioDialog, PortfolioSettingsDialog } from '@/components/portfolio/PortfolioDialogs';
+import { analyzePortfolio, getPortfolios, type Portfolio } from '@/services/portfolioService';
 
+type Dialog = { kind: 'create' } | { kind: 'settings'; portfolio: Portfolio } | null;
+
+/**
+ * Every portfolio at a glance, the way into it, and creating one or
+ * changing its settings (name, public / private, experimental, delete).
+ * Experimental portfolios sit in their own section and are left out of
+ * the Overview.
+ * Cards load their analysis into the same cache the analysis page uses,
+ * so opening a portfolio from here is instant.
+ */
 export function MyPortfolios() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  const fmt = useFormatters('TRY');
+  const [dialog, setDialog] = useState<Dialog>(null);
 
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [portfolioToEdit, setPortfolioToEdit] = useState<Portfolio | null>(null);
-  const [portfolioToDelete, setPortfolioToDelete] = useState<Portfolio | null>(null);
-  const [newPortfolioName, setNewPortfolioName] = useState('');
-  const [newPortfolioMarket, setNewPortfolioMarket] = useState<Market>('BIST');
-  const [editPortfolioName, setEditPortfolioName] = useState('');
-  const [createError, setCreateError] = useState('');
-  const [editError, setEditError] = useState('');
+  useDocumentTitle(t('myPortfolios.title'));
 
-  // Fetch portfolios
-  const {
-    data: portfolios = [],
-    isLoading,
-    error,
-  } = useQuery({
+  const { data: portfolios = [], isLoading, error, refetch } = useQuery({
     queryKey: ['portfolios'],
     queryFn: getPortfolios,
   });
 
-  // Create portfolio mutation
-  const createMutation = useMutation({
-    mutationFn: createPortfolio,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['portfolios'] });
-      setIsCreateModalOpen(false);
-      setNewPortfolioName('');
-      setNewPortfolioMarket('BIST');
-      setCreateError('');
-    },
-    onError: (error: Error) => {
-      setCreateError(error.message);
-    },
+  const withTrades = portfolios.filter((p) => (p.transaction_count ?? 0) > 0);
+  const analyses = useQueries({
+    queries: withTrades.map((p) => ({
+      queryKey: ['portfolio-analysis', p.id],
+      queryFn: () => analyzePortfolio(p.id),
+    })),
   });
+  const analysisById = new Map(withTrades.map((p, i) => [p.id, analyses[i]]));
 
-  // Delete portfolio mutation
-  const deleteMutation = useMutation({
-    mutationFn: deletePortfolio,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['portfolios'] });
-      setIsDeleteModalOpen(false);
-      setPortfolioToDelete(null);
-    },
+  // Largest first; portfolios without a value yet (loading, no trades) keep
+  // their order at the end. Array.sort is stable.
+  const valueOf = (p: Portfolio) => {
+    const a = analysisById.get(p.id)?.data;
+    return a ? a.totals.portfolio_value + a.totals.in_the_safe : null;
+  };
+  const sorted = [...portfolios].sort((a, b) => {
+    const va = valueOf(a);
+    const vb = valueOf(b);
+    if (va == null || vb == null) return (va == null ? 1 : 0) - (vb == null ? 1 : 0);
+    return vb - va;
   });
+  const regular = sorted.filter((p) => !p.is_experimental);
+  const experimental = sorted.filter((p) => p.is_experimental);
 
-  const updateMutation = useMutation({
-    mutationFn: updatePortfolio,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['portfolios'] });
-      setIsEditModalOpen(false);
-      setPortfolioToEdit(null);
-      setEditPortfolioName('');
-      setEditError('');
-    },
-    onError: (error: Error) => {
-      setEditError(error.message);
-    },
-  });
+  const renderCards = (list: Portfolio[]) => (
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      {list.map((p) => {
+        const q = analysisById.get(p.id);
+        return (
+          <PortfolioCard
+            key={p.id}
+            portfolio={p}
+            analysis={q?.data}
+            loading={!!q?.isLoading}
+            failed={!!q?.isError}
+            onRetry={() => q?.refetch()}
+            onSettings={() => setDialog({ kind: 'settings', portfolio: p })}
+            fmt={fmt}
+          />
+        );
+      })}
+    </div>
+  );
 
-  const handleCreateSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newPortfolioName.trim()) {
-      createMutation.mutate({
-        name: newPortfolioName.trim(),
-        market: newPortfolioMarket,
-      });
-    }
-  };
-
-  const handleDeleteClick = (e: React.MouseEvent, portfolio: Portfolio) => {
-    e.stopPropagation();
-    setPortfolioToDelete(portfolio);
-    setIsDeleteModalOpen(true);
-  };
-
-  const handleEditClick = (e: React.MouseEvent, portfolio: Portfolio) => {
-    e.stopPropagation();
-    setPortfolioToEdit(portfolio);
-    setEditPortfolioName(portfolio.name);
-    setEditError('');
-    setIsEditModalOpen(true);
-  };
-
-  const handleEditSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!portfolioToEdit || !editPortfolioName.trim()) {
-      return;
-    }
-    updateMutation.mutate({
-      id: portfolioToEdit.id,
-      name: editPortfolioName.trim(),
-    });
-  };
-
-  const handleConfirmDelete = () => {
-    if (portfolioToDelete) {
-      deleteMutation.mutate(portfolioToDelete.id);
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
+  const createButton = (
+    <Button onClick={() => setDialog({ kind: 'create' })} className="gap-2">
+      <Plus className="h-4 w-4" />
+      {t('myPortfolios.createNew')}
+    </Button>
+  );
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+    <div className="container mx-auto px-4 py-6 md:py-8 max-w-7xl">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold">{t('myPortfolios.title')}</h1>
-          <p
-            className="text-sm mt-1"
-            style={{ color: 'hsl(var(--muted-foreground))' }}
-          >
-            {t('myPortfolios.subtitle')}
-          </p>
+          <h1 className="text-2xl md:text-3xl font-bold">{t('myPortfolios.title')}</h1>
+          <p className="hidden sm:block text-sm mt-1 text-muted-foreground">{t('myPortfolios.subtitle')}</p>
         </div>
-        <Button onClick={() => setIsCreateModalOpen(true)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          {t('myPortfolios.createNew')}
-        </Button>
+        {portfolios.length > 0 && createButton}
       </div>
 
-      {/* Loading State */}
-      {isLoading && (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      )}
-
-      {/* Error State */}
-      {error && (
+      {error ? (
         <div
-          className="rounded-lg border p-4 text-center"
-          style={{
-            borderColor: 'hsl(var(--destructive))',
-            backgroundColor: 'hsl(var(--destructive) / 0.1)',
-          }}
+          className="rounded-xl border p-6 text-center"
+          style={{ borderColor: 'hsl(var(--destructive) / 0.5)', backgroundColor: 'hsl(var(--destructive) / 0.06)' }}
+          role="alert"
         >
-          <p style={{ color: 'hsl(var(--destructive))' }}>
+          <p className="font-medium mb-3" style={{ color: 'hsl(var(--destructive))' }}>
             {t('common.error')}: {(error as Error).message}
           </p>
-        </div>
-      )}
-
-      {/* Empty State */}
-      {!isLoading && !error && portfolios.length === 0 && (
-        <div
-          className="rounded-lg border-2 border-dashed p-12 text-center"
-          style={{ borderColor: 'hsl(var(--border))' }}
-        >
-          <div
-            className="mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4"
-            style={{ backgroundColor: 'hsl(var(--primary) / 0.1)' }}
-          >
-            <Briefcase className="h-8 w-8 text-primary" />
-          </div>
-          <h3 className="text-lg font-semibold mb-2">
-            {t('myPortfolios.empty.title')}
-          </h3>
-          <p
-            className="mb-6 max-w-sm mx-auto"
-            style={{ color: 'hsl(var(--muted-foreground))' }}
-          >
-            {t('myPortfolios.empty.description')}
-          </p>
-          <Button onClick={() => setIsCreateModalOpen(true)} className="gap-2">
-            <Plus className="h-4 w-4" />
-            {t('myPortfolios.createNew')}
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            {t('common.retry')}
           </Button>
         </div>
-      )}
-
-      {/* Portfolio Grid */}
-      {!isLoading && !error && portfolios.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {portfolios.map((portfolio) => (
-            <div
-              key={portfolio.id}
-              onClick={() => navigate(`/portfolio/${portfolio.slug}`)}
-              className="group rounded-lg border p-5 cursor-pointer transition-all hover:shadow-md"
-              style={{
-                borderColor: 'hsl(var(--border))',
-                backgroundColor: 'hsl(var(--card))',
-              }}
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div
-                  className="w-10 h-10 rounded-lg flex items-center justify-center"
-                  style={{ backgroundColor: 'hsl(var(--primary) / 0.1)' }}
-                >
-                  <Briefcase className="h-5 w-5 text-primary" />
-                </div>
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={(e) => handleEditClick(e, portfolio)}
-                  >
-                    <Pencil className="h-4 w-4" style={{ color: 'hsl(var(--muted-foreground))' }} />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={(e) => handleDeleteClick(e, portfolio)}
-                  >
-                    <Trash2 className="h-4 w-4" style={{ color: 'hsl(var(--destructive))' }} />
-                  </Button>
-                  <ChevronRight
-                    className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity"
-                    style={{ color: 'hsl(var(--muted-foreground))' }}
-                  />
-                </div>
-              </div>
-              <h3 className="font-semibold text-lg mb-1">{portfolio.name}</h3>
-              <div className="mb-2">
-                <span
-                  className="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium"
-                  style={{
-                    backgroundColor: 'hsl(var(--muted))',
-                    color: 'hsl(var(--muted-foreground))',
-                  }}
-                >
-                  {t('myPortfolios.card.market', { market: portfolio.market })}
-                </span>
-              </div>
-              <div
-                className="flex items-center gap-3 text-sm"
-                style={{ color: 'hsl(var(--muted-foreground))' }}
-              >
-                <span>
-                  {portfolio.transaction_count && portfolio.transaction_count > 0
-                    ? t('myPortfolios.card.transactions', {
-                        count: portfolio.transaction_count,
-                      })
-                    : t('myPortfolios.card.noTransactions')}
-                </span>
-                <span>•</span>
-                <span>
-                  {t('myPortfolios.card.created', {
-                    date: formatDate(portfolio.created_at),
-                  })}
-                </span>
-              </div>
-            </div>
+      ) : isLoading ? (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-busy="true">
+          {Array.from({ length: 3 }, (_, i) => (
+            <div key={i} className="h-56 rounded-2xl border bg-muted/40 animate-pulse" style={{ borderColor: 'hsl(var(--border))' }} />
           ))}
         </div>
+      ) : portfolios.length === 0 ? (
+        <div className="rounded-2xl border-2 border-dashed p-12 text-center" style={{ borderColor: 'hsl(var(--border))' }}>
+          <div className="mx-auto w-14 h-14 rounded-full flex items-center justify-center mb-4 bg-primary/10">
+            <Briefcase className="h-7 w-7 text-primary" />
+          </div>
+          <h2 className="text-lg font-semibold mb-1">{t('myPortfolios.empty.title')}</h2>
+          <p className="text-sm mb-5 max-w-sm mx-auto text-muted-foreground">{t('myPortfolios.empty.description')}</p>
+          {createButton}
+        </div>
+      ) : (
+        <>
+          {regular.length > 0 && renderCards(regular)}
+          {experimental.length > 0 && (
+            <section className={regular.length > 0 ? 'mt-10' : undefined} aria-labelledby="experimental-title">
+              <div className="flex items-center sm:items-start gap-3 mb-4">
+                <span className="sm:mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+                  <FlaskConical className="h-[18px] w-[18px]" aria-hidden="true" />
+                </span>
+                <div>
+                  <h2 id="experimental-title" className="text-base font-semibold leading-tight">
+                    {t('myPortfolios.experimental.title')}
+                  </h2>
+                  <p className="hidden sm:block text-sm mt-1 text-muted-foreground">{t('myPortfolios.experimental.hint')}</p>
+                </div>
+              </div>
+              {renderCards(experimental)}
+            </section>
+          )}
+        </>
       )}
 
-      {/* Create Portfolio Modal */}
-      <Modal
-        isOpen={isCreateModalOpen}
-        onClose={() => {
-          setIsCreateModalOpen(false);
-          setNewPortfolioName('');
-          setNewPortfolioMarket('BIST');
-          setCreateError('');
-        }}
-        title={t('myPortfolios.create.title')}
-        footer={
-          <>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsCreateModalOpen(false);
-                setNewPortfolioName('');
-                setNewPortfolioMarket('BIST');
-                setCreateError('');
-              }}
-            >
-              {t('common.cancel')}
-            </Button>
-            <Button
-              onClick={handleCreateSubmit}
-              disabled={!newPortfolioName.trim() || createMutation.isPending}
-            >
-              {createMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                t('common.create')
-              )}
-            </Button>
-          </>
-        }
-      >
-        <form onSubmit={handleCreateSubmit}>
-          <div>
-            <label
-              htmlFor="portfolioName"
-              className="block text-sm font-medium mb-2"
-            >
-              {t('myPortfolios.create.nameLabel')}
-            </label>
-            <input
-              id="portfolioName"
-              type="text"
-              value={newPortfolioName}
-              onChange={(e) => setNewPortfolioName(e.target.value)}
-              placeholder={t('myPortfolios.create.namePlaceholder')}
-              autoFocus
-              className="w-full px-3 py-2 rounded-md border bg-transparent"
-              style={{ borderColor: 'hsl(var(--input))' }}
-            />
-          </div>
-          <div className="mt-4">
-            <label
-              htmlFor="portfolioMarket"
-              className="block text-sm font-medium mb-2"
-            >
-              {t('myPortfolios.create.marketLabel')}
-            </label>
-            <select
-              id="portfolioMarket"
-              value={newPortfolioMarket}
-              onChange={(e) => setNewPortfolioMarket(e.target.value as Market)}
-              className="w-full px-3 py-2 rounded-md border bg-transparent"
-              style={{ borderColor: 'hsl(var(--input))' }}
-            >
-              {MARKETS.map((market) => (
-                <option key={market.value} value={market.value}>
-                  {market.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          {createError && (
-            <p
-              className="text-sm mt-2"
-              style={{ color: 'hsl(var(--destructive))' }}
-            >
-              {createError}
-            </p>
-          )}
-        </form>
-      </Modal>
-
-      {/* Edit Portfolio Modal */}
-      <Modal
-        isOpen={isEditModalOpen}
-        onClose={() => {
-          setIsEditModalOpen(false);
-          setPortfolioToEdit(null);
-          setEditPortfolioName('');
-          setEditError('');
-        }}
-        title={t('myPortfolios.edit.title')}
-        footer={
-          <>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsEditModalOpen(false);
-                setPortfolioToEdit(null);
-                setEditPortfolioName('');
-                setEditError('');
-              }}
-            >
-              {t('common.cancel')}
-            </Button>
-            <Button
-              onClick={handleEditSubmit}
-              disabled={!editPortfolioName.trim() || updateMutation.isPending}
-            >
-              {updateMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                t('common.save')
-              )}
-            </Button>
-          </>
-        }
-      >
-        <form onSubmit={handleEditSubmit}>
-          <div>
-            <label
-              htmlFor="editPortfolioName"
-              className="block text-sm font-medium mb-2"
-            >
-              {t('myPortfolios.edit.nameLabel')}
-            </label>
-            <input
-              id="editPortfolioName"
-              type="text"
-              value={editPortfolioName}
-              onChange={(e) => setEditPortfolioName(e.target.value)}
-              placeholder={t('myPortfolios.edit.namePlaceholder')}
-              autoFocus
-              className="w-full px-3 py-2 rounded-md border bg-transparent"
-              style={{ borderColor: 'hsl(var(--input))' }}
-            />
-          </div>
-          {editError && (
-            <p
-              className="text-sm mt-2"
-              style={{ color: 'hsl(var(--destructive))' }}
-            >
-              {editError}
-            </p>
-          )}
-        </form>
-      </Modal>
-
-      {/* Delete Confirmation Modal */}
-      <Modal
-        isOpen={isDeleteModalOpen}
-        onClose={() => {
-          setIsDeleteModalOpen(false);
-          setPortfolioToDelete(null);
-        }}
-        title={t('portfolio.deleteConfirm.title')}
-        footer={
-          <>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsDeleteModalOpen(false);
-                setPortfolioToDelete(null);
-              }}
-            >
-              {t('common.cancel')}
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleConfirmDelete}
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                t('portfolio.deleteConfirm.confirm')
-              )}
-            </Button>
-          </>
-        }
-      >
-        <p style={{ color: 'hsl(var(--muted-foreground))' }}>
-          {t('portfolio.deleteConfirm.message', {
-            name: portfolioToDelete?.name,
-          })}
-        </p>
-      </Modal>
+      {dialog?.kind === 'create' && <CreatePortfolioDialog onClose={() => setDialog(null)} />}
+      {dialog?.kind === 'settings' && (
+        <PortfolioSettingsDialog portfolio={dialog.portfolio} onClose={() => setDialog(null)} />
+      )}
     </div>
   );
 }

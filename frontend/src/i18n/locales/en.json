@@ -1,9 +1,8 @@
 {
   "common": {
-    "appName": "PortfolioTracker",
+    "appName": "True Portfolio",
     "signIn": "Sign In",
     "signOut": "Sign Out",
-    "dashboard": "Dashboard",
     "myPortfolios": "My Portfolios",
     "getStarted": "Get Started",
     "learnMore": "Learn More",
@@ -14,30 +13,91 @@
     "edit": "Edit",
     "loading": "Loading...",
     "error": "An error occurred",
-    "noData": "No data available"
+    "noData": "No data available",
+    "toggleTheme": "Toggle theme",
+    "language": "Language",
+    "mainNav": "Main menu",
+    "retry": "Try again"
   },
   "landing": {
     "hero": {
-      "title": "Track Your Investments",
-      "titleHighlight": "With Confidence",
-      "subtitle": "A modern portfolio tracker that helps you monitor your stocks, analyze performance, and make smarter investment decisions."
+      "eyebrow": "For BIST stocks and TEFAS funds",
+      "title": "See your portfolios'",
+      "titleHighlight": "true performance",
+      "subtitle": "Track not just your investments' current P/L but how they have moved from day one, just like a fund.",
+      "howItWorks": "How it works",
+      "points": {
+        "bist": "BIST stocks and TEFAS funds",
+        "dividends": "Dividends and withholding, automatic",
+        "splits": "Split and rights issue corrections",
+        "compare": "Compare with BIST 100, gold and the dollar"
+      }
+    },
+    "preview": {
+      "unitPrice": "Unit price",
+      "vs": {
+        "bist": "vs BIST 100",
+        "gold": "vs gold",
+        "usd": "vs dollar"
+      },
+      "ahead": "+{{value}} pts"
     },
     "features": {
-      "analytics": {
-        "title": "Real-time Analytics",
-        "description": "Track your portfolio performance with live market data and detailed analytics."
-      },
-      "security": {
-        "title": "Secure & Private",
-        "description": "Your financial data is encrypted and never shared with third parties."
-      },
-      "speed": {
-        "title": "Fast & Intuitive",
-        "description": "A clean, modern interface designed for speed and ease of use."
+      "title": "Everything you need, on one calm screen",
+      "subtitle": "See your portfolio's real performance without digging through broker statements.",
+      "items": {
+        "fund": {
+          "title": "Fund-style unit price",
+          "description": "Adding or withdrawing money doesn't distort performance; the unit price starts at 1.0000 and moves only with returns."
+        },
+        "compare": {
+          "title": "BIST 100, gold, dollar",
+          "description": "What if the same money had gone into the index, gold or the dollar? See the gap in points for every period."
+        },
+        "dividends": {
+          "title": "Dividends and withholding",
+          "description": "Dividends land in your cash on the ex-date, net of withholding tax."
+        },
+        "corporate": {
+          "title": "Splits and rights issues",
+          "description": "Prices and lots are corrected automatically after bonus issues, rights issues and splits."
+        },
+        "tefas": {
+          "title": "TEFAS funds",
+          "description": "Add your funds too: upload the TEFAS Excel and the app does the rest."
+        },
+        "perStock": {
+          "title": "Per-stock P/L",
+          "description": "Realized, unrealized and dividend gains per stock; buy and sell averages for closed ones."
+        }
+      }
+    },
+    "steps": {
+      "title": "Start in three steps",
+      "step": "Step {{n}}",
+      "items": {
+        "create": {
+          "title": "Create a portfolio",
+          "description": "Open a BIST or TEFAS portfolio; keep as many as you like."
+        },
+        "trades": {
+          "title": "Enter your trades",
+          "description": "Add buys, sells and commissions; market data arrives automatically."
+        },
+        "insights": {
+          "title": "See the results",
+          "description": "Unit price, returns, highlights and per-stock P/L are ready."
+        }
       }
     },
     "footer": {
-      "copyright": "© 2026 PortfolioTracker. All rights reserved."
+      "copyright": "© 2026 True Portfolio. All rights reserved."
+    },
+    "showcase": {
+      "title": "Top on Explore",
+      "seeAll": "See all",
+      "more_one": "{{count}} more portfolio on Explore",
+      "more_other": "{{count}} more portfolios on Explore"
     }
   },
   "auth": {
@@ -60,42 +120,86 @@
     "errors": {
       "emailCheck": "Unable to verify email. Please try again.",
       "invalidCredentials": "Invalid email or password.",
-      "registrationFailed": "Registration failed. Please try again."
-    }
-  },
-  "dashboard": {
-    "title": "Dashboard",
-    "subtitle": "Select a portfolio to analyze its performance",
-    "selectPortfolio": "Choose a Portfolio",
-    "dropdownPlaceholder": "Select a portfolio…",
-    "analyze": "Analyze",
-    "txns": "txns",
-    "noPortfolios": "You don't have any portfolios yet. Create one to get started.",
-    "goToPortfolios": "Go to My Portfolios"
+      "registrationFailed": "Registration failed. Please try again.",
+      "invalid_credentials": "Wrong email or password.",
+      "email_not_confirmed": "Your email address isn't confirmed yet. Click the link in your inbox.",
+      "user_already_exists": "An account with this email already exists.",
+      "email_exists": "An account with this email already exists.",
+      "weak_password": "The password isn't strong enough.",
+      "same_password": "The new password must differ from the old one.",
+      "email_address_invalid": "Enter a valid email address.",
+      "signup_disabled": "Sign-ups are closed right now.",
+      "over_request_rate_limit": "Too many attempts. Try again in a few minutes.",
+      "over_email_send_rate_limit": "Too many emails sent. Try again in a few minutes.",
+      "reauthentication_needed": "Please sign in again to do this.",
+      "session_expired": "Your session has expired. Please sign in again.",
+      "session_not_found": "Your session has expired. Please sign in again.",
+      "network": "Couldn't reach the server. Check your internet connection."
+    },
+    "brand": {
+      "title": "Make sense of your investing history.",
+      "points": {
+        "fund": "Your portfolio is priced like a fund; adding or withdrawing money doesn't distort returns.",
+        "compare": "Compare against BIST 100, gold and the dollar for every period.",
+        "automatic": "Dividends, withholding, splits and rights issues are handled automatically."
+      }
+    },
+    "secureNote": "Your connection is encrypted; your password is only stored as an irreversible hash.",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
   },
   "analyze": {
-    "backToDashboard": "Back to Dashboard",
-    "title": "{{name}} — Analysis",
-    "subtitle": "Average cost method · prices exclude today",
+    "subtitle": "Average cost method · prices exclude today · dividends net of withholding tax · commission included",
     "chart": {
-      "title": "Performance Chart (Base 100)",
-      "range": "From {{start}} to {{end}}",
-      "noRange": "No date range available yet.",
+      "titles": {
+        "unit": "Unit Price",
+        "value": "Total Value",
+        "pl": "Profit / Loss"
+      },
+      "rangeLabel": "Period",
+      "modeLabel": "Chart",
+      "modes": {
+        "unit": "Unit price",
+        "value": "Value vs. invested",
+        "pl": "P/L (₺)"
+      },
+      "compareLabel": "Compare",
+      "comparisons": {
+        "benchmark": "BIST 100",
+        "gold": "Gold",
+        "usd": "Dollar"
+      },
+      "portfolioUnit": "Portfolio unit price",
+      "comparisonLines": {
+        "benchmark": "BIST 100 (same start)",
+        "gold": "Gold (same start)",
+        "usd": "Dollar (same start)"
+      },
+      "sinceRangeStart": "Since period start",
+      "hints": {
+        "unit": "Like a fund chart: the unit price moves with the stocks you held on each day. Green dot = period high, red dot = low; the shaded area is the largest drawdown. Dashed lines show the same money in BIST 100, gold and the dollar. BIST 100 is a price index (excludes dividends); gold is derived from the gold future and the dollar rate.",
+        "value": "Total value (holdings + cash in the safe) against the money you brought in from outside (dashed).",
+        "pl": "Cumulative profit/loss on each day: realized + unrealized + dividends."
+      },
       "noData": "No historical performance data available for this period.",
-      "seriesLabel": "Portfolio Index",
-      "plLabel": "P/L",
-      "dailyPlLabel": "Daily P/L",
-      "priceAxis": "Price",
-      "dateAxis": "Date"
+      "dailyReturnLabel": "Daily return",
+      "dailyShort": "daily",
+      "portfoliosLabel": "Portfolios",
+      "portfoliosHint": "Portfolio lines show each portfolio's own unit price from its first buy (or the range start), starting from the combined unit price that day. One ending above the combined line did better than the whole over that time."
     },
     "totalInvested": "Total Invested",
-    "portfolioValue": "Portfolio Value",
-    "inTheSafe": "In the Safe",
     "totalPl": "Total P/L",
-    "currentHoldings": "Current Holdings",
-    "closedPositions": "Closed Positions",
-    "noCurrentHoldings": "No stocks currently held.",
-    "noClosedPositions": "No closed positions yet.",
+    "dividendIncome": "Dividends (net)",
+    "dividendIncomeSub": "{{gross}} before withholding",
+    "dividends": "Dividends Received",
+    "dividendsHint": "Credited on the ex-date to shares held the day before, net of withholding tax, into the safe.",
+    "noDividends": "No dividends received yet.",
+    "warnings": {
+      "title": "Some market data could not be loaded. Results may be incomplete.",
+      "market_data_unavailable": "Market data for {{ticker}} could not be refreshed; the last stored data is shown.",
+      "rights_issue_review": "A rights issue for {{ticker}} needs review; enter or confirm its terms in the Rights Issues section of the Transactions page.",
+      "fund_prices_outdated": "Uploaded fund prices for {{ticker}} are missing or out of date; upload a fresh TEFAS Excel in the Fund Prices section of the Transactions page."
+    },
     "table": {
       "ticker": "Ticker",
       "qty": "Quantity",
@@ -107,22 +211,224 @@
       "unrealized": "Unrealized P/L",
       "realized": "Realized P/L",
       "total": "Total P/L",
-      "pct": "%"
+      "pct": "%",
+      "exDate": "Ex-Date",
+      "shares": "Shares",
+      "grossPerShare": "Gross / Share",
+      "withholding": "Withholding",
+      "gross": "Gross",
+      "net": "Net",
+      "sum": "Total"
+    },
+    "performance": {
+      "ranges": {
+        "1M": "1M",
+        "3M": "3M",
+        "6M": "6M",
+        "YTD": "YTD",
+        "1Y": "1Y",
+        "ALL": "All"
+      },
+      "return": "Return",
+      "returnHint": "Time-weighted return: performance of your holdings, not affected by when you added money.",
+      "vsBenchmark": "BIST 100: {{value}} ({{diff}} pts)",
+      "maxDrawdown": "Max Drawdown",
+      "drawdownHint": "Largest fall from a high point to a later low, measured on the time-weighted return.",
+      "drawdownSpan": "{{from}} → {{to}}",
+      "start": "start",
+      "recovered": "Recovered on {{date}}",
+      "notRecovered": "Not recovered yet · now {{value}} from peak",
+      "noDrawdown": "No fall in this period",
+      "portfolio": "Portfolio",
+      "benchmark": "BIST 100",
+      "totalPl": "Total P/L",
+      "totalValue": "Total value",
+      "invested": "Invested"
+    },
+    "refresh": "Refresh",
+    "loading": "Updating market data; the first open of the day can take a few seconds…",
+    "loadError": "Couldn't load the analysis.",
+    "empty": {
+      "title": "No trades to analyze yet",
+      "description": "Add your first buy to see the portfolio's fund-style chart, returns and per-stock profit/loss."
+    },
+    "fund": {
+      "overview": "Portfolio overview",
+      "unitPrice": "Unit price",
+      "asOf": "Close of {{date}}",
+      "sinceStart": "since start",
+      "unitPriceHint": "Your portfolio is priced like a mutual fund: it starts at 1.0000 and moves only with performance. Adding or withdrawing money doesn't move the unit price.",
+      "size": "Total value",
+      "holdingsPart": "Holdings {{value}}",
+      "cashPart": "Cash {{value}}",
+      "currentValue": "Current Total Value"
+    },
+    "returns": {
+      "title": "Returns",
+      "hint": "Return: unit price change over the period picked on the chart; adding or withdrawing money doesn't affect it. Same money: your P/L today had each amount you put in bought these instead of stocks, on the same days.",
+      "periods": {
+        "1M": "1 Month",
+        "3M": "3 Months",
+        "6M": "6 Months",
+        "YTD": "Year to date",
+        "1Y": "1 Year",
+        "ALL": "Since start"
+      },
+      "volatility": "Annual volatility",
+      "volatilityHint": "Annualized standard deviation of daily returns; the higher, the bumpier the ride.",
+      "bestDay": "Best day",
+      "worstDay": "Worst day",
+      "returnIn": "Return · {{period}}",
+      "sameMoney": "Same money P/L",
+      "sameMoneyHint": "From the start until today: each time money came into the portfolio, the same TL amount is bought at that day's close. The portfolio row is your actual total P/L. BIST 100 is a price index (no dividends)."
+    },
+    "positions": {
+      "title": "Profit / Loss by Stock",
+      "hint": "Unrealized: today's gain on shares still held. Realized: gains locked in by selling (incl. sold rights). For closed stocks, quantity is the shares sold and price shows average cost → average sale price. Commissions included.",
+      "filterLabel": "Stocks",
+      "filters": {
+        "all": "All ({{count}})",
+        "open": "Held ({{count}})",
+        "closed": "Closed ({{count}})"
+      },
+      "empty": "No stocks in this filter.",
+      "weight": "Weight",
+      "dividends": "Dividends",
+      "totalPct": "Return",
+      "closed": "Closed",
+      "closedOn": "Closed {{date}}",
+      "short": { "unrealized": "Unrealized", "realized": "Realized" },
+      "closedPricesHint": "Shares sold; average cost → average sale price (commission included, in the split basis of the day it closed)."
+    },
+    "allocation": {
+      "title": "Allocation",
+      "cash": "Cash in the safe",
+      "other": "Other ({{count}})"
+    },
+    "insights": {
+      "title": "Highlights",
+      "hint": "What the charts and tables say, from the start until today.",
+      "bestWorst": "Winners and losers",
+      "best": "Biggest winner",
+      "worst": "Biggest loser",
+      "noWinner": "No stock in profit yet.",
+      "fromPeak": "Distance from peak",
+      "atPeak": "At its peak",
+      "maxDrawdown": "Largest drawdown {{value}} ({{date}})",
+      "noDrawdown": "No drawdown so far.",
+      "concentration": "Concentration",
+      "topHoldings": "in the largest {{count}} of {{total}} holdings",
+      "noOpen": "No open holdings.",
+      "days": "Best and worst day",
+      "noDays": "Not enough days yet."
+    },
+    "daily": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "hint": "Unit price change at the {{date}} close vs. the previous trading day"
+    },
+    "unrealizedPl": "Unrealized P/L",
+    "unrealizedPlSub": "On holdings you still have",
+    "realizedPl": "Realized P/L",
+    "realizedPlSub": "From sales",
+    "plEquation": "Money invested + realized P/L + net dividends + unrealized P/L = current total value. Realized P/L + net dividends + unrealized P/L = total P/L.",
+    "commissionNote": "The {{commission}} paid in commission is counted in the costs."
+  },
+  "overview": {
+    "title": "Overview",
+    "subtitle": "All your portfolios as one fund: total size, profit/loss and return. Experimental portfolios are not included.",
+    "experimentalExcluded": "{{count}} experimental excluded",
+    "loadError": "Could not load the analysis of: {{names}}",
+    "allocation": "Portfolio Allocation",
+    "footnote": "The unit price and returns are computed from the portfolios' combined daily value, with the effect of new money removed.",
+    "empty": {
+      "title": "Nothing to summarize yet",
+      "description": "The Overview adds up your portfolios that have trades. Create a portfolio and add its first buy.",
+      "allExperimental": "All of your portfolios with trades are marked experimental. Unmark the ones you want in the Overview from My Portfolios."
+    },
+    "table": {
+      "title": "Profit / Loss by Portfolio",
+      "hint": "Each portfolio's size (cash included), share of the total, money put in and P/L split. Unit price return is performance without the effect of new money.",
+      "portfolio": "Portfolio",
+      "unitReturn": "Unit price return"
+    },
+    "insights": {
+      "noWinner": "No portfolio is in profit yet.",
+      "largest": "In the largest portfolio (of {{total}})",
+      "noOpen": "No portfolio holds any value."
+    }
+  },
+  "portfolioSettings": {
+    "title": "Portfolio settings",
+    "visibility": "Visibility",
+    "type": "Type",
+    "private": {
+      "label": "Private",
+      "description": "Only you can see it."
+    },
+    "public": {
+      "label": "Public",
+      "description": "Everyone sees it on Explore, as percentages only. Amounts and trades stay hidden."
+    },
+    "experimental": {
+      "label": "Experimental",
+      "description": "A trial or paper portfolio. It keeps its own analysis but is left out of the Overview."
+    },
+    "delete": {
+      "title": "Delete portfolio",
+      "description": "The portfolio and all its trades are deleted for good."
+    },
+    "short": "Settings"
+  },
+  "explore": {
+    "title": "Explore",
+    "subtitle": "Portfolios people chose to share. Best since-start return first.",
+    "amountsHidden": "Amounts are hidden; only percentages are shown.",
+    "amountsHiddenDetail": "Amounts and trades are hidden. The unit price starts at 1.0000 and shows performance without the effect of new money.",
+    "loadError": "Could not load portfolios.",
+    "notFound": "This portfolio was not found or is no longer public.",
+    "backToList": "Back to Explore",
+    "empty": {
+      "title": "No public portfolios yet",
+      "description": "Be the first: make one of your portfolios \"Public\" in its settings."
+    },
+    "anonymous": "Anonymous",
+    "sinceStart": "Since start",
+    "horizon": "Started {{start}} · {{duration}}",
+    "duration": {
+      "years_one": "{{count}} year",
+      "years_other": "{{count}} years",
+      "months_one": "{{count}} month",
+      "months_other": "{{count}} months",
+      "days_one": "{{count}} day",
+      "days_other": "{{count}} days"
+    },
+    "allocation": "Current Allocation",
+    "holdings_one": "{{count}} holding",
+    "holdings_other": "{{count}} holdings",
+    "returnsHint": "Unit price change over the period picked on the chart; adding or withdrawing money does not move it. Below: BIST 100, gold and the dollar over the same period.",
+    "openMine": "Your portfolio: full analysis",
+    "share": {
+      "label": "Share link",
+      "short": "Share",
+      "copied": "Link copied",
+      "failed": "Could not copy",
+      "text": "Take a look at how {{name}} has performed"
     }
   },
   "myPortfolios": {
     "title": "My Portfolios",
-    "subtitle": "Manage your investment portfolios",
+    "subtitle": "All your portfolios' performance at a glance. Open their analysis and transactions from here.",
     "createNew": "New Portfolio",
     "empty": {
       "title": "No portfolios yet",
-      "description": "Create your first portfolio to start tracking your investments."
+      "description": "Create your first portfolio, add your trades, and follow its performance here like a fund."
     },
     "card": {
-      "transactions": "{{count}} transactions",
+      "transactions_one": "{{count}} transaction",
+      "transactions_other": "{{count}} transactions",
       "noTransactions": "No transactions",
-      "market": "Market: {{market}}",
-      "created": "Created {{date}}"
+      "addFirst": "Add your first trade"
     },
     "create": {
       "title": "Create New Portfolio",
@@ -134,10 +440,18 @@
       "title": "Rename Portfolio",
       "nameLabel": "Portfolio Name",
       "namePlaceholder": "Enter portfolio name"
-    }
+    },
+    "noTrades": "No trades yet. Add your first buy to see the analysis.",
+    "sparklineLabel": "Unit price over the last 90 trading days",
+    "experimental": {
+      "title": "Experimental portfolios",
+      "hint": "Trials and paper portfolios. They keep their own analysis but are left out of the Overview."
+    },
+    "trendLabel": "Unit price since the start"
   },
   "portfolio": {
     "title": "Portfolio Details",
+    "notFound": "Portfolio not found.",
     "viewing": "Viewing portfolio: {{id}}",
     "back": "Back to Portfolios",
     "marketTag": "Market: {{market}}",
@@ -158,7 +472,13 @@
       "total": "Total",
       "date": "Date",
       "buy": "Buy",
-      "sell": "Sell"
+      "sell": "Sell",
+      "rights_sale": "Rights Sale",
+      "commission": "comm. {{amount}} ({{rate}})",
+      "adjustedLine": "After splits {{quantity}} × {{price}}",
+      "adjustedHint": "Today's equivalent after splits and bonus issues; calculations use it.",
+      "count_one": "{{count}} transaction",
+      "count_other": "{{count}} transactions"
     },
     "addTransactionModal": {
       "title": "Add Transaction",
@@ -168,22 +488,79 @@
       "operationLabel": "Operation",
       "quantityLabel": "Quantity",
       "quantityPlaceholder": "Number of shares",
+      "rightsQuantityLabel": "Number of Rights",
       "priceLabel": "Price per Share",
       "pricePlaceholder": "Price",
-      "dateLabel": "Transaction Date"
+      "commissionLabel": "Commission rate (%)",
+      "commissionHint": "What your broker charges for this trade; 2 basis points = 0.02.",
+      "commissionAmount": "Commission: ₺{{amount}}",
+      "commissionInvalid": "Enter a rate between 0 and {{max}}%.",
+      "rightsPriceLabel": "Sale Price per Right",
+      "dateLabel": "Transaction Date",
+      "fund": {
+        "tickerLabel": "Fund Code",
+        "tickerPlaceholder": "e.g. IPB, KPC, IDH",
+        "quantityLabel": "Units",
+        "quantityPlaceholder": "Number of units",
+        "priceLabel": "Unit Price"
+      }
     },
     "editTransactionModal": {
       "title": "Edit Transaction"
+    },
+    "deleteTransactionConfirm": {
+      "title": "Delete Transaction",
+      "message": "This transaction will be permanently deleted and the analysis will be recalculated without it. This cannot be undone.",
+      "confirm": "Delete Transaction"
     },
     "deleteConfirm": {
       "title": "Delete Portfolio",
       "message": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone and all transactions will be permanently deleted.",
       "confirm": "Delete Portfolio"
+    },
+    "tabs": {
+      "label": "Portfolio views",
+      "analysis": "Analysis",
+      "transactions": "Transactions"
     }
   },
   "profile": {
     "title": "Profile",
-    "placeholder": "Your profile settings will appear here..."
+    "subtitle": "Manage your account, password and preferences.",
+    "noName": "Unnamed user",
+    "memberSince": "Member since {{date}}",
+    "saved": "Saved",
+    "stats": {
+      "portfolios": "Portfolios",
+      "transactions": "Transactions"
+    },
+    "account": {
+      "title": "Account",
+      "description": "The name shown in the app.",
+      "emailHint": "The email address can't be changed."
+    },
+    "password": {
+      "title": "Password",
+      "description": "Set a new password.",
+      "new": "New password",
+      "confirm": "New password (again)",
+      "mismatch": "Passwords don't match.",
+      "submit": "Change password",
+      "changed": "Your password was changed"
+    },
+    "preferences": {
+      "title": "Preferences",
+      "description": "Display settings for this device.",
+      "languageHint": "Interface language",
+      "theme": "Theme",
+      "themeHint": "Light or dark appearance",
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "session": {
+      "title": "Session",
+      "description": "Sign out on this device."
+    }
   },
   "password": {
     "requirements": {
@@ -198,6 +575,66 @@
       "weak": "Weak",
       "medium": "Medium",
       "strong": "Strong"
+    }
+  },
+  "rightsIssues": {
+    "title": "Rights Issues",
+    "hint": "Yahoo doesn't report rights issues; it silently lowers earlier prices instead. For every rights issue listed here, past prices are restored to their real values. If you exercised your rights use \"Exercised\", if you sold them use \"Sold\"; if you did nothing, no transaction is needed.",
+    "add": "Add Rights Issue",
+    "empty": "No rights issues recorded for this portfolio's stocks.",
+    "detected": "Auto-detected",
+    "needsReview": "Review",
+    "terms": "{{ratio}}% rights · {{price}} per share",
+    "missingTerms": "Terms not entered",
+    "entitled": "{{shares}} shares held",
+    "rights_one": "{{rights}} right",
+    "rights_other": "{{rights}} rights",
+    "exercised": "Exercised",
+    "sold": "Sold",
+    "form": {
+      "title": "Add Rights Issue",
+      "editTitle": "Edit Rights Issue",
+      "hint": "Take the details from the capital increase announcement on KAP.",
+      "ticker": "Stock",
+      "exDate": "Rights exercise start date (ex-date)",
+      "ratio": "Rights ratio (%)",
+      "price": "Subscription price per share (₺)"
+    },
+    "errors": {
+      "ticker_not_in_portfolio": "This stock is not in the portfolio.",
+      "ex_date_in_future": "The date can't be in the future; enter it once the issue has started.",
+      "invalid_terms": "Invalid ratio or price.",
+      "not_held_on_ex_date": "The portfolio didn't hold this stock the day before this date.",
+      "not_found": "Record not found."
+    },
+    "deleteConfirm": {
+      "title": "Delete Rights Issue",
+      "message": "The {{date}} rights issue of {{ticker}} will be deleted. It affects every portfolio holding the stock; past prices go back to Yahoo's lowered values."
+    }
+  },
+  "fundPrices": {
+    "title": "Fund Prices",
+    "upload": "Upload Prices",
+    "hint": "Yahoo has no daily prices for funds. On TEFAS, open Fund Data, pick the fund and a date range, download the Excel and upload it here. Re-upload now and then to stay current; a new file is merged with the old one.",
+    "empty": "No funds yet. Add a buy first, then upload its prices.",
+    "range": "{{from}} – {{to}} · {{days}} days",
+    "missing": "No prices uploaded",
+    "form": {
+      "title": "Upload TEFAS Prices",
+      "hint": "TEFAS → Fund Data → pick the fund → Excel. Prices are shared by every portfolio holding the fund.",
+      "file": "Excel file",
+      "code": "Fund code",
+      "codeHint": "The file does not contain the fund code; it was filled from the file name, please check.",
+      "submit": "Upload"
+    },
+    "errors": {
+      "not_excel": "The file could not be read; choose the .xlsx downloaded from TEFAS.",
+      "no_price_table": "No Date / Price table found in the file.",
+      "no_prices": "The file has no prices.",
+      "bad_row": "The file has a row that could not be read.",
+      "invalid_fund_code": "The fund code must be 3 characters (e.g. IPB).",
+      "not_fund_portfolio": "Price upload is only for TEFAS portfolios.",
+      "file_too_large": "The file is too large; upload one fund's Excel."
     }
   }
 }
