@@ -103,6 +103,8 @@ export function AllocationChart({
                 ))}
               </Pie>
               <Tooltip
+                // Above the center label, which comes later in the markup.
+                wrapperStyle={{ zIndex: 10 }}
                 content={({ active, payload }) => {
                   const s = active ? (payload?.[0]?.payload as Slice | undefined) : undefined;
                   if (!s) return null;
