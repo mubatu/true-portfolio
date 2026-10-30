@@ -82,7 +82,7 @@ export function PerformanceSection({
   }, [slice, mode]);
 
   const isPct = mode === 'plPct' || mode === 'performance';
-  const formatAxis = (v: number) => (isPct ? `${v.toFixed(0)}%` : fmt.compactMoney(v));
+  const formatAxis = (v: number) => (isPct ? fmt.axisPct(v) : fmt.compactMoney(v));
   const formatValue = (v: number) => (isPct ? fmt.pct(v) : fmt.money(v));
 
   const { maxRow, minRow } = useMemo(() => {
@@ -136,7 +136,7 @@ export function PerformanceSection({
                 stats.benchmarkReturnPct != null &&
                   t('analyze.performance.vsBenchmark', {
                     value: fmt.pct(stats.benchmarkReturnPct),
-                    diff: fmt.pct(stats.returnPct - stats.benchmarkReturnPct),
+                    diff: fmt.points(stats.returnPct - stats.benchmarkReturnPct),
                   }),
               ]}
               hint={t('analyze.performance.returnHint')}

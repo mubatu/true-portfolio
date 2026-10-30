@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Briefcase, Loader2, Trash2, ChevronRight, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/Modal';
-import { MARKETS, type Market } from '@/config';
+import { MARKETS, getDateLocale, type Market } from '@/config';
 import {
   getPortfolios,
   createPortfolio,
@@ -15,7 +15,7 @@ import {
 } from '@/services/portfolioService';
 
 export function MyPortfolios() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -121,7 +121,7 @@ export function MyPortfolios() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return new Date(dateString).toLocaleDateString(getDateLocale(i18n.language), {
       month: 'short',
       day: 'numeric',
       year: 'numeric',

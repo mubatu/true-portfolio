@@ -1,0 +1,271 @@
+{
+  "common": {
+    "appName": "PortfolioTracker",
+    "signIn": "Giriş Yap",
+    "signOut": "Çıkış Yap",
+    "dashboard": "Panel",
+    "myPortfolios": "Portföylerim",
+    "getStarted": "Hemen Başla",
+    "learnMore": "Daha Fazla Bilgi",
+    "cancel": "İptal",
+    "create": "Oluştur",
+    "save": "Kaydet",
+    "delete": "Sil",
+    "edit": "Düzenle",
+    "loading": "Yükleniyor...",
+    "error": "Bir hata oluştu",
+    "noData": "Veri yok",
+    "toggleTheme": "Temayı değiştir",
+    "language": "Dil"
+  },
+  "landing": {
+    "hero": {
+      "title": "Yatırımlarını",
+      "titleHighlight": "Güvenle Takip Et",
+      "subtitle": "Hisselerini izlemene, performansını analiz etmene ve daha bilinçli yatırım kararları almana yardımcı olan modern bir portföy takip uygulaması."
+    },
+    "features": {
+      "analytics": {
+        "title": "Detaylı Analiz",
+        "description": "Portföyünün geçmiş performansını, zirve ve düşüşlerini ay ay takip et."
+      },
+      "security": {
+        "title": "Güvenli ve Gizli",
+        "description": "Finansal verilerin korunur ve hiçbir zaman üçüncü taraflarla paylaşılmaz."
+      },
+      "speed": {
+        "title": "Hızlı ve Sade",
+        "description": "Hız ve kolay kullanım için tasarlanmış, sade ve modern bir arayüz."
+      }
+    },
+    "footer": {
+      "copyright": "© 2026 PortfolioTracker. Tüm hakları saklıdır."
+    }
+  },
+  "auth": {
+    "welcome": "Hoş geldin",
+    "welcomeBack": "Tekrar hoş geldin",
+    "enterEmail": "Devam etmek için e-posta adresini gir",
+    "loginSubtitle": "Bu e-posta adresiyle kayıtlı bir hesap var. Lütfen şifreni gir.",
+    "registerSubtitle": "Bu e-posta adresiyle kayıtlı bir hesap bulunamadı. Hesap oluşturmak için aşağıdaki formu doldur.",
+    "email": "E-posta",
+    "emailPlaceholder": "ornek@eposta.com",
+    "password": "Şifre",
+    "passwordPlaceholder": "Şifreni gir",
+    "createPasswordPlaceholder": "Bir şifre oluştur",
+    "name": "Ad Soyad",
+    "namePlaceholder": "Adın ve soyadın",
+    "continue": "Devam Et",
+    "back": "Geri",
+    "signIn": "Giriş Yap",
+    "createAccount": "Hesap Oluştur",
+    "errors": {
+      "emailCheck": "E-posta doğrulanamadı. Lütfen tekrar dene.",
+      "invalidCredentials": "E-posta veya şifre hatalı.",
+      "registrationFailed": "Kayıt başarısız oldu. Lütfen tekrar dene."
+    }
+  },
+  "dashboard": {
+    "title": "Panel",
+    "subtitle": "Performansını analiz etmek için bir portföy seç",
+    "selectPortfolio": "Portföy Seç",
+    "dropdownPlaceholder": "Bir portföy seç…",
+    "analyze": "Analiz Et",
+    "txns": "işlem",
+    "noPortfolios": "Henüz bir portföyün yok. Başlamak için bir tane oluştur.",
+    "goToPortfolios": "Portföylerime Git"
+  },
+  "analyze": {
+    "backToDashboard": "Panele Dön",
+    "title": "{{name}} — Analiz",
+    "subtitle": "Ortalama maliyet yöntemi · fiyatlar bugünü içermez · temettüler stopaj düşülmüş net tutardır",
+    "chart": {
+      "noData": "Bu dönem için geçmiş performans verisi yok.",
+      "dailyReturnLabel": "Günlük getiri"
+    },
+    "totalInvested": "Yatırılan Para",
+    "portfolioValue": "Hisse Değeri",
+    "inTheSafe": "Kasadaki Nakit",
+    "totalPl": "Toplam K/Z",
+    "dividendIncome": "Temettü Geliri",
+    "dividendIncomeSub": "Brüt {{gross}}",
+    "currentHoldings": "Eldeki Hisseler",
+    "closedPositions": "Gerçekleşen Satışlar",
+    "noCurrentHoldings": "Şu anda elde hisse yok.",
+    "noClosedPositions": "Henüz satış yapılmamış.",
+    "dividends": "Alınan Temettüler",
+    "dividendsHint": "Hak kullanım tarihinde, bir önceki gün elde tutulan hisseler için stopaj düşülmüş net tutar olarak kasaya eklenir.",
+    "noDividends": "Henüz temettü alınmamış.",
+    "warnings": {
+      "title": "Bazı piyasa verileri yüklenemedi. Sonuçlar eksik olabilir.",
+      "market_data_unavailable": "{{ticker}} için piyasa verisi güncellenemedi; kayıtlı son veriler gösteriliyor."
+    },
+    "table": {
+      "ticker": "Hisse",
+      "qty": "Adet",
+      "avgCost": "Ort. Maliyet",
+      "price": "Fiyat",
+      "value": "Değer",
+      "invested": "Maliyet",
+      "returned": "Satış Tutarı",
+      "unrealized": "Gerçekleşmemiş K/Z",
+      "realized": "Gerçekleşen K/Z",
+      "total": "Toplam K/Z",
+      "pct": "%",
+      "exDate": "Hak Kullanım",
+      "shares": "Adet",
+      "grossPerShare": "Brüt / Hisse",
+      "withholding": "Stopaj",
+      "gross": "Brüt",
+      "net": "Net",
+      "sum": "Toplam"
+    },
+    "performance": {
+      "title": "Performans",
+      "ranges": {
+        "1M": "1A",
+        "3M": "3A",
+        "6M": "6A",
+        "YTD": "YB",
+        "1Y": "1Y",
+        "ALL": "Tümü"
+      },
+      "modes": {
+        "pl": "K/Z (₺)",
+        "plPct": "K/Z (%)",
+        "value": "Değer ve Yatırılan",
+        "performance": "Getiri ve BIST 100"
+      },
+      "hints": {
+        "pl": "Her gün itibarıyla birikimli kâr/zarar: gerçekleşen + gerçekleşmemiş + temettü. Yeşil nokta dönemin en yüksek, kırmızı nokta en düşük değeri.",
+        "plPct": "Birikimli kâr/zararın, o güne kadar yatırdığın paraya oranı. Fiyatlar değişmese bile para eklediğinde bu oran değişir.",
+        "value": "Toplam değer (hisseler + kasadaki nakit) ile dışarıdan yatırdığın para (kesikli çizgi).",
+        "performance": "Zaman ağırlıklı getiri: para ekleme etkisinden arındırılmış performans; dönem başında %0'dan başlar. BIST 100 fiyat endeksidir (temettü içermez). Gölgeli alan en büyük düşüştür."
+      },
+      "return": "Getiri",
+      "returnHint": "Zaman ağırlıklı getiri: ne zaman para eklediğinden etkilenmeyen, yatırımlarının kendi performansı.",
+      "vsBenchmark": "BIST 100: {{value}} ({{diff}} puan)",
+      "plChange": "K/Z Değişimi",
+      "plNow": "Dönem sonu K/Z: {{value}} ({{pct}})",
+      "peakPl": "Zirve Kâr",
+      "onDate": "{{date}} ({{pct}})",
+      "belowPeak": "Şu an zirvenin {{value}} altında",
+      "atPeak": "Şu an zirvede",
+      "maxDrawdown": "En Büyük Düşüş",
+      "drawdownHint": "Bir zirveden sonraki en dip noktaya kadar yaşanan en büyük düşüş; zaman ağırlıklı getiri üzerinden ölçülür.",
+      "drawdownSpan": "{{from}} → {{to}}",
+      "start": "başlangıç",
+      "recovered": "{{date}} tarihinde toparlandı",
+      "notRecovered": "Henüz toparlanmadı · zirveden {{value}}",
+      "noDrawdown": "Bu dönemde düşüş yok",
+      "portfolio": "Portföy",
+      "benchmark": "BIST 100",
+      "totalPl": "Toplam K/Z",
+      "totalValue": "Toplam değer",
+      "invested": "Yatırılan"
+    },
+    "monthly": {
+      "title": "Aylık Döküm",
+      "hint": "Değerler her ayın son işlem günü itibarıyladır. Getiri zaman ağırlıklıdır (eklenen parayı yok sayar); K/Z değişimi TL cinsindendir.",
+      "month": "Ay",
+      "value": "Toplam Değer",
+      "invested": "Yatırılan",
+      "totalPl": "Toplam K/Z",
+      "plChange": "K/Z Değişimi",
+      "return": "Getiri",
+      "benchmark": "BIST 100",
+      "showAll": "{{count}} ayın tümünü göster",
+      "showLess": "Daha az göster"
+    }
+  },
+  "myPortfolios": {
+    "title": "Portföylerim",
+    "subtitle": "Yatırım portföylerini yönet",
+    "createNew": "Yeni Portföy",
+    "empty": {
+      "title": "Henüz portföy yok",
+      "description": "Yatırımlarını takip etmeye başlamak için ilk portföyünü oluştur."
+    },
+    "card": {
+      "transactions": "{{count}} işlem",
+      "noTransactions": "İşlem yok",
+      "market": "Piyasa: {{market}}",
+      "created": "Oluşturulma: {{date}}"
+    },
+    "create": {
+      "title": "Yeni Portföy Oluştur",
+      "namePlaceholder": "örn. Uzun Vade, Temettü Hisseleri",
+      "nameLabel": "Portföy Adı",
+      "marketLabel": "Piyasa"
+    },
+    "edit": {
+      "title": "Portföyü Yeniden Adlandır",
+      "nameLabel": "Portföy Adı",
+      "namePlaceholder": "Portföy adını gir"
+    }
+  },
+  "portfolio": {
+    "title": "Portföy Detayı",
+    "viewing": "Görüntülenen portföy: {{id}}",
+    "back": "Portföylerime Dön",
+    "marketTag": "Piyasa: {{market}}",
+    "addTransaction": "İşlem Ekle",
+    "transactions": {
+      "title": "İşlemler",
+      "empty": {
+        "title": "Henüz işlem yok",
+        "description": "Bu portföyü takip etmeye başlamak için ilk işlemini ekle."
+      },
+      "ticker": "Hisse",
+      "operation": "İşlem",
+      "market": "Piyasa",
+      "quantity": "Adet",
+      "adjustedQuantity": "Düzeltilmiş Adet",
+      "price": "Fiyat",
+      "adjustedPrice": "Düzeltilmiş Fiyat",
+      "total": "Tutar",
+      "date": "Tarih",
+      "buy": "Alış",
+      "sell": "Satış"
+    },
+    "addTransactionModal": {
+      "title": "İşlem Ekle",
+      "marketLabel": "Piyasa",
+      "tickerLabel": "Hisse Kodu",
+      "tickerPlaceholder": "örn. THYAO, SISE, AKBNK",
+      "operationLabel": "İşlem",
+      "quantityLabel": "Adet",
+      "quantityPlaceholder": "Hisse adedi",
+      "priceLabel": "Hisse Başına Fiyat",
+      "pricePlaceholder": "Fiyat",
+      "dateLabel": "İşlem Tarihi"
+    },
+    "editTransactionModal": {
+      "title": "İşlemi Düzenle"
+    },
+    "deleteConfirm": {
+      "title": "Portföyü Sil",
+      "message": "\"{{name}}\" portföyünü silmek istediğine emin misin? Bu işlem geri alınamaz ve tüm işlemler kalıcı olarak silinir.",
+      "confirm": "Portföyü Sil"
+    }
+  },
+  "profile": {
+    "title": "Profil",
+    "placeholder": "Profil ayarların burada görünecek..."
+  },
+  "password": {
+    "requirements": {
+      "minLength": "En az 8 karakter",
+      "uppercase": "En az bir büyük harf",
+      "lowercase": "En az bir küçük harf",
+      "number": "En az bir rakam",
+      "special": "En az bir özel karakter (!@#$%^&*)"
+    },
+    "strength": {
+      "label": "Şifre gücü",
+      "weak": "Zayıf",
+      "medium": "Orta",
+      "strong": "Güçlü"
+    }
+  }
+}

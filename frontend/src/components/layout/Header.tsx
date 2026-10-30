@@ -1,13 +1,17 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { TrendingUp, Moon, Sun, LogOut, LayoutDashboard, User, ChevronDown, Briefcase } from 'lucide-react';
+import { TrendingUp, Moon, Sun, LogOut, LayoutDashboard, User, ChevronDown, Briefcase, Languages } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { LOCALES } from '@/config';
 import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/hooks/useAuth';
 import { useState, useRef, useEffect } from 'react';
 
 export function Header() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const currentLanguage = i18n.resolvedLanguage ?? 'tr';
+  const nextLanguage =
+    LOCALES[(LOCALES.findIndex((l) => l.code === currentLanguage) + 1) % LOCALES.length];
   const { theme, toggleTheme } = useTheme();
   const { isAuthenticated, signOut, user } = useAuth();
   const navigate = useNavigate();
@@ -93,13 +97,26 @@ export function Header() {
         
         {/* Right side actions */}
         <div className="flex items-center gap-3">
+          {/* Language toggle (TR ⇄ EN) */}
+          <Button
+            variant="ghost"
+            size="default"
+            className="h-11 gap-1.5 px-3"
+            onClick={() => i18n.changeLanguage(nextLanguage.code)}
+            aria-label={`${t('common.language')}: ${nextLanguage.label}`}
+            title={nextLanguage.label}
+          >
+            <Languages className="h-5 w-5" />
+            <span className="text-sm font-medium uppercase">{currentLanguage}</span>
+          </Button>
+
           {/* Theme toggle */}
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="icon"
             className="h-11 w-11"
             onClick={toggleTheme}
-            aria-label="Toggle theme"
+            aria-label={t('common.toggleTheme')}
           >
             {theme === 'dark' ? (
               <Sun className="h-5 w-5" />

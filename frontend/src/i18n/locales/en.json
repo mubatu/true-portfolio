@@ -14,7 +14,9 @@
     "edit": "Edit",
     "loading": "Loading...",
     "error": "An error occurred",
-    "noData": "No data available"
+    "noData": "No data available",
+    "toggleTheme": "Toggle theme",
+    "language": "Language"
   },
   "landing": {
     "hero": {

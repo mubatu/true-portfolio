@@ -37,6 +37,21 @@ export function useFormatters(currencyCode: string) {
       style: 'percent',
       maximumFractionDigits: 2,
     });
+    const signedPct = new Intl.NumberFormat(numberLocale, {
+      style: 'percent',
+      signDisplay: 'exceptZero',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    const signedPoints = new Intl.NumberFormat(numberLocale, {
+      signDisplay: 'exceptZero',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    const axisPct = new Intl.NumberFormat(numberLocale, {
+      style: 'percent',
+      maximumFractionDigits: 0,
+    });
     const fullDate = new Intl.DateTimeFormat(dateLocale, {
       day: 'numeric',
       month: 'short',
@@ -55,8 +70,12 @@ export function useFormatters(currencyCode: string) {
       money: (v: number) => currency.format(v),
       compactMoney: (v: number) => compactCurrency.format(v),
       number: (v: number) => number.format(v),
-      /** Signed percent with two decimals, e.g. +12.34% */
-      pct: (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`,
+      /** Signed percent from a percent number, e.g. 12.34 → +12.34% / +%12,34 */
+      pct: (v: number) => signedPct.format(v / 100),
+      /** Difference of two percentages, in points, e.g. 48.54 → +48.54 */
+      points: (v: number) => signedPoints.format(v),
+      /** Whole percent for chart axes, e.g. 30 → 30% / %30 */
+      axisPct: (v: number) => axisPct.format(v / 100),
       /** Fraction as percent, e.g. 0.15 → 15% */
       rate: (v: number) => rate.format(v),
       date: (iso: string) => fullDate.format(parseIsoDate(iso)),
