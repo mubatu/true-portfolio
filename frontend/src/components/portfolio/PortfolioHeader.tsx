@@ -1,22 +1,27 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, LineChart, ListOrdered } from 'lucide-react';
+import { ChevronLeft, LineChart, ListOrdered, Settings2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import type { Portfolio } from '@/services/portfolioService';
+import { PortfolioSettingsDialog } from './PortfolioDialogs';
+import { PortfolioBadges } from './PortfolioFlags';
 
 /**
- * Shared header of a portfolio's pages: back link, name and market on the
- * left; the Analysis / Transactions switch and page-specific actions on
+ * Shared header of a portfolio's pages: back link, name, market and its
+ * labels (public / private, experimental) on the left; the Analysis /
+ * Transactions switch, page-specific actions and the settings button on
  * the right (below the title on small screens).
  */
 export function PortfolioHeader({
   portfolio,
   actions,
 }: {
-  portfolio: Pick<Portfolio, 'name' | 'market' | 'slug'> | null | undefined;
+  portfolio: Portfolio | null | undefined;
   actions?: ReactNode;
 }) {
   const { t } = useTranslation();
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const base = portfolio ? `/portfolio/${portfolio.slug}` : '';
 
   const tabClass = ({ isActive }: { isActive: boolean }) =>
@@ -35,13 +40,18 @@ export function PortfolioHeader({
       </Link>
 
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 min-w-0">
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight truncate">
             {portfolio?.name ?? <span className="inline-block h-8 w-48 rounded-md bg-muted animate-pulse" />}
           </h1>
           {portfolio && (
             <span className="shrink-0 rounded-md border bg-card px-2 py-0.5 text-xs font-semibold text-muted-foreground">
               {portfolio.market}
+            </span>
+          )}
+          {portfolio && (
+            <span className="flex items-center gap-1.5">
+              <PortfolioBadges portfolio={portfolio} />
             </span>
           )}
         </div>
@@ -62,9 +72,22 @@ export function PortfolioHeader({
               </NavLink>
             </nav>
             {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}
+            <Button
+              variant="outline"
+              size="icon"
+              className="shrink-0"
+              onClick={() => setSettingsOpen(true)}
+              aria-label={t('portfolioSettings.title')}
+              title={t('portfolioSettings.title')}
+            >
+              <Settings2 className="h-4 w-4" />
+            </Button>
           </div>
         )}
       </div>
+      {settingsOpen && portfolio && (
+        <PortfolioSettingsDialog portfolio={portfolio} onClose={() => setSettingsOpen(false)} />
+      )}
     </header>
   );
 }

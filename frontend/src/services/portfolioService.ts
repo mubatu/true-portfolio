@@ -10,8 +10,10 @@ export interface Portfolio {
   market: Market;
   slug: string;
   created_at: string;
-  /** Trial portfolio: left out of the Overview. Absent before its migration. */
+  /** Trial portfolio: left out of the Overview. */
   is_experimental?: boolean;
+  /** Shown on Explore to everyone, as percentages only. */
+  is_public?: boolean;
   transaction_count?: number;
 }
 
@@ -36,12 +38,17 @@ export interface Transaction {
 /** Default broker commission for new trades: on binde 2 (0.02%). */
 export const DEFAULT_COMMISSION_RATE = 0.0002;
 
-export interface CreatePortfolioInput {
+export interface PortfolioSettings {
+  is_public: boolean;
+  is_experimental: boolean;
+}
+
+export interface CreatePortfolioInput extends PortfolioSettings {
   name: string;
   market: Market;
 }
 
-export interface UpdatePortfolioInput {
+export interface UpdatePortfolioInput extends PortfolioSettings {
   id: number;
   name: string;
 }
@@ -156,6 +163,8 @@ export async function createPortfolio(input: CreatePortfolioInput): Promise<Port
     .insert({
       name: input.name,
       market: input.market,
+      is_public: input.is_public,
+      is_experimental: input.is_experimental,
       user_id: user.id,
     })
     .select()
@@ -197,30 +206,10 @@ export async function updatePortfolio(input: UpdatePortfolioInput): Promise<Port
     .from('portfolios')
     .update({
       name: input.name,
+      is_public: input.is_public,
+      is_experimental: input.is_experimental,
     })
     .eq('id', input.id)
-    .eq('user_id', user.id)
-    .select()
-    .single();
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return data;
-}
-
-export async function setPortfolioExperimental(id: number, isExperimental: boolean): Promise<Portfolio> {
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    throw new Error('User not authenticated');
-  }
-
-  const { data, error } = await supabase
-    .from('portfolios')
-    .update({ is_experimental: isExperimental })
-    .eq('id', id)
     .eq('user_id', user.id)
     .select()
     .single();

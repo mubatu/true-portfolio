@@ -5,12 +5,14 @@ import type { User } from '@supabase/supabase-js';
 import { Header } from '@/components/layout/Header';
 import { PageLoader } from '@/components/layout/PageLoader';
 import { AuthContext, type AuthContextType } from '@/hooks/authContext';
-import { MOCK_ANALYSES, MOCK_PORTFOLIOS, MOCK_TRANSACTIONS } from './mockData';
+import { MOCK_ANALYSES, MOCK_PORTFOLIOS, MOCK_PUBLIC, MOCK_PUBLIC_LIST, MOCK_TRANSACTIONS } from './mockData';
 
 const Overview = lazy(() => import('@/pages/private/Overview').then((m) => ({ default: m.Overview })));
 const MyPortfolios = lazy(() => import('@/pages/private/MyPortfolios').then((m) => ({ default: m.MyPortfolios })));
 const PortfolioDetail = lazy(() => import('@/pages/private/PortfolioDetail').then((m) => ({ default: m.PortfolioDetail })));
 const PortfolioAnalyze = lazy(() => import('@/pages/private/PortfolioAnalyze').then((m) => ({ default: m.PortfolioAnalyze })));
+const Explore = lazy(() => import('@/pages/public/Explore').then((m) => ({ default: m.Explore })));
+const ExplorePortfolio = lazy(() => import('@/pages/public/ExplorePortfolio').then((m) => ({ default: m.ExplorePortfolio })));
 const Profile = lazy(() => import('@/pages/private/Profile').then((m) => ({ default: m.Profile })));
 
 /** Query cache pre-filled with synthetic data; nothing is ever fetched. */
@@ -19,6 +21,8 @@ function seededClient() {
     defaultOptions: { queries: { staleTime: Infinity, retry: false, refetchOnMount: false, refetchOnWindowFocus: false } },
   });
   client.setQueryData(['portfolios'], MOCK_PORTFOLIOS);
+  client.setQueryData(['explore'], MOCK_PUBLIC_LIST);
+  for (const p of MOCK_PUBLIC) client.setQueryData(['explore', p.slug], p);
   for (const p of MOCK_PORTFOLIOS) {
     client.setQueryData(['portfolio', p.slug], p);
     client.setQueryData(['transactions', p.slug], MOCK_TRANSACTIONS[p.slug] ?? []);
@@ -60,6 +64,8 @@ export default function DevPreview() {
                 <Route path="my-portfolios" element={<MyPortfolios />} />
                 <Route path="portfolio/:slug" element={<PortfolioDetail />} />
                 <Route path="portfolio/:slug/analyze" element={<PortfolioAnalyze />} />
+                <Route path="explore" element={<Explore />} />
+                <Route path="explore/:slug" element={<ExplorePortfolio />} />
                 <Route path="profile" element={<Profile />} />
               </Routes>
             </Suspense>

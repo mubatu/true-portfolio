@@ -124,3 +124,50 @@ export const uploadFundPrices = async (
   });
   return response.data;
 };
+
+// Explore: public portfolios, open to everyone. The backend sends
+// percentages only (app/services/explore.py), never amounts.
+export interface PublicOwner {
+  /** "Batuhan B."; null when the owner has no name. */
+  display_name: string | null;
+  initials: string | null;
+}
+
+export interface PublicPortfolioSummary {
+  slug: string;
+  name: string;
+  market: string;
+  is_experimental: boolean;
+  owner: PublicOwner;
+  start_date: string | null;
+  end_date: string | null;
+  /** Unit price return since the start, %. */
+  return_pct: number | null;
+  return_1m_pct: number | null;
+  return_1y_pct: number | null;
+  /** Last 90 days of cumulative time-weighted return, %. */
+  sparkline: number[];
+}
+
+export interface PublicPoint {
+  date: string;
+  twr_pct: number;
+  benchmark_close: number | null;
+  usd_close: number | null;
+  gold_close: number | null;
+}
+
+export interface PublicPortfolioDetail extends Omit<PublicPortfolioSummary, 'sparkline'> {
+  points: PublicPoint[];
+  allocation: { positions: { ticker: string; weight_pct: number }[]; cash_pct: number };
+}
+
+export const getPublicPortfolios = async (): Promise<PublicPortfolioSummary[]> => {
+  const response = await apiClient.get<PublicPortfolioSummary[]>('/explore/portfolios');
+  return response.data;
+};
+
+export const getPublicPortfolio = async (slug: string): Promise<PublicPortfolioDetail> => {
+  const response = await apiClient.get<PublicPortfolioDetail>(`/explore/portfolios/${encodeURIComponent(slug)}`);
+  return response.data;
+};

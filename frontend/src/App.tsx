@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, ThemeProvider } from '@/components/providers';
 import { PageLoader, ProtectedLayout } from '@/components/layout';
+import { PublicLayout } from '@/components/layout/PublicLayout';
 import '@/i18n';
 import './index.css';
 
@@ -17,6 +18,10 @@ const PortfolioDetail = lazy(() =>
 );
 const PortfolioAnalyze = lazy(() =>
   import('@/pages/private/PortfolioAnalyze').then((m) => ({ default: m.PortfolioAnalyze }))
+);
+const Explore = lazy(() => import('@/pages/public/Explore').then((m) => ({ default: m.Explore })));
+const ExplorePortfolio = lazy(() =>
+  import('@/pages/public/ExplorePortfolio').then((m) => ({ default: m.ExplorePortfolio }))
 );
 const Profile = lazy(() => import('@/pages/private/Profile').then((m) => ({ default: m.Profile })));
 // Dev-only UI preview with synthetic data; compiled out of production builds.
@@ -47,6 +52,12 @@ function App() {
                 <Route path="/login" element={<Navigate to="/auth" replace />} />
                 <Route path="/register" element={<Navigate to="/auth" replace />} />
                 <Route path="/dashboard" element={<Navigate to="/my-portfolios" replace />} />
+
+                {/* Open to everyone, signed in or not */}
+                <Route element={<PublicLayout />}>
+                  <Route path="/explore" element={<Explore />} />
+                  <Route path="/explore/:slug" element={<ExplorePortfolio />} />
+                </Route>
 
                 {/* Private Routes (shared header, lazy pages) */}
                 <Route element={<ProtectedLayout />}>

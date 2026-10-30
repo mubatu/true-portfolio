@@ -1,18 +1,20 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowRight, FlaskConical, ListOrdered, Pencil, Trash2 } from 'lucide-react';
+import { ArrowRight, ListOrdered, Settings2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DailyChange } from '@/components/analysis/DailyChange';
 import { plColor, type Formatters } from '@/components/analysis/format';
 import { unitPrice } from '@/components/analysis/performance';
 import type { AnalysisResponse } from '@/components/analysis/types';
 import type { Portfolio } from '@/services/portfolioService';
+import { PortfolioBadges } from './PortfolioFlags';
 import { Sparkline } from './Sparkline';
 
 /**
  * One portfolio at a glance: unit-price sparkline, value, P/L and daily
  * change, with links to its analysis and transactions and its own actions
- * (rename, mark experimental, delete).
+ * (settings: name, visibility, experimental; delete). Labels show whether
+ * it is public and whether it is experimental.
  */
 export function PortfolioCard({
   portfolio,
@@ -20,9 +22,8 @@ export function PortfolioCard({
   loading,
   failed,
   onRetry,
-  onRename,
+  onSettings,
   onDelete,
-  onToggleExperimental,
   fmt,
 }: {
   portfolio: Portfolio;
@@ -30,9 +31,8 @@ export function PortfolioCard({
   loading: boolean;
   failed: boolean;
   onRetry: () => void;
-  onRename: () => void;
+  onSettings: () => void;
   onDelete: () => void;
-  onToggleExperimental: () => void;
   fmt: Formatters;
 }) {
   const { t } = useTranslation();
@@ -41,7 +41,6 @@ export function PortfolioCard({
   const points = analysis?.performance_series.points ?? [];
   const recent = points.slice(-90).map(unitPrice);
   const experimental = !!portfolio.is_experimental;
-  const experimentalLabel = t(experimental ? 'myPortfolios.experimental.unmark' : 'myPortfolios.experimental.mark');
 
   return (
     <article
@@ -65,12 +64,7 @@ export function PortfolioCard({
                 ? t('myPortfolios.card.transactions', { count: portfolio.transaction_count ?? 0 })
                 : t('myPortfolios.card.noTransactions')}
             </span>
-            {experimental && (
-              <span className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-px font-medium text-foreground/80">
-                <FlaskConical className="h-3 w-3" aria-hidden="true" />
-                {t('myPortfolios.experimental.badge')}
-              </span>
-            )}
+            <PortfolioBadges portfolio={portfolio} />
           </p>
         </div>
 
@@ -80,22 +74,11 @@ export function PortfolioCard({
             variant="ghost"
             size="icon"
             className="h-8 w-8 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity"
-            aria-label={t('myPortfolios.edit.title')}
-            title={t('myPortfolios.edit.title')}
-            onClick={onRename}
+            aria-label={t('portfolioSettings.title')}
+            title={t('portfolioSettings.title')}
+            onClick={onSettings}
           >
-            <Pencil className="h-4 w-4 text-muted-foreground" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity"
-            aria-label={experimentalLabel}
-            aria-pressed={experimental}
-            title={experimentalLabel}
-            onClick={onToggleExperimental}
-          >
-            <FlaskConical className={`h-4 w-4 ${experimental ? 'text-primary' : 'text-muted-foreground'}`} />
+            <Settings2 className="h-4 w-4 text-muted-foreground" />
           </Button>
           <Button
             variant="ghost"

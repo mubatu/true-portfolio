@@ -22,13 +22,18 @@ interface Slice {
   color: string;
 }
 
-/** Where the money is now: open positions by market value, plus cash. */
+/**
+ * Where the money is now: open positions by market value, plus cash.
+ * ``hideAmounts`` (Explore): values are already percentages; only shares
+ * are shown, with the holding count in the middle.
+ */
 export function AllocationChart({
   positions,
   cash,
   fmt,
   displayTicker,
   title,
+  hideAmounts = false,
 }: {
   positions: Position[];
   cash: number;
@@ -36,6 +41,7 @@ export function AllocationChart({
   displayTicker: (ticker: string) => string;
   /** Defaults to the per-stock "Allocation". */
   title?: string;
+  hideAmounts?: boolean;
 }) {
   const { t } = useTranslation();
   const { theme } = useTheme();
@@ -110,7 +116,7 @@ export function AllocationChart({
                     >
                       <p className="font-medium">{s.label}</p>
                       <p className="tabular-nums" style={{ color: 'hsl(var(--muted-foreground))' }}>
-                        {fmt.money(s.value)} · {fmt.share((s.value / total) * 100)}
+                        {hideAmounts ? fmt.share((s.value / total) * 100) : `${fmt.money(s.value)} · ${fmt.share((s.value / total) * 100)}`}
                       </p>
                     </div>
                   );
@@ -119,10 +125,18 @@ export function AllocationChart({
             </PieChart>
           </ResponsiveContainer>
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>
-              {t('analyze.fund.size')}
-            </span>
-            <span className="text-sm font-semibold tabular-nums">{fmt.compactMoney(total)}</span>
+            {hideAmounts ? (
+              <span className="text-sm font-semibold tabular-nums text-center px-2">
+                {t('explore.holdings', { count: positions.filter((p) => p.quantity > 0).length })}
+              </span>
+            ) : (
+              <>
+                <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                  {t('analyze.fund.size')}
+                </span>
+                <span className="text-sm font-semibold tabular-nums">{fmt.compactMoney(total)}</span>
+              </>
+            )}
           </div>
         </div>
 

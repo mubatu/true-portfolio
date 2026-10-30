@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import {
   ArrowRight,
   CheckCircle2,
+  Compass,
   Coins,
   Landmark,
   Layers,
@@ -80,8 +81,14 @@ export function LandingPage() {
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
+                <Link to="/explore">
+                  <Button size="lg" variant="outline" className="gap-2 rounded-full px-6 h-11">
+                    <Compass className="h-4 w-4" />
+                    {t('landing.hero.explore')}
+                  </Button>
+                </Link>
                 <a href="#how-it-works">
-                  <Button size="lg" variant="outline" className="rounded-full px-6 h-11">
+                  <Button size="lg" variant="ghost" className="rounded-full px-6 h-11">
                     {t('landing.hero.howItWorks')}
                   </Button>
                 </a>

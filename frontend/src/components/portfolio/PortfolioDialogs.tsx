@@ -11,7 +11,9 @@ import {
   deletePortfolio,
   updatePortfolio,
   type Portfolio,
+  type PortfolioSettings,
 } from '@/services/portfolioService';
+import { PortfolioSettingsFields } from './PortfolioFlags';
 
 const INPUT_CLASS = 'w-full px-3 py-2 rounded-md border bg-transparent';
 const INPUT_STYLE = { borderColor: 'hsl(var(--input))' };
@@ -26,6 +28,7 @@ export function CreatePortfolioDialog({ onClose }: { onClose: () => void }) {
   const queryClient = useQueryClient();
   const [name, setName] = useState('');
   const [market, setMarket] = useState<Market>('BIST');
+  const [settings, setSettings] = useState<PortfolioSettings>({ is_public: false, is_experimental: false });
 
   const mutation = useMutation({
     mutationFn: createPortfolio,
@@ -38,7 +41,7 @@ export function CreatePortfolioDialog({ onClose }: { onClose: () => void }) {
 
   const submit = (e?: FormEvent) => {
     e?.preventDefault();
-    if (name.trim() && !mutation.isPending) mutation.mutate({ name: name.trim(), market });
+    if (name.trim() && !mutation.isPending) mutation.mutate({ name: name.trim(), market, ...settings });
   };
 
   return (
@@ -91,6 +94,7 @@ export function CreatePortfolioDialog({ onClose }: { onClose: () => void }) {
             ))}
           </select>
         </div>
+        <PortfolioSettingsFields value={settings} onChange={setSettings} />
         {mutation.error && (
           <p className="text-sm" style={{ color: 'hsl(var(--destructive))' }}>
             {mutation.error.message}
@@ -102,31 +106,42 @@ export function CreatePortfolioDialog({ onClose }: { onClose: () => void }) {
   );
 }
 
-export function RenamePortfolioDialog({ portfolio, onClose }: { portfolio: Portfolio; onClose: () => void }) {
+/** Name, visibility and experimental flag of an existing portfolio. */
+export function PortfolioSettingsDialog({ portfolio, onClose }: { portfolio: Portfolio; onClose: () => void }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [name, setName] = useState(portfolio.name);
+  const [settings, setSettings] = useState<PortfolioSettings>({
+    is_public: !!portfolio.is_public,
+    is_experimental: !!portfolio.is_experimental,
+  });
 
   const mutation = useMutation({
     mutationFn: updatePortfolio,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['portfolios'] });
       queryClient.invalidateQueries({ queryKey: ['portfolio', portfolio.slug] });
+      queryClient.invalidateQueries({ queryKey: ['explore'] });
       onClose();
     },
   });
 
-  const unchanged = name.trim() === portfolio.name;
+  const unchanged =
+    name.trim() === portfolio.name &&
+    settings.is_public === !!portfolio.is_public &&
+    settings.is_experimental === !!portfolio.is_experimental;
   const submit = (e?: FormEvent) => {
     e?.preventDefault();
-    if (name.trim() && !unchanged && !mutation.isPending) mutation.mutate({ id: portfolio.id, name: name.trim() });
+    if (name.trim() && !unchanged && !mutation.isPending) {
+      mutation.mutate({ id: portfolio.id, name: name.trim(), ...settings });
+    }
   };
 
   return (
     <Modal
       isOpen
       onClose={onClose}
-      title={t('myPortfolios.edit.title')}
+      title={t('portfolioSettings.title')}
       footer={
         <>
           <Button variant="outline" onClick={onClose}>
@@ -138,22 +153,24 @@ export function RenamePortfolioDialog({ portfolio, onClose }: { portfolio: Portf
         </>
       }
     >
-      <form onSubmit={submit}>
-        <label htmlFor="portfolio-rename" className="block text-sm font-medium mb-2">
-          {t('myPortfolios.edit.nameLabel')}
-        </label>
-        <input
-          id="portfolio-rename"
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder={t('myPortfolios.edit.namePlaceholder')}
-          autoFocus
-          className={INPUT_CLASS}
-          style={INPUT_STYLE}
-        />
+      <form onSubmit={submit} className="space-y-4">
+        <div>
+          <label htmlFor="portfolio-rename" className="block text-sm font-medium mb-2">
+            {t('myPortfolios.edit.nameLabel')}
+          </label>
+          <input
+            id="portfolio-rename"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder={t('myPortfolios.edit.namePlaceholder')}
+            className={INPUT_CLASS}
+            style={INPUT_STYLE}
+          />
+        </div>
+        <PortfolioSettingsFields value={settings} onChange={setSettings} />
         {mutation.error && (
-          <p className="text-sm mt-2" style={{ color: 'hsl(var(--destructive))' }}>
+          <p className="text-sm" style={{ color: 'hsl(var(--destructive))' }}>
             {mutation.error.message}
           </p>
         )}

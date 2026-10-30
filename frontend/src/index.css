@@ -87,8 +87,11 @@
   --series-usd: #9085e9;
 }
 
-* {
-  border-color: hsl(var(--border));
+/* In the base layer, so border-<color> utilities can override it. */
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
 }
 
 body {

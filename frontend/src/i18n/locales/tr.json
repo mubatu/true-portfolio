@@ -30,7 +30,8 @@
         "dividends": "Temettü ve stopaj otomatik",
         "splits": "Bölünme ve bedelli düzeltmeleri",
         "compare": "BIST 100, altın ve dolarla kıyas"
-      }
+      },
+      "explore": "Portföyleri keşfet"
     },
     "preview": {
       "unitPrice": "Pay fiyatı",
@@ -354,6 +355,48 @@
       "noOpen": "Değeri olan portföy yok."
     }
   },
+  "portfolioSettings": {
+    "title": "Portföy ayarları",
+    "visibility": "Görünürlük",
+    "type": "Tür",
+    "private": {
+      "label": "Bana özel",
+      "description": "Yalnızca sen görürsün."
+    },
+    "public": {
+      "label": "Herkese açık",
+      "description": "Keşfet'te herkes görür, yalnızca yüzde olarak. Tutarlar ve işlemler gösterilmez."
+    },
+    "experimental": {
+      "label": "Deneysel",
+      "description": "Deneme ya da sanal portföy. Kendi analizi durur ama Özet'e dahil edilmez."
+    }
+  },
+  "explore": {
+    "title": "Keşfet",
+    "subtitle": "Kullanıcıların herkese açık paylaştığı portföyler. Başlangıçtan bu yana getirisi en yüksek olan en üstte.",
+    "amountsHidden": "Tutarlar gizlidir; yalnızca yüzdeler gösterilir.",
+    "amountsHiddenDetail": "Tutarlar ve işlemler gizlidir. Pay fiyatı 1,0000'dan başlar ve para girişlerinden arındırılmış performansı gösterir.",
+    "loadError": "Portföyler yüklenemedi.",
+    "notFound": "Bu portföy bulunamadı ya da artık herkese açık değil.",
+    "backToList": "Keşfet'e dön",
+    "empty": {
+      "title": "Henüz herkese açık portföy yok",
+      "description": "Bir portföyünü ayarlarından \"Herkese açık\" yaparak ilk paylaşan sen ol."
+    },
+    "anonymous": "İsimsiz",
+    "sinceStart": "Başlangıçtan beri",
+    "horizon": "Başlangıç {{start}} · {{duration}}",
+    "duration": {
+      "years": "{{count}} yıl",
+      "months": "{{count}} ay",
+      "days": "{{count}} gün"
+    },
+    "allocation": "Güncel Dağılım",
+    "holdings": "{{count}} varlık",
+    "returnsHint": "Grafikte seçili dönemde pay fiyatındaki değişim; para ekleyip çıkarmaktan etkilenmez. Altında aynı dönemde BIST 100, altın ve dolar.",
+    "openMine": "Senin portföyün: tam analiz"
+  },
   "myPortfolios": {
     "title": "Portföylerim",
     "subtitle": "Tüm portföylerinin performansı tek bakışta. Analizine ve işlemlerine buradan ulaş.",
@@ -381,11 +424,7 @@
     "sparklineLabel": "Son 90 işlem günündeki pay fiyatı",
     "experimental": {
       "title": "Deneysel portföyler",
-      "hint": "Denemeler ve sanal portföyler. Kendi analizleri durur ama Özet'e dahil edilmezler.",
-      "badge": "Deneysel",
-      "mark": "Deneysel olarak işaretle (Özet'ten çıkar)",
-      "unmark": "Deneysel işaretini kaldır (Özet'e dahil et)",
-      "error": "Portföy güncellenemedi"
+      "hint": "Denemeler ve sanal portföyler. Kendi analizleri durur ama Özet'e dahil edilmezler."
     }
   },
   "portfolio": {

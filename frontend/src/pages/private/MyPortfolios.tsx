@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import { Briefcase, FlaskConical, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useFormatters } from '@/components/analysis/format';
@@ -8,20 +8,16 @@ import { PortfolioCard } from '@/components/portfolio/PortfolioCard';
 import {
   CreatePortfolioDialog,
   DeletePortfolioDialog,
-  RenamePortfolioDialog,
+  PortfolioSettingsDialog,
 } from '@/components/portfolio/PortfolioDialogs';
-import {
-  analyzePortfolio,
-  getPortfolios,
-  setPortfolioExperimental,
-  type Portfolio,
-} from '@/services/portfolioService';
+import { analyzePortfolio, getPortfolios, type Portfolio } from '@/services/portfolioService';
 
-type Dialog = { kind: 'create' } | { kind: 'rename' | 'delete'; portfolio: Portfolio } | null;
+type Dialog = { kind: 'create' } | { kind: 'settings' | 'delete'; portfolio: Portfolio } | null;
 
 /**
  * Every portfolio at a glance, the way into its analysis and transactions,
- * and creating, renaming, deleting or marking it experimental. Experimental
+ * and creating, deleting or changing its settings (name, public / private,
+ * experimental). Experimental
  * portfolios sit in their own section and are left out of the Overview.
  * Cards load their analysis into the same cache the analysis page uses,
  * so opening a portfolio from here is instant.
@@ -30,7 +26,6 @@ export function MyPortfolios() {
   const { t } = useTranslation();
   const fmt = useFormatters('TRY');
   const [dialog, setDialog] = useState<Dialog>(null);
-  const queryClient = useQueryClient();
 
   useEffect(() => {
     document.title = `${t('myPortfolios.title')} · ${t('common.appName')}`;
@@ -65,23 +60,6 @@ export function MyPortfolios() {
   const regular = sorted.filter((p) => !p.is_experimental);
   const experimental = sorted.filter((p) => p.is_experimental);
 
-  // Optimistic: the card moves sections at once; on failure it moves back.
-  const toggleExperimental = useMutation({
-    mutationFn: (p: Portfolio) => setPortfolioExperimental(p.id, !p.is_experimental),
-    onMutate: async (p) => {
-      await queryClient.cancelQueries({ queryKey: ['portfolios'] });
-      const previous = queryClient.getQueryData<Portfolio[]>(['portfolios']);
-      queryClient.setQueryData<Portfolio[]>(['portfolios'], (list) =>
-        list?.map((x) => (x.id === p.id ? { ...x, is_experimental: !p.is_experimental } : x))
-      );
-      return { previous };
-    },
-    onError: (_error, _p, context) => {
-      if (context?.previous) queryClient.setQueryData(['portfolios'], context.previous);
-    },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['portfolios'] }),
-  });
-
   const renderCards = (list: Portfolio[]) => (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {list.map((p) => {
@@ -94,9 +72,8 @@ export function MyPortfolios() {
             loading={!!q?.isLoading}
             failed={!!q?.isError}
             onRetry={() => q?.refetch()}
-            onRename={() => setDialog({ kind: 'rename', portfolio: p })}
+            onSettings={() => setDialog({ kind: 'settings', portfolio: p })}
             onDelete={() => setDialog({ kind: 'delete', portfolio: p })}
-            onToggleExperimental={() => toggleExperimental.mutate(p)}
             fmt={fmt}
           />
         );
@@ -120,12 +97,6 @@ export function MyPortfolios() {
         </div>
         {portfolios.length > 0 && createButton}
       </div>
-
-      {toggleExperimental.isError && (
-        <p className="text-sm mb-4" role="alert" style={{ color: 'hsl(var(--destructive))' }}>
-          {t('myPortfolios.experimental.error')}: {(toggleExperimental.error as Error).message}
-        </p>
-      )}
 
       {error ? (
         <div
@@ -178,8 +149,8 @@ export function MyPortfolios() {
       )}
 
       {dialog?.kind === 'create' && <CreatePortfolioDialog onClose={() => setDialog(null)} />}
-      {dialog?.kind === 'rename' && (
-        <RenamePortfolioDialog portfolio={dialog.portfolio} onClose={() => setDialog(null)} />
+      {dialog?.kind === 'settings' && (
+        <PortfolioSettingsDialog portfolio={dialog.portfolio} onClose={() => setDialog(null)} />
       )}
       {dialog?.kind === 'delete' && (
         <DeletePortfolioDialog portfolio={dialog.portfolio} onClose={() => setDialog(null)} />

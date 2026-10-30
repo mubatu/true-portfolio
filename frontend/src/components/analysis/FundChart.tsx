@@ -56,18 +56,23 @@ type ComparisonKey = (typeof COMPARISONS)[number]['key'];
  * The portfolio drawn like a fund chart: its unit price over time, with
  * BIST 100, gold and the dollar on the same footing; plus value and P/L views and the key
  * numbers of the selected period.
+ *
+ * ``hideAmounts`` (Explore): unit price only — no value / P/L views, no
+ * TL in the tooltip, and only the percentage stats.
  */
 export function FundChart({
   points,
   fmt,
   range,
   onRangeChange,
+  hideAmounts = false,
 }: {
   points: PerformancePoint[];
   fmt: Formatters;
   /** Selected period; shared with the returns table. */
   range: RangeKey;
   onRangeChange: (range: RangeKey) => void;
+  hideAmounts?: boolean;
 }) {
   const { t } = useTranslation();
   const [mode, setMode] = useState<Mode>('unit');
@@ -153,13 +158,15 @@ export function FundChart({
       ) : (
         <>
           <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-            <Segmented
-              size="sm"
-              label={t('analyze.chart.modeLabel')}
-              options={MODES.map((key) => ({ key, label: t(`analyze.chart.modes.${key}`) }))}
-              value={mode}
-              onChange={setMode}
-            />
+            {!hideAmounts && (
+              <Segmented
+                size="sm"
+                label={t('analyze.chart.modeLabel')}
+                options={MODES.map((key) => ({ key, label: t(`analyze.chart.modes.${key}`) }))}
+                value={mode}
+                onChange={setMode}
+              />
+            )}
             {mode === 'unit' && available.length > 0 && (
               <fieldset className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm" style={{ color: MUTED }}>
                 <legend className="sr-only">{t('analyze.chart.compareLabel')}</legend>
@@ -327,13 +334,17 @@ export function FundChart({
                             );
                           })}
 
-                        <div className="my-1.5 border-t" style={{ borderColor: 'hsl(var(--border))' }} />
-                        <TooltipLine label={t('analyze.performance.totalValue')} value={fmt.money(p.total_value)} />
-                        <TooltipLine label={t('analyze.performance.invested')} value={fmt.money(p.invested)} />
-                        <TooltipLine label={t('analyze.performance.totalPl')} value={fmt.signedMoney(p.total_pl)} color={plColor(p.total_pl)} strong />
-                        <p className="text-right tabular-nums text-[11px]" style={{ color: plColor(p.total_pl) }}>
-                          {fmt.pct(p.pl_pct)}
-                        </p>
+                        {!hideAmounts && (
+                          <>
+                            <div className="my-1.5 border-t" style={{ borderColor: 'hsl(var(--border))' }} />
+                            <TooltipLine label={t('analyze.performance.totalValue')} value={fmt.money(p.total_value)} />
+                            <TooltipLine label={t('analyze.performance.invested')} value={fmt.money(p.invested)} />
+                            <TooltipLine label={t('analyze.performance.totalPl')} value={fmt.signedMoney(p.total_pl)} color={plColor(p.total_pl)} strong />
+                            <p className="text-right tabular-nums text-[11px]" style={{ color: plColor(p.total_pl) }}>
+                              {fmt.pct(p.pl_pct)}
+                            </p>
+                          </>
+                        )}
                       </div>
                     );
                   }}
@@ -346,7 +357,7 @@ export function FundChart({
             {t(`analyze.chart.hints.${mode}`)}
           </p>
 
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 mt-5">
+          <div className={`grid gap-3 sm:grid-cols-2 mt-5 ${hideAmounts ? '' : 'xl:grid-cols-4'}`}>
             <StatCard
               label={t('analyze.performance.return')}
               value={fmt.pct(stats.returnPct)}
@@ -360,26 +371,30 @@ export function FundChart({
                   }),
               ]}
             />
-            <StatCard
-              label={t('analyze.performance.plChange')}
-              value={fmt.signedMoney(stats.plChange)}
-              color={plColor(stats.plChange)}
-              lines={[
-                last &&
-                  t('analyze.performance.plNow', { value: fmt.money(last.total_pl), pct: fmt.pct(last.pl_pct) }),
-              ]}
-            />
-            <StatCard
-              label={t('analyze.performance.peakPl')}
-              value={fmt.money(stats.peakPl.totalPl)}
-              color={plColor(stats.peakPl.totalPl)}
-              lines={[
-                t('analyze.performance.onDate', { date: fmt.date(stats.peakPl.date), pct: fmt.pct(stats.peakPl.plPct) }),
-                stats.belowPeakPl < 0
-                  ? t('analyze.performance.belowPeak', { value: fmt.money(-stats.belowPeakPl) })
-                  : t('analyze.performance.atPeak'),
-              ]}
-            />
+            {!hideAmounts && (
+              <>
+                <StatCard
+                  label={t('analyze.performance.plChange')}
+                  value={fmt.signedMoney(stats.plChange)}
+                  color={plColor(stats.plChange)}
+                  lines={[
+                    last &&
+                      t('analyze.performance.plNow', { value: fmt.money(last.total_pl), pct: fmt.pct(last.pl_pct) }),
+                  ]}
+                />
+                <StatCard
+                  label={t('analyze.performance.peakPl')}
+                  value={fmt.money(stats.peakPl.totalPl)}
+                  color={plColor(stats.peakPl.totalPl)}
+                  lines={[
+                    t('analyze.performance.onDate', { date: fmt.date(stats.peakPl.date), pct: fmt.pct(stats.peakPl.plPct) }),
+                    stats.belowPeakPl < 0
+                      ? t('analyze.performance.belowPeak', { value: fmt.money(-stats.belowPeakPl) })
+                      : t('analyze.performance.atPeak'),
+                  ]}
+                />
+              </>
+            )}
             <StatCard
               label={t('analyze.performance.maxDrawdown')}
               value={drawdown ? fmt.pct(drawdown.pct) : '—'}

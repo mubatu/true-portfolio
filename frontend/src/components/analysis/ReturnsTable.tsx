@@ -30,7 +30,18 @@ const PORTFOLIO_COLOR = 'hsl(var(--primary))';
  * flows), and the TL result since the start had the same money gone into
  * each of them on the same days instead of into the stocks.
  */
-export function ReturnsTable({ points, fmt, range }: { points: PerformancePoint[]; fmt: Formatters; range: RangeKey }) {
+export function ReturnsTable({
+  points,
+  fmt,
+  range,
+  hideAmounts = false,
+}: {
+  points: PerformancePoint[];
+  fmt: Formatters;
+  range: RangeKey;
+  /** Public view: returns only, without the TL "same money" column. */
+  hideAmounts?: boolean;
+}) {
   const { t } = useTranslation();
   const period = useMemo(() => periodReturns(points).find((r) => r.range === range) ?? null, [points, range]);
   const volatility = useMemo(() => annualizedVolatility(points), [points]);
@@ -99,21 +110,23 @@ export function ReturnsTable({ points, fmt, range }: { points: PerformancePoint[
         id="returns-title"
         icon={CalendarRange}
         title={t('analyze.returns.title')}
-        description={t('analyze.returns.hint')}
+        description={t(hideAmounts ? 'explore.returnsHint' : 'analyze.returns.hint')}
         className="mb-4"
       />
 
       <div className="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0">
-        <table className="w-full min-w-[480px] text-sm">
+        <table className={`w-full text-sm ${hideAmounts ? '' : 'min-w-[480px]'}`}>
           <thead>
             <tr style={{ color: MUTED }}>
               <th scope="col" className="text-left font-medium py-2 pr-4" />
               <th scope="col" className="text-right font-medium py-2 px-2 align-bottom">
                 {t('analyze.returns.returnIn', { period: t(`analyze.returns.periods.${range}`) })}
               </th>
-              <th scope="col" className="text-right font-medium py-2 pl-2 align-bottom" title={t('analyze.returns.sameMoneyHint')}>
-                {t('analyze.returns.sameMoney')}
-              </th>
+              {!hideAmounts && (
+                <th scope="col" className="text-right font-medium py-2 pl-2 align-bottom" title={t('analyze.returns.sameMoneyHint')}>
+                  {t('analyze.returns.sameMoney')}
+                </th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -122,7 +135,7 @@ export function ReturnsTable({ points, fmt, range }: { points: PerformancePoint[
                 {t('analyze.performance.portfolio')}
               </th>
               <td className="text-right py-3 px-2">{pctCell(period?.returnPct ?? null, PORTFOLIO_COLOR)}</td>
-              <td className="text-right py-3 pl-2">{plCell(last.total_pl, last.pl_pct)}</td>
+              {!hideAmounts && <td className="text-right py-3 pl-2">{plCell(last.total_pl, last.pl_pct)}</td>}
             </tr>
             {comparisons.map((c) => (
               <tr key={c.key} className="border-t" style={{ borderColor: 'hsl(var(--border))' }}>
@@ -133,7 +146,9 @@ export function ReturnsTable({ points, fmt, range }: { points: PerformancePoint[
                   </span>
                 </th>
                 <td className="text-right py-3 px-2">{pctCell(c.returnPct, c.color)}</td>
-                <td className="text-right py-3 pl-2">{plCell(c.sameMoney?.pl ?? null, c.sameMoney?.plPct ?? null)}</td>
+                {!hideAmounts && (
+                  <td className="text-right py-3 pl-2">{plCell(c.sameMoney?.pl ?? null, c.sameMoney?.plPct ?? null)}</td>
+                )}
               </tr>
             ))}
           </tbody>

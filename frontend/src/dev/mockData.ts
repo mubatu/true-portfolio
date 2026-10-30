@@ -9,6 +9,7 @@ import type {
   PerformancePoint,
   Position,
 } from '@/components/analysis/types';
+import type { PublicOwner, PublicPortfolioDetail, PublicPortfolioSummary } from '@/lib/api';
 import type { Portfolio, Transaction } from '@/services/portfolioService';
 
 function rng(seed: number) {
@@ -224,11 +225,11 @@ const trialPoints = series(23, '2025-06-02', { 0: 50_000, 40: 25_000 }, -0.0003,
 const trialRows = positions([['THYAO.IS', 200, 310, 285, 0, 0], ['ASELS.IS', 150, 120, 131, 0, 0]], []);
 
 export const MOCK_PORTFOLIOS: Portfolio[] = [
-  { id: 9, user_id: 'dev', name: 'Buber Fon', market: 'BIST', slug: 'buber-fon', created_at: '2026-10-30T10:00:00Z', transaction_count: 115 },
+  { id: 9, user_id: 'dev', name: 'Buber Fon', market: 'BIST', slug: 'buber-fon', created_at: '2026-10-30T10:00:00Z', transaction_count: 115, is_public: true },
   { id: 11, user_id: 'dev', name: 'IPB İstanbul Portföy', market: 'TEFAS', slug: 'ipb', created_at: '2026-10-30T12:00:00Z', transaction_count: 2 },
   { id: 14, user_id: 'dev', name: 'KPC Kuveyt Türk Portföy', market: 'TEFAS', slug: 'kpc', created_at: '2026-10-30T12:30:00Z', transaction_count: 1 },
   { id: 12, user_id: 'dev', name: 'Yeni Portföy', market: 'BIST', slug: 'yeni', created_at: '2026-10-30T13:00:00Z', transaction_count: 0 },
-  { id: 13, user_id: 'dev', name: 'Deneme Stratejisi', market: 'BIST', slug: 'deneme', created_at: '2026-10-30T14:00:00Z', transaction_count: 6, is_experimental: true },
+  { id: 13, user_id: 'dev', name: 'Deneme Stratejisi', market: 'BIST', slug: 'deneme', created_at: '2026-10-30T14:00:00Z', transaction_count: 6, is_experimental: true, is_public: true },
 ];
 
 export const MOCK_ANALYSES: Record<number, AnalysisResponse> = {
@@ -237,6 +238,50 @@ export const MOCK_ANALYSES: Record<number, AnalysisResponse> = {
   13: analysis(13, trialPoints, trialRows, []),
   14: analysis(14, kpcPoints, kpcRows, []),
 };
+
+// Explore: what the backend's /api/explore would send (percentages only).
+function publicDetail(p: Portfolio, a: AnalysisResponse, owner: PublicOwner): PublicPortfolioDetail {
+  const points = a.performance_series.points.map(({ date, twr_pct, benchmark_close, usd_close, gold_close }) => ({
+    date, twr_pct, benchmark_close, usd_close, gold_close,
+  }));
+  const last = points[points.length - 1];
+  const at = (months: number) => {
+    const d = new Date(`${last.date}T00:00:00Z`);
+    d.setUTCMonth(d.getUTCMonth() - months);
+    const start = d.toISOString().slice(0, 10);
+    const base = [...points].reverse().find((x) => x.date <= start);
+    return start < points[0].date || !base ? null : ((1 + last.twr_pct / 100) / (1 + base.twr_pct / 100) - 1) * 100;
+  };
+  const total = a.totals.portfolio_value + a.totals.in_the_safe;
+  return {
+    slug: p.slug, name: p.name, market: p.market, is_experimental: !!p.is_experimental, owner,
+    start_date: points[0].date, end_date: last.date,
+    return_pct: last.twr_pct, return_1m_pct: at(1), return_1y_pct: at(12),
+    points,
+    allocation: {
+      positions: a.positions.filter((x) => x.quantity > 0).map((x) => ({ ticker: x.ticker, weight_pct: (x.market_value / total) * 100 })),
+      cash_pct: (a.totals.in_the_safe / total) * 100,
+    },
+  };
+}
+
+const otherOwnerPoints = series(41, '2025-12-01', { 0: 100_000 }, 0.0012, 0.012);
+const otherOwnerRows = positions([['ASELS.IS', 400, 95, 131, 0, 0], ['TUPRS.IS', 300, 150, 171, 0, 0], ['BIMAS.IS', 60, 480, 512, 0, 0]], []);
+const otherOwner: Portfolio = { id: 99, user_id: 'someone', name: 'Savunma ve Enerji Sepeti', market: 'BIST', slug: 'savunma', created_at: '2025-12-01T10:00:00Z', is_public: true };
+
+export const MOCK_PUBLIC: PublicPortfolioDetail[] = [
+  publicDetail(otherOwner, analysis(99, otherOwnerPoints, otherOwnerRows, []), { display_name: 'Elif K.', initials: 'EK' }),
+  ...[9, 13].map((id) =>
+    publicDetail(MOCK_PORTFOLIOS.find((p) => p.id === id)!, MOCK_ANALYSES[id], { display_name: 'Önizleme K.', initials: 'ÖK' })
+  ),
+].sort((a, b) => (b.return_pct ?? 0) - (a.return_pct ?? 0));
+
+export const MOCK_PUBLIC_LIST: PublicPortfolioSummary[] = MOCK_PUBLIC.map((d) => ({
+  slug: d.slug, name: d.name, market: d.market, is_experimental: d.is_experimental, owner: d.owner,
+  start_date: d.start_date, end_date: d.end_date,
+  return_pct: d.return_pct, return_1m_pct: d.return_1m_pct, return_1y_pct: d.return_1y_pct,
+  sparkline: d.points.slice(-90).map((x) => x.twr_pct),
+}));
 
 const txn = (id: number, ticker: string, operation: Transaction['operation'], quantity: number, price: number, date: string, portfolio_id = 9): Transaction => ({
   id, portfolio_id, ticker, operation, quantity, price, adjusted_quantity: quantity, adjusted_price: price,

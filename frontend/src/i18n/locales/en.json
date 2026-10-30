@@ -30,7 +30,8 @@
         "dividends": "Dividends and withholding, automatic",
         "splits": "Split and rights issue corrections",
         "compare": "Compare with BIST 100, gold and the dollar"
-      }
+      },
+      "explore": "Explore portfolios"
     },
     "preview": {
       "unitPrice": "Unit price",
@@ -354,6 +355,52 @@
       "noOpen": "No portfolio holds any value."
     }
   },
+  "portfolioSettings": {
+    "title": "Portfolio settings",
+    "visibility": "Visibility",
+    "type": "Type",
+    "private": {
+      "label": "Private",
+      "description": "Only you can see it."
+    },
+    "public": {
+      "label": "Public",
+      "description": "Everyone sees it on Explore, as percentages only. Amounts and trades stay hidden."
+    },
+    "experimental": {
+      "label": "Experimental",
+      "description": "A trial or paper portfolio. It keeps its own analysis but is left out of the Overview."
+    }
+  },
+  "explore": {
+    "title": "Explore",
+    "subtitle": "Portfolios people chose to share. Best since-start return first.",
+    "amountsHidden": "Amounts are hidden; only percentages are shown.",
+    "amountsHiddenDetail": "Amounts and trades are hidden. The unit price starts at 1.0000 and shows performance without the effect of new money.",
+    "loadError": "Could not load portfolios.",
+    "notFound": "This portfolio was not found or is no longer public.",
+    "backToList": "Back to Explore",
+    "empty": {
+      "title": "No public portfolios yet",
+      "description": "Be the first: make one of your portfolios \"Public\" in its settings."
+    },
+    "anonymous": "Anonymous",
+    "sinceStart": "Since start",
+    "horizon": "Started {{start}} · {{duration}}",
+    "duration": {
+      "years_one": "{{count}} year",
+      "years_other": "{{count}} years",
+      "months_one": "{{count}} month",
+      "months_other": "{{count}} months",
+      "days_one": "{{count}} day",
+      "days_other": "{{count}} days"
+    },
+    "allocation": "Current Allocation",
+    "holdings_one": "{{count}} holding",
+    "holdings_other": "{{count}} holdings",
+    "returnsHint": "Unit price change over the period picked on the chart; adding or withdrawing money does not move it. Below: BIST 100, gold and the dollar over the same period.",
+    "openMine": "Your portfolio: full analysis"
+  },
   "myPortfolios": {
     "title": "My Portfolios",
     "subtitle": "All your portfolios' performance at a glance. Open their analysis and transactions from here.",
@@ -381,11 +428,7 @@
     "sparklineLabel": "Unit price over the last 90 trading days",
     "experimental": {
       "title": "Experimental portfolios",
-      "hint": "Trials and paper portfolios. They keep their own analysis but are left out of the Overview.",
-      "badge": "Experimental",
-      "mark": "Mark as experimental (leave out of Overview)",
-      "unmark": "Unmark experimental (include in Overview)",
-      "error": "Could not update the portfolio"
+      "hint": "Trials and paper portfolios. They keep their own analysis but are left out of the Overview."
     }
   },
   "portfolio": {

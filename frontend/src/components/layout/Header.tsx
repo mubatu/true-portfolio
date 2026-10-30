@@ -1,6 +1,6 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { TrendingUp, Moon, Sun, LogOut, User, ChevronDown, Briefcase, Languages, LayoutDashboard, type LucideIcon } from 'lucide-react';
+import { TrendingUp, Moon, Sun, LogOut, User, ChevronDown, Briefcase, Languages, LayoutDashboard, Compass, type LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { LOCALES } from '@/config';
 import { useTheme } from '@/hooks/useTheme';
@@ -38,15 +38,20 @@ export function Header() {
   // Portfolio pages live under "My Portfolios". The dev preview mounts the
   // same pages under /dev.
   const path = location.pathname.replace(/^\/dev(?=\/)/, '');
-  const navItems: { to: string; label: string; icon: LucideIcon; active: boolean }[] = [
-    { to: '/overview', label: t('overview.title'), icon: LayoutDashboard, active: path === '/overview' },
-    {
-      to: '/my-portfolios',
-      label: t('common.myPortfolios'),
-      icon: Briefcase,
-      active: path === '/my-portfolios' || path.startsWith('/portfolio/'),
-    },
-  ];
+  // Explore is open to everyone; the rest needs an account.
+  const explore = { to: '/explore', label: t('explore.title'), icon: Compass, active: path.startsWith('/explore') };
+  const navItems: { to: string; label: string; icon: LucideIcon; active: boolean }[] = isAuthenticated
+    ? [
+        explore,
+        { to: '/overview', label: t('overview.title'), icon: LayoutDashboard, active: path === '/overview' },
+        {
+          to: '/my-portfolios',
+          label: t('common.myPortfolios'),
+          icon: Briefcase,
+          active: path === '/my-portfolios' || path.startsWith('/portfolio/'),
+        },
+      ]
+    : [explore];
 
   const getUserInitials = () => {
     const name = user?.user_metadata?.full_name;
@@ -70,9 +75,13 @@ export function Header() {
           <span className="text-lg font-semibold tracking-tight hidden sm:inline">{t('common.appName')}</span>
         </Link>
 
-        {/* Navigation for authenticated users */}
-        {isAuthenticated && (
-          <nav className="hidden md:flex items-center gap-2 absolute left-1/2 -translate-x-1/2">
+        {/* Navigation (signed out: Explore only) */}
+        {(isAuthenticated || location.pathname !== '/auth') && (
+          <nav
+            // Signed out there is one item (Explore): on phones it sits in the
+            // row between the logo and the buttons instead of centered over them.
+            className={`${isAuthenticated ? 'hidden' : 'flex'} md:flex items-center gap-2 md:absolute md:left-1/2 md:-translate-x-1/2`}
+          >
             {navItems.map(({ to, label, icon: Icon, active }) => (
               <Link key={to} to={to}>
                 <Button
