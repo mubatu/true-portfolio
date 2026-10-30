@@ -244,6 +244,11 @@
     "editTransactionModal": {
       "title": "İşlemi Düzenle"
     },
+    "deleteTransactionConfirm": {
+      "title": "İşlemi Sil",
+      "message": "Bu işlem kalıcı olarak silinecek ve analiz bu işlem olmadan yeniden hesaplanacak. Bu işlem geri alınamaz.",
+      "confirm": "İşlemi Sil"
+    },
     "deleteConfirm": {
       "title": "Portföyü Sil",
       "message": "\"{{name}}\" portföyünü silmek istediğine emin misin? Bu işlem geri alınamaz ve tüm işlemler kalıcı olarak silinir.",

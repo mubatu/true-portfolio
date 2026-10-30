@@ -1,18 +1,11 @@
-import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pencil, Trash2, TrendingDown, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { getDateLocale, getLocale, getMarketCurrency, toDisplayTicker } from '@/config';
-import { parseIsoDate } from '@/lib/dates';
+import { toDisplayTicker } from '@/config';
 import type { Transaction } from '@/services/portfolioService';
+import { useTransactionFormatters, type TransactionFormatters } from './format';
 
 type Operation = Transaction['operation'];
-
-interface Formatters {
-  number: (value: number) => string;
-  money: (value: number) => string;
-  date: (isoDate: string) => string;
-}
 
 const OPERATION_STYLES: Record<Operation, { backgroundColor: string; color: string }> = {
   buy: { backgroundColor: 'hsl(142 76% 36% / 0.1)', color: 'hsl(142 76% 36%)' },
@@ -33,26 +26,10 @@ export function TransactionsTable({
   market: string;
   isDeletePending: boolean;
   onEdit: (transaction: Transaction) => void;
-  onDelete: (transactionId: number) => void;
+  onDelete: (transaction: Transaction) => void;
 }) {
-  const { t, i18n } = useTranslation();
-  const currency = getMarketCurrency(market);
-
-  const fmt: Formatters = useMemo(() => {
-    const numberLocale = getLocale(i18n.language);
-    const number = new Intl.NumberFormat(numberLocale);
-    const money = new Intl.NumberFormat(numberLocale, { style: 'currency', currency });
-    const date = new Intl.DateTimeFormat(getDateLocale(i18n.language), {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-    return {
-      number: (v) => number.format(v),
-      money: (v) => money.format(v),
-      date: (iso) => date.format(parseIsoDate(iso)),
-    };
-  }, [i18n.language, currency]);
+  const { t } = useTranslation();
+  const fmt = useTransactionFormatters(market);
 
   return (
     <div className="rounded-lg border overflow-hidden" style={{ borderColor: 'hsl(var(--border))' }}>
@@ -105,10 +82,10 @@ function TransactionRow({
 }: {
   transaction: Transaction;
   market: string;
-  fmt: Formatters;
+  fmt: TransactionFormatters;
   isDeletePending: boolean;
   onEdit: (transaction: Transaction) => void;
-  onDelete: (transactionId: number) => void;
+  onDelete: (transaction: Transaction) => void;
 }) {
   const { t } = useTranslation();
   const quantity = Number(transaction.quantity);
@@ -170,7 +147,7 @@ function TransactionRow({
             className="h-8 w-8"
             type="button"
             aria-label={t('common.delete')}
-            onClick={() => onDelete(transaction.id)}
+            onClick={() => onDelete(transaction)}
             disabled={isDeletePending}
           >
             <Trash2 className="h-4 w-4" style={{ color: 'hsl(var(--destructive))' }} />

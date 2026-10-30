@@ -9,6 +9,7 @@ import {
   type TransactionFormValues,
 } from '@/components/transactions/TransactionFormModal';
 import { TransactionsTable } from '@/components/transactions/TransactionsTable';
+import { DeleteTransactionDialog } from '@/components/transactions/DeleteTransactionDialog';
 import {
   getPortfolioBySlug,
   getTransactionsBySlug,
@@ -30,6 +31,7 @@ export function PortfolioDetail() {
   const [form, setForm] = useState<FormState | null>(null);
   // Remounts the form on every opening so its fields start fresh.
   const [formKey, setFormKey] = useState(0);
+  const [transactionToDelete, setTransactionToDelete] = useState<Transaction | null>(null);
 
   const {
     data: portfolio,
@@ -75,8 +77,16 @@ export function PortfolioDetail() {
 
   const deleteMutation = useMutation({
     mutationFn: deleteTransaction,
-    onSuccess: invalidate,
+    onSuccess: () => {
+      invalidate();
+      setTransactionToDelete(null);
+    },
   });
+
+  const askToDelete = (transaction: Transaction) => {
+    deleteMutation.reset();
+    setTransactionToDelete(transaction);
+  };
 
   const openForm = (state: FormState) => {
     createMutation.reset();
@@ -212,11 +222,22 @@ export function PortfolioDetail() {
                 market={portfolio.market}
                 isDeletePending={deleteMutation.isPending}
                 onEdit={(transaction) => openForm({ mode: 'edit', transaction })}
-                onDelete={(id) => deleteMutation.mutate(id)}
+                onDelete={askToDelete}
               />
             )}
           </div>
         </>
+      )}
+
+      {transactionToDelete && (
+        <DeleteTransactionDialog
+          transaction={transactionToDelete}
+          market={market}
+          isPending={deleteMutation.isPending}
+          error={deleteMutation.error?.message}
+          onCancel={() => setTransactionToDelete(null)}
+          onConfirm={() => deleteMutation.mutate(transactionToDelete.id)}
+        />
       )}
 
       {form && (

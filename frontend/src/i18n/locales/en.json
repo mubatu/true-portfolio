@@ -244,6 +244,11 @@
     "editTransactionModal": {
       "title": "Edit Transaction"
     },
+    "deleteTransactionConfirm": {
+      "title": "Delete Transaction",
+      "message": "This transaction will be permanently deleted and the analysis will be recalculated without it. This cannot be undone.",
+      "confirm": "Delete Transaction"
+    },
     "deleteConfirm": {
       "title": "Delete Portfolio",
       "message": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone and all transactions will be permanently deleted.",
