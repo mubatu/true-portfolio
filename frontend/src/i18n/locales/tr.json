@@ -203,7 +203,7 @@
     },
     "positions": {
       "title": "Hisse Bazında Kâr / Zarar",
-      "hint": "Gerçekleşmemiş: eldeki hisselerin bugünkü kârı. Gerçekleşen: satışlarla (rüçhan satışları dahil) kesinleşen kâr. Komisyonlar dahildir.",
+      "hint": "Gerçekleşmemiş: eldeki hisselerin bugünkü kârı. Gerçekleşen: satışlarla (rüçhan satışları dahil) kesinleşen kâr. Kapanan hisselerde adet satılan adeti, fiyat ortalama alış → ortalama satış fiyatını gösterir. Komisyonlar dahildir.",
       "filterLabel": "Hisseler",
       "filters": {
         "all": "Tümü ({{count}})",
@@ -214,7 +214,9 @@
       "weight": "Ağırlık",
       "dividends": "Temettü",
       "totalPct": "Getiri",
-      "closed": "Kapandı"
+      "closed": "Kapandı",
+      "closedOn": "Kapandı {{date}}",
+      "closedPricesHint": "Satılan adet; ortalama alış maliyeti → ortalama satış fiyatı (komisyonlar dahil, kapandığı günün bölünme bazında)."
     },
     "allocation": {
       "title": "Dağılım",

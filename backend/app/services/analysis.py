@@ -252,7 +252,16 @@ def _position_row(
         "invested": _tl(position.bought_cost),
         "total_pl": _tl(total_pl),
         "total_pl_pct": _pct(total_pl, position.bought_cost, 2),
+        # Sales: average cost of the shares sold → their average net price.
+        "sold_quantity": float(position.sold_quantity),
+        "avg_sold_cost": _per_share(position.sold_cost, position.sold_quantity),
+        "avg_sell_price": _per_share(position.share_sales, position.sold_quantity),
+        "closed_on": position.closed_on.isoformat() if position.closed_on else None,
     }
+
+
+def _per_share(amount: Decimal, quantity: Decimal) -> float | None:
+    return float(amount / quantity) if quantity > 0 else None
 
 
 def _dividends_payload(ledger: Ledger) -> dict:

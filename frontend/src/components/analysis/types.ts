@@ -20,6 +20,14 @@ export interface Position {
   invested: number;
   total_pl: number;
   total_pl_pct: number;
+  /** Shares sold over the position's life (a closed one: in the basis of its close). */
+  sold_quantity: number;
+  /** Average cost of the shares sold, commission included; null if none sold. */
+  avg_sold_cost: number | null;
+  /** Average net sale price, commission deducted; null if none sold. */
+  avg_sell_price: number | null;
+  /** Day of the sale that emptied the position; null while held. */
+  closed_on: string | null;
 }
 
 export interface AnalysisTotals {

@@ -71,6 +71,35 @@ def test_selling_everything_resets_position():
 
 # -- dividends -----------------------------------------------------------
 
+def test_sales_are_summarized_and_close_date_kept():
+    ledger = replay(
+        [
+            buy(date(2025, 1, 2), "AAA.IS", "10", "100"),
+            sell(date(2025, 1, 6), "AAA.IS", "4", "120"),
+            LedgerTransaction(date(2025, 1, 7), "AAA.IS", "rights_sale", D(5), D(2)),
+            sell(date(2025, 1, 8), "AAA.IS", "6", "130"),
+        ],
+        [],
+    )
+    position = ledger.positions["AAA.IS"]
+    assert position.sold_quantity == D(10)
+    assert position.share_sales == D(1260)  # 4 × 120 + 6 × 130; sold rights excluded
+    assert position.sold_cost == D(1000)
+    assert position.closed_on == date(2025, 1, 8)
+
+
+def test_buying_again_reopens_position():
+    ledger = replay(
+        [
+            buy(date(2025, 1, 2), "AAA.IS", "10", "100"),
+            sell(date(2025, 1, 6), "AAA.IS", "10", "120"),
+            buy(date(2025, 2, 3), "AAA.IS", "5", "110"),
+        ],
+        [],
+    )
+    assert ledger.positions["AAA.IS"].closed_on is None
+
+
 def test_dividend_is_net_of_withholding_and_goes_to_safe():
     ledger = replay(
         [buy(date(2025, 1, 2), "AAA.IS", "100", "50")],

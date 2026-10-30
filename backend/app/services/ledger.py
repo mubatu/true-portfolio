@@ -86,6 +86,11 @@ class TickerPosition:
     commission_paid: Decimal = ZERO
     bought_cost: Decimal = ZERO
     """Everything ever paid for buys of this ticker, commission included."""
+    sold_quantity: Decimal = ZERO
+    share_sales: Decimal = ZERO
+    """Net proceeds of share sales (``sold_value`` minus sold rights)."""
+    closed_on: date | None = None
+    """Day of the sale that emptied the position; None while held."""
 
     @property
     def avg_cost(self) -> Decimal:
@@ -111,6 +116,7 @@ class Ledger:
             position.quantity += txn.quantity
             position.cost_basis += paid
             position.bought_cost += paid
+            position.closed_on = None
 
             from_safe = min(self.safe, paid)
             self.safe -= from_safe
@@ -130,11 +136,14 @@ class Ledger:
             position.realized_pl += received - sell_cost
             position.sold_value += received
             position.sold_cost += sell_cost
+            position.sold_quantity += txn.quantity
+            position.share_sales += received
             position.quantity -= txn.quantity
             position.cost_basis -= sell_cost
             if position.quantity <= 0:
                 position.quantity = ZERO
                 position.cost_basis = ZERO
+                position.closed_on = txn.date
 
         self.safe += received
 

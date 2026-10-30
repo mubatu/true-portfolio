@@ -145,6 +145,9 @@ export function PositionsTable({
               <tbody>
                 {visible.map((p) => {
                   const open = p.quantity > 0;
+                  // Open: average cost → today's price. Closed: average cost of the
+                  // shares sold → their average sale price.
+                  const [from, to] = open ? [p.avg_cost, p.price] : [p.avg_sold_cost, p.avg_sell_price];
                   return (
                     <tr key={p.ticker} className="border-t group" style={{ borderColor: 'hsl(var(--border))' }}>
                       <th
@@ -161,21 +164,28 @@ export function PositionsTable({
                           {displayTicker(p.ticker)}
                           {!open && (
                             <span
-                              className="text-[10px] font-medium uppercase tracking-wide px-1.5 py-0.5 rounded"
+                              className="text-[10px] font-medium uppercase tracking-wide px-1.5 py-0.5 rounded tabular-nums"
                               style={{ backgroundColor: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))' }}
                             >
-                              {t('analyze.positions.closed')}
+                              {p.closed_on
+                                ? t('analyze.positions.closedOn', { date: fmt.date(p.closed_on) })
+                                : t('analyze.positions.closed')}
                             </span>
                           )}
                         </span>
                       </th>
-                      <td className="px-3 py-3 text-right tabular-nums">{open ? fmt.number(p.quantity) : '—'}</td>
-                      <td className="px-3 py-3 text-right tabular-nums whitespace-nowrap">
-                        {open ? (
+                      <td className="px-3 py-3 text-right tabular-nums">
+                        {open ? fmt.number(p.quantity) : p.sold_quantity > 0 ? fmt.number(p.sold_quantity) : '—'}
+                      </td>
+                      <td
+                        className="px-3 py-3 text-right tabular-nums whitespace-nowrap"
+                        title={open ? undefined : t('analyze.positions.closedPricesHint')}
+                      >
+                        {from != null ? (
                           <>
-                            <span style={{ color: 'hsl(var(--muted-foreground))' }}>{fmt.money(p.avg_cost)}</span>
+                            <span style={{ color: 'hsl(var(--muted-foreground))' }}>{fmt.money(from)}</span>
                             <span className="mx-1" style={{ color: 'hsl(var(--muted-foreground))' }}>→</span>
-                            {p.price != null ? fmt.money(p.price) : '—'}
+                            {to != null ? fmt.money(to) : '—'}
                           </>
                         ) : (
                           '—'

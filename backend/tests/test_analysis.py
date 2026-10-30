@@ -212,3 +212,44 @@ def test_positions_split_realized_unrealized_and_add_up_to_totals():
     # Open positions come first.
     assert [p["ticker"] for p in result["positions"]] == ["AAA.IS", "BBB.IS"]
     assert round(sum(p["total_pl"] for p in result["positions"]), 2) == result["totals"]["total_pl"]
+
+
+def test_closed_position_row_shows_its_sales():
+    result = build_analysis(
+        [buy(D1, "AAA.IS", "10", "100"), sell(D2, "AAA.IS", "4", "120"), sell(D3, "AAA.IS", "6", "130")],
+        closes("AAA.IS", (D1, 100), (D2, 120), (D3, 130)),
+        [],
+        [D1, D2, D3],
+        as_of=D3,
+    )
+    row = result["positions"][0]
+    assert row["quantity"] == 0
+    assert row["sold_quantity"] == 10
+    assert row["avg_sold_cost"] == 100
+    assert row["avg_sell_price"] == 126
+    assert row["closed_on"] == D3.isoformat()
+
+
+def test_closed_sales_are_shown_in_the_basis_of_their_close():
+    """Sold 512 lots at 59.80 before a 1.83 split: show 512 × 59.80, not 937 × 32.67."""
+    from app.services.market_data import CorporateActions
+    from app.services.portfolio_service import _sales_in_closing_basis
+
+    split = D("1.8306711")
+    rows = [
+        {
+            "ticker": "TNZTP.IS",
+            "quantity": 0.0,
+            "closed_on": "2025-08-19",
+            "sold_quantity": float(512 * split),
+            "avg_sold_cost": float(D("37.81") / split),
+            "avg_sell_price": float(D("59.80") / split),
+        },
+        {"ticker": "AAA.IS", "quantity": 5.0, "closed_on": None, "sold_quantity": 0.0},
+    ]
+    actions = {"TNZTP.IS": CorporateActions(splits=((date(2025, 9, 11), split),)), "AAA.IS": CorporateActions()}
+    _sales_in_closing_basis(rows, actions, date(2026, 10, 30))
+    assert round(rows[0]["sold_quantity"], 6) == 512
+    assert round(rows[0]["avg_sell_price"], 6) == 59.80
+    assert round(rows[0]["avg_sold_cost"], 6) == 37.81
+    assert rows[1]["sold_quantity"] == 0.0

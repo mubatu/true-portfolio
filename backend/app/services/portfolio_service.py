@@ -136,6 +136,7 @@ def analyze_portfolio(db: Session, portfolio_id: int) -> dict:
         as_of=yesterday,
         comparison_closes=comparison_closes,
     )
+    _sales_in_closing_basis(result["positions"], actions, date.today())
     rights_issues = _rights_summary(transactions, issues)
     warnings = [
         {"code": "market_data_unavailable", "ticker": ticker}
@@ -465,6 +466,27 @@ def refresh_portfolio_adjusted_prices(db: Session, portfolio_id: int) -> dict:
 
 # How far before the first trade comparison lines are loaded from.
 COMPARISON_LOOKBACK = timedelta(days=10)
+
+
+def _sales_in_closing_basis(
+    positions: list[dict], actions: dict, today: date
+) -> None:
+    """Show a closed position's sales as the broker did: transactions are in
+    today's split basis, so undo the splits after the position closed."""
+    for row in positions:
+        if row["quantity"] > 0 or not row["closed_on"]:
+            continue
+        factor = float(
+            split_factor_between_dates(
+                actions[row["ticker"]].splits, date.fromisoformat(row["closed_on"]), today
+            )
+        )
+        if factor in (0, 1):
+            continue
+        row["sold_quantity"] /= factor
+        for key in ("avg_sold_cost", "avg_sell_price"):
+            if row[key] is not None:
+                row[key] *= factor
 
 
 def _market_data_needs(

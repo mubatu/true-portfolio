@@ -203,7 +203,7 @@
     },
     "positions": {
       "title": "Profit / Loss by Stock",
-      "hint": "Unrealized: today's gain on shares still held. Realized: gains locked in by selling (incl. sold rights). Commissions included.",
+      "hint": "Unrealized: today's gain on shares still held. Realized: gains locked in by selling (incl. sold rights). For closed stocks, quantity is the shares sold and price shows average cost → average sale price. Commissions included.",
       "filterLabel": "Stocks",
       "filters": {
         "all": "All ({{count}})",
@@ -214,7 +214,9 @@
       "weight": "Weight",
       "dividends": "Dividends",
       "totalPct": "Return",
-      "closed": "Closed"
+      "closed": "Closed",
+      "closedOn": "Closed {{date}}",
+      "closedPricesHint": "Shares sold; average cost → average sale price (commission included, in the split basis of the day it closed)."
     },
     "allocation": {
       "title": "Allocation",
