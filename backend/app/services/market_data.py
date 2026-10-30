@@ -7,6 +7,9 @@ Tables (see supabase/migrations/):
   - ``market_data_sync``  stored window and last sync per ticker
   - ``rights_issues``     rights issues Yahoo restated silently; their price
                           factors are applied when reading (see rights.py)
+  - ``split_corrections`` split ratios Yahoo reports wrongly (they replace
+                          Yahoo's split on the same date when reading), and
+                          splits whose older closes Yahoo left unadjusted
 
 Sync rule: a ticker is refreshed when its stored window does not reach
 back to the earliest date someone needs, or forward to the latest date
@@ -46,6 +49,10 @@ class CorporateActions:
 
     dividends: tuple[tuple[date, Decimal], ...] = ()
     """``(ex_date, gross_amount_per_share)`` sorted by date."""
+
+    unadjusted_closes: tuple[tuple[date, Decimal], ...] = ()
+    """``(adjusted_from, ratio)``: closes before ``adjusted_from`` Yahoo left
+    in the pre-split basis; divide them by ``ratio`` (see split_corrections)."""
 
 
 @dataclass(frozen=True)
@@ -227,26 +234,35 @@ def _record_detected_issue(db: Session, ticker: str, detection: rights.Detection
             text(
                 """
                 UPDATE rights_issues
-                SET price_factor = price_factor * :factor, updated_at = now()
+                SET price_factor = price_factor * :factor,
+                    restated_from = COALESCE(restated_from, :restated_from),
+                    updated_at = now()
                 WHERE ticker = :ticker AND ex_date = :ex_date
                 """
             ),
-            {"ticker": ticker, "ex_date": nearby.ex_date, "factor": detection.factor},
+            {
+                "ticker": ticker,
+                "ex_date": nearby.ex_date,
+                "factor": detection.factor,
+                "restated_from": detection.restated_from,
+            },
         )
         return
 
     db.execute(
         text(
             """
-            INSERT INTO rights_issues (ticker, ex_date, price_factor, source, needs_review)
-            VALUES (:ticker, :ex_date, :factor, 'detected', :needs_review)
+            INSERT INTO rights_issues
+                (ticker, ex_date, price_factor, source, needs_review, restated_from)
+            VALUES (:ticker, :ex_date, :factor, 'detected', :needs_review, :restated_from)
             """
         ),
         {
             "ticker": ticker,
             "ex_date": detection.ex_date,
             "factor": detection.factor,
-            "needs_review": not detection.exact,
+            "needs_review": not detection.exact or detection.restated_from is None,
+            "restated_from": detection.restated_from,
         },
     )
 
@@ -265,8 +281,9 @@ def save_rights_issue(
     """Create or update a rights issue from its KAP terms.
 
     The price factor is inferred from the stored closes around the
-    ex-date (caller syncs them first). A detected record for the same
-    event keeps its measured factor and gets the terms and exact date.
+    ex-date (caller syncs them first), and so is the first restated close.
+    A detected record for the same event keeps its measured factor and
+    gets the terms and exact date.
     """
     closes = load_closes(
         db, [ticker], ex_date - timedelta(days=30), ex_date + timedelta(days=10)
@@ -278,6 +295,10 @@ def save_rights_issue(
         if nearby.source == "detected" or not certain:
             factor = nearby.price_factor
             certain = certain or nearby.source == "detected"
+    restated_from = rights.infer_restated_from(closes, ex_date, factor)
+    if restated_from is None and nearby is not None:
+        restated_from = nearby.restated_from
+    if nearby is not None:
         db.execute(
             text("DELETE FROM rights_issues WHERE ticker = :ticker AND ex_date = :ex_date"),
             {"ticker": ticker, "ex_date": nearby.ex_date},
@@ -290,14 +311,17 @@ def save_rights_issue(
         ratio=ratio,
         subscription_price=subscription_price,
         source="manual",
-        needs_review=not certain,
+        needs_review=not certain or (factor > 1 and restated_from is None),
+        restated_from=restated_from,
     )
     db.execute(
         text(
             """
             INSERT INTO rights_issues
-                (ticker, ex_date, price_factor, ratio, subscription_price, source, needs_review)
-            VALUES (:ticker, :ex_date, :factor, :ratio, :price, 'manual', :needs_review)
+                (ticker, ex_date, price_factor, ratio, subscription_price, source,
+                 needs_review, restated_from)
+            VALUES (:ticker, :ex_date, :factor, :ratio, :price, 'manual',
+                    :needs_review, :restated_from)
             """
         ),
         {
@@ -307,6 +331,7 @@ def save_rights_issue(
             "ratio": ratio,
             "price": subscription_price,
             "needs_review": issue.needs_review,
+            "restated_from": restated_from,
         },
     )
     db.commit()
@@ -328,7 +353,8 @@ def load_rights_issues(db: Session, tickers: list[str]) -> dict[str, list[Rights
     rows = db.execute(
         text(
             """
-            SELECT ticker, ex_date, price_factor, ratio, subscription_price, source, needs_review
+            SELECT ticker, ex_date, price_factor, ratio, subscription_price, source,
+                   needs_review, restated_from
             FROM rights_issues
             WHERE ticker IN :tickers
             ORDER BY ticker, ex_date
@@ -338,7 +364,7 @@ def load_rights_issues(db: Session, tickers: list[str]) -> dict[str, list[Rights
     ).fetchall()
 
     issues: dict[str, list[RightsIssue]] = {t: [] for t in tickers}
-    for ticker, ex_date, factor, ratio, price, source, needs_review in rows:
+    for ticker, ex_date, factor, ratio, price, source, needs_review, restated_from in rows:
         issues[ticker].append(
             RightsIssue(
                 ticker=ticker,
@@ -348,6 +374,7 @@ def load_rights_issues(db: Session, tickers: list[str]) -> dict[str, list[Rights
                 subscription_price=Decimal(str(price)) if price is not None else None,
                 source=source,
                 needs_review=needs_review,
+                restated_from=restated_from,
             )
         )
     return issues
@@ -426,10 +453,65 @@ def load_corporate_actions(
         target = splits if kind == "split" else dividends
         target[ticker].append((action_date, Decimal(str(value))))
 
+    ratios: dict[str, dict[date, Decimal]] = {t: {} for t in tickers}
+    unadjusted: dict[str, list[tuple[date, Decimal]]] = {t: [] for t in tickers}
+    for ticker, split_date, ratio, adjusted_from in load_split_corrections(db, tickers):
+        ratios[ticker][split_date] = ratio
+        if adjusted_from is not None:
+            unadjusted[ticker].append((adjusted_from, ratio))
+
     return {
-        t: CorporateActions(splits=tuple(splits[t]), dividends=tuple(dividends[t]))
+        t: CorporateActions(
+            splits=apply_split_corrections(splits[t], ratios[t]),
+            dividends=tuple(dividends[t]),
+            unadjusted_closes=tuple(sorted(unadjusted[t])),
+        )
         for t in tickers
     }
+
+
+def load_split_corrections(
+    db: Session, tickers: list[str]
+) -> list[tuple[str, date, Decimal, date | None]]:
+    """``(ticker, date, ratio, adjusted_from)`` rows of ``split_corrections``."""
+    if not tickers:
+        return []
+    rows = db.execute(
+        text(
+            """
+            SELECT ticker, date, ratio, adjusted_from
+            FROM split_corrections
+            WHERE ticker IN :tickers
+            """
+        ).bindparams(bindparam("tickers", expanding=True)),
+        {"tickers": tickers},
+    ).fetchall()
+    return [(t, d, Decimal(str(r)), a) for t, d, r, a in rows]
+
+
+def apply_split_corrections(
+    splits: list[tuple[date, Decimal]] | tuple[tuple[date, Decimal], ...],
+    corrections: dict[date, Decimal],
+) -> tuple[tuple[date, Decimal], ...]:
+    """Yahoo's splits with a corrected ratio replacing (or adding) its date."""
+    merged = dict(splits)
+    merged.update(corrections)
+    return tuple(sorted(merged.items()))
+
+
+def adjust_unadjusted_closes(
+    closes: dict[date, Decimal],
+    unadjusted: tuple[tuple[date, Decimal], ...],
+) -> dict[date, Decimal]:
+    """Bring closes Yahoo left in a pre-split basis onto the split-adjusted one."""
+    if not unadjusted:
+        return closes
+    adjusted = dict(closes)
+    for adjusted_from, ratio in unadjusted:
+        for d in adjusted:
+            if d < adjusted_from:
+                adjusted[d] /= ratio
+    return adjusted
 
 
 def split_factor_between_dates(

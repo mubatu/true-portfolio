@@ -4,15 +4,18 @@ Rights issues (bedelli sermaye artırımı). Pure: no DB, no network.
 Why this exists
 ---------------
 For BIST rights issues Yahoo records **no** corporate action. Instead it
-silently divides every close (and dividend) before the ex-date by the
-issue's price factor ``f = P_old / P_theoretical``, where
+silently divides the last few closes (4–7 trading days) and every
+dividend before the ex-date by the issue's price factor
+``f = P_old / P_theoretical``, where
 
     P_theoretical = (P_old + ratio × subscription_price) / (1 + ratio)
 
-(verified on KONTR, BRMEN, ORCAY, TUCLK in 2025: the last restated close
-equals the theoretical price Borsa İstanbul announces). Left alone, a
-holder from before the issue would see a fake ~50% loss on a 100% rights
-issue. We undo the restatement — pre-ex closes and dividends × f — so
+(verified on KONTR, BRMEN, ORCAY, TUCLK in 2025 and MARTI in 2026: the
+last restated close equals the theoretical price Borsa İstanbul
+announces; older closes stay real, so the restated run starts with a
+drop of about f). Left alone, a holder from before the issue would see a
+fake ~50% loss on a 100% rights issue. We undo the restatement — closes
+from ``restated_from`` to the ex-date and earlier dividends × f — so
 prices are real, and the ex-date drop is real too. What the holder did
 with the rights then decides the outcome:
 
@@ -38,6 +41,8 @@ SAME_TOLERANCE = Decimal("0.002")
 MIN_FACTOR = Decimal("1.01")
 # Two records for one ticker closer than this are the same event.
 SAME_EVENT_WINDOW = timedelta(days=10)
+# Trading days before an ex-date searched for the start of the restated run.
+RESTATED_SEARCH_DAYS = 15
 
 
 @dataclass(frozen=True)
@@ -49,6 +54,8 @@ class RightsIssue:
     subscription_price: Decimal | None = None
     source: str = "manual"
     needs_review: bool = False
+    restated_from: date | None = None
+    """First close Yahoo restated; None = every close before the ex-date."""
 
 
 @dataclass(frozen=True)
@@ -58,6 +65,7 @@ class Detection:
     """Extra factor Yahoo applied since the stored copy (stored / fresh)."""
     exact: bool
     """False when the ex-date had to be estimated (no stored data after it)."""
+    restated_from: date | None = None
 
 
 # ------------------------------------------------------------------
@@ -73,13 +81,22 @@ def cumulative_factor(issues: list[RightsIssue], on: date) -> Decimal:
     return factor
 
 
+def close_factor(issues: list[RightsIssue], on: date) -> Decimal:
+    """Like ``cumulative_factor``, but only issues whose restated run covers ``on``."""
+    factor = Decimal(1)
+    for issue in issues:
+        if on < issue.ex_date and (issue.restated_from is None or issue.restated_from <= on):
+            factor *= issue.price_factor
+    return factor
+
+
 def correct_closes(
     closes: dict[date, Decimal], issues: list[RightsIssue]
 ) -> dict[date, Decimal]:
-    """Undo Yahoo's rights restatement: closes before each ex-date × factor."""
+    """Undo Yahoo's rights restatement: restated closes × factor."""
     if not issues:
         return closes
-    return {d: c * cumulative_factor(issues, d) for d, c in closes.items()}
+    return {d: c * close_factor(issues, d) for d, c in closes.items()}
 
 
 def correct_dividend(
@@ -131,6 +148,29 @@ def infer_price_factor(
     return Decimal(1), True
 
 
+def infer_restated_from(
+    closes: dict[date, Decimal], ex_date: date, factor: Decimal
+) -> date | None:
+    """First close Yahoo restated before ``ex_date``, from Yahoo's closes.
+
+    The restated run starts where the price falls by about ``factor`` from
+    one day to the next (real day-to-day moves stay within ±10%). Among the
+    last ``RESTATED_SEARCH_DAYS`` closes, the drop closest to ``factor`` wins
+    if it is closer to ``factor`` than to no change; otherwise None.
+    """
+    if factor <= 1:
+        return None
+    before = sorted(d for d in closes if d < ex_date)[-(RESTATED_SEARCH_DAYS + 1):]
+    best: date | None = None
+    best_distance = math.inf
+    for prev, day in zip(before, before[1:]):
+        drop = _log_distance(closes[prev], closes[day])
+        distance = _log_distance(closes[prev] / closes[day], factor)
+        if closes[prev] > closes[day] and distance < drop and distance < best_distance:
+            best, best_distance = day, distance
+    return best
+
+
 def _log_distance(a: Decimal, b: Decimal) -> float:
     return abs(math.log(float(a) / float(b)))
 
@@ -146,9 +186,9 @@ def detect_restatement(
 ) -> Detection | None:
     """Find a silent restatement between a stored and a fresh download.
 
-    Pattern: on overlapping days, stored/fresh is a constant ``g > 1`` up to
-    some day and ≈ 1 after it (or up to the end of the overlap). A split
-    with ratio ≈ g in that place explains it instead and is ignored.
+    Pattern: on overlapping days, stored/fresh is ≈ 1, then a constant
+    ``g > 1`` for a run of days, then ≈ 1 again (or the overlap ends). A
+    split with ratio ≈ g in that place explains it instead and is ignored.
     """
     overlap = sorted(d for d in stored if d in fresh)
     if len(overlap) < 3:
@@ -159,13 +199,14 @@ def detect_restatement(
     if not any(changed):
         return None
 
+    first_changed = min(i for i, c in enumerate(changed) if c)
     last_changed = max(i for i, c in enumerate(changed) if c)
-    prefix = ratios[: last_changed + 1]
-    if any(not c for c in changed[: last_changed + 1]):
-        return None  # mixed pattern: ordinary revisions, not a restatement
+    run = ratios[first_changed : last_changed + 1]
+    if len(run) < 2 or not all(changed[first_changed : last_changed + 1]):
+        return None  # one-off or mixed pattern: ordinary revisions, not a restatement
 
-    g = sorted(prefix)[len(prefix) // 2]
-    if g < MIN_FACTOR or any(abs(r / g - 1) > SAME_TOLERANCE for r in prefix):
+    g = sorted(run)[len(run) // 2]
+    if g < MIN_FACTOR or any(abs(r / g - 1) > SAME_TOLERANCE for r in run):
         return None
 
     last_restated = overlap[last_changed]
@@ -179,7 +220,12 @@ def detect_restatement(
         if last_restated < split_date <= split_window_end and abs(split_ratio / g - 1) < Decimal("0.01"):
             return None
 
-    return Detection(ex_date=ex_date, factor=g, exact=exact)
+    restated_from = (
+        overlap[first_changed]
+        if first_changed > 0
+        else infer_restated_from(fresh, ex_date, g)
+    )
+    return Detection(ex_date=ex_date, factor=g, exact=exact, restated_from=restated_from)
 
 
 def _estimate_ex_date(fresh: dict[date, Decimal], last_known_restated: date) -> date:

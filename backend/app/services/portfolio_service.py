@@ -6,7 +6,8 @@ loaded data to the pure ``analysis`` module.
 Price basis: ``market_prices`` holds Yahoo's raw closes — restated for
 splits, not for dividends — matching the split-adjusted transaction
 fields. Cash dividends are counted separately as income by the ledger.
-Rights issues Yahoo restated silently are undone on read (``rights``).
+Rights issues Yahoo restated silently are undone on read (``rights``), and
+so are splits Yahoo applied to only part of the history (``split_corrections``).
 """
 
 from datetime import date, timedelta
@@ -19,6 +20,7 @@ from app.core.markets import get_dividend_withholding_rate, get_market_benchmark
 from app.services import analysis
 from app.services.ledger import DividendEvent, LedgerTransaction, replay
 from app.services.market_data import (
+    adjust_unadjusted_closes,
     delete_rights_issue,
     ensure_market_data,
     load_closes,
@@ -73,7 +75,12 @@ def analyze_portfolio(db: Session, portfolio_id: int) -> dict:
     benchmark_closes = closes.pop(benchmark, {}) if benchmark else {}
     actions = load_corporate_actions(db, tickers)
     issues = load_rights_issues(db, tickers)
-    closes = {t: correct_closes(c, issues.get(t, [])) for t, c in closes.items()}
+    closes = {
+        t: correct_closes(
+            adjust_unadjusted_closes(c, actions[t].unadjusted_closes), issues.get(t, [])
+        )
+        for t, c in closes.items()
+    }
 
     dividends = sorted(
         (

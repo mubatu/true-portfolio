@@ -38,6 +38,35 @@ def test_split_factor_window_is_open_closed():
     assert split_factor_between_dates(splits, date(2025, 1, 10), date(2026, 1, 1)) == 1
 
 
+def test_split_correction_replaces_or_adds_yahoo_split():
+    yahoo_splits = [(date(2025, 3, 6), D("763587.12")), (date(2025, 9, 11), D("1.83"))]
+    corrected = market_data.apply_split_corrections(
+        yahoo_splits, {date(2025, 3, 6): D("1.7"), date(2024, 1, 2): D(2)}
+    )
+    assert corrected == (
+        (date(2024, 1, 2), D(2)),
+        (date(2025, 3, 6), D("1.7")),
+        (date(2025, 9, 11), D("1.83")),
+    )
+    assert market_data.apply_split_corrections(yahoo_splits, {}) == tuple(yahoo_splits)
+
+
+def test_closes_yahoo_left_unadjusted_are_divided():
+    """EUREN 2024: Yahoo adjusted Dec 2–4 for the Dec 5 split, not Nov 29."""
+    closes = {
+        date(2024, 11, 29): D("11.06"),
+        date(2024, 12, 2): D("4.031619"),
+        date(2024, 12, 5): D("4.21"),
+    }
+    adjusted = market_data.adjust_unadjusted_closes(
+        closes, ((date(2024, 12, 2), D("2.7631577")),)
+    )
+    assert adjusted[date(2024, 11, 29)].quantize(D("0.01")) == D("4.00")
+    assert adjusted[date(2024, 12, 2)] == D("4.031619")
+    assert adjusted[date(2024, 12, 5)] == D("4.21")
+    assert market_data.adjust_unadjusted_closes(closes, ()) is closes
+
+
 # -- sync decisions -------------------------------------------------------
 
 @pytest.fixture

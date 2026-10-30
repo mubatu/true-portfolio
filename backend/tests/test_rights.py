@@ -1,5 +1,6 @@
 """Rights-issue logic, checked against real KONTR data (100% rights issue,
-subscription 1 TL, ex-date 2025-12-09, BIST theoretical price 15.58)."""
+subscription 1 TL, ex-date 2025-12-09, BIST theoretical price 15.58;
+Yahoo restated Dec 1–8 only)."""
 
 from datetime import date
 from decimal import Decimal as D
@@ -12,6 +13,7 @@ from app.services.rights import (
     correct_dividend,
     detect_restatement,
     infer_price_factor,
+    infer_restated_from,
 )
 
 EX = date(2025, 12, 9)
@@ -33,6 +35,9 @@ F = (2 * D("15.58") - 1) / D("15.58")  # 30.16 / 15.58
 REAL = {d: (c * F).quantize(D("0.01")) if d < EX else c for d, c in YAHOO.items()}
 
 KONTR = RightsIssue("KONTR.IS", EX, F, D(1), D(1))
+
+# Yahoo leaves closes before its restated run real: Nov 28 printed 33.40.
+YAHOO_FULL = {date(2025, 11, 28): D("33.40")} | YAHOO
 
 
 def test_real_closes_are_on_tick_after_correction():
@@ -56,6 +61,28 @@ def test_correct_dividend_matches_kap():
 
 def test_dividend_after_ex_date_is_untouched():
     assert correct_dividend(date(2026, 7, 1), D("0.5"), [KONTR]) == D("0.5")
+
+
+def test_closes_before_restated_run_are_untouched():
+    """Yahoo restated only Dec 1–8; Nov 28 is still the real close."""
+    windowed = RightsIssue("KONTR.IS", EX, F, D(1), D(1), restated_from=date(2025, 12, 1))
+    corrected = correct_closes(YAHOO_FULL, [windowed])
+    assert corrected[date(2025, 11, 28)] == D("33.40")
+    assert corrected[date(2025, 12, 1)].quantize(D("0.01")) == D("33.26")
+    assert corrected[EX] == YAHOO[EX]
+
+
+def test_dividends_are_corrected_outside_restated_run():
+    windowed = RightsIssue("KONTR.IS", EX, F, D(1), D(1), restated_from=date(2025, 12, 1))
+    assert correct_dividend(date(2025, 7, 8), D("0.015895"), [windowed]) == (
+        correct_dividend(date(2025, 7, 8), D("0.015895"), [KONTR])
+    )
+
+
+def test_infer_restated_from_finds_the_drop():
+    assert infer_restated_from(YAHOO_FULL, EX, F) == date(2025, 12, 1)
+    # Real (unrestated) closes have no drop of about F.
+    assert infer_restated_from({date(2025, 11, 28): D("33.40")} | REAL, EX, F) is None
 
 
 def test_factors_of_several_issues_compound():
@@ -91,6 +118,16 @@ def test_detect_with_stored_data_on_both_sides():
     assert detection.exact
     assert detection.ex_date == EX
     assert abs(detection.factor - F) < D("0.001")
+
+
+def test_detect_restated_run_after_unchanged_days():
+    """Yahoo restates only the days before the ex-date; older closes match."""
+    stored = {date(2025, 11, 28): D("33.40")} | REAL
+    detection = detect_restatement(stored, YAHOO_FULL, fresh_splits={})
+    assert detection is not None
+    assert detection.exact
+    assert detection.ex_date == EX
+    assert detection.restated_from == date(2025, 12, 1)
 
 
 def test_detect_when_stored_copy_ends_before_ex_date():
