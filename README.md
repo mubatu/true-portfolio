@@ -1,6 +1,6 @@
 # True Portfolio
 
-**[portfolio.mubatu.com](https://portfolio.mubatu.com)**
+**▶ Live: [portfolio.mubatu.com](https://portfolio.mubatu.com)**
 
 See how your Borsa Istanbul (BIST) stock and TEFAS fund portfolios really did over time, not just today's profit and loss.
 
