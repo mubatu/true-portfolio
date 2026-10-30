@@ -16,6 +16,7 @@
     "noData": "No data available",
     "toggleTheme": "Toggle theme",
     "language": "Language",
+    "mainNav": "Main menu",
     "retry": "Try again"
   },
   "landing": {
@@ -296,6 +297,7 @@
       "totalPct": "Return",
       "closed": "Closed",
       "closedOn": "Closed {{date}}",
+      "short": { "unrealized": "Unrealized", "realized": "Realized" },
       "closedPricesHint": "Shares sold; average cost → average sale price (commission included, in the split basis of the day it closed)."
     },
     "allocation": {

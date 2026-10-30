@@ -55,7 +55,7 @@ export function Insights({
   return (
     <Panel className="p-4 md:p-6 mb-6" aria-labelledby="insights-title">
       <PanelHeader id="insights-title" icon={Sparkles} title={t('analyze.insights.title')} description={t('analyze.insights.hint')} className="mb-4" />
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Insight icon={Activity} label={t('analyze.insights.days')}>
           {data.days ? (
             <>
@@ -122,7 +122,7 @@ export function Insights({
 
 function Insight({ icon: Icon, label, children }: { icon: LucideIcon; label: string; children: ReactNode }) {
   return (
-    <div className="rounded-xl border bg-background/40 p-4 flex flex-col">
+    <div className="min-w-0 rounded-xl border bg-background/40 p-4 flex flex-col">
       <p className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground mb-2">
         <Icon className="h-3.5 w-3.5" aria-hidden="true" />
         {label}
@@ -154,8 +154,8 @@ function Mover({ label, ticker, value, pct, tone }: { label: string; ticker: str
         <p className="text-xs text-muted-foreground">{label}</p>
         <p className="font-semibold truncate">{ticker}</p>
       </div>
-      <div className="text-right">
-        <p className="font-semibold tabular-nums" style={{ color: plColor(tone) }}>{value}</p>
+      <div className="shrink-0 text-right">
+        <p className="font-semibold tabular-nums whitespace-nowrap" style={{ color: plColor(tone) }}>{value}</p>
         <p className="text-xs tabular-nums" style={{ color: plColor(tone) }}>{pct}</p>
       </div>
     </div>

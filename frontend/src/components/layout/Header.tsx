@@ -1,8 +1,9 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Moon, Sun, LogOut, User, ChevronDown, Briefcase, Languages, LayoutDashboard, Compass, type LucideIcon } from 'lucide-react';
+import { Moon, Sun, LogOut, User, ChevronDown, Languages } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Logo } from './Logo';
+import { useNavItems } from './navItems';
 import { LOCALES } from '@/config';
 import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/hooks/useAuth';
@@ -36,23 +37,7 @@ export function Header() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Portfolio pages live under "My Portfolios". The dev preview mounts the
-  // same pages under /dev.
-  const path = location.pathname.replace(/^\/dev(?=\/)/, '');
-  // Explore is open to everyone; the rest needs an account.
-  const explore = { to: '/explore', label: t('explore.title'), icon: Compass, active: path.startsWith('/explore') };
-  const navItems: { to: string; label: string; icon: LucideIcon; active: boolean }[] = isAuthenticated
-    ? [
-        explore,
-        { to: '/overview', label: t('overview.title'), icon: LayoutDashboard, active: path === '/overview' },
-        {
-          to: '/my-portfolios',
-          label: t('common.myPortfolios'),
-          icon: Briefcase,
-          active: path === '/my-portfolios' || path.startsWith('/portfolio/'),
-        },
-      ]
-    : [explore];
+  const navItems = useNavItems();
 
   const getUserInitials = () => {
     const name = user?.user_metadata?.full_name;
@@ -78,6 +63,7 @@ export function Header() {
           <nav
             // Signed out there is one item (Explore): on phones it sits in the
             // row between the logo and the buttons instead of centered over them.
+            // Signed in, phones get the bottom bar (BottomNav) instead.
             className={`${isAuthenticated ? 'hidden' : 'flex'} md:flex items-center gap-2 md:absolute md:left-1/2 md:-translate-x-1/2`}
           >
             {navItems.map(({ to, label, icon: Icon, active }) => (
@@ -156,21 +142,6 @@ export function Header() {
                     <p className="text-xs text-muted-foreground truncate">
                       {user?.email}
                     </p>
-                  </div>
-
-                  {/* Mobile nav items */}
-                  <div className="md:hidden py-1 border-b">
-                    {navItems.map(({ to, label, icon: Icon }) => (
-                      <Link
-                        key={to}
-                        to={to}
-                        onClick={() => setDropdownOpen(false)}
-                        className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent transition-colors"
-                      >
-                        <Icon className="h-4 w-4" />
-                        {label}
-                      </Link>
-                    ))}
                   </div>
 
                   {/* Menu items */}

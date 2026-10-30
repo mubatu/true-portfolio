@@ -1,14 +1,18 @@
 import { useTranslation } from 'react-i18next';
 import { Coins } from 'lucide-react';
 import { plColor, type Formatters } from './format';
-import { FOOT_ROW_CLASS, HEAD_BG, HEAD_CELL_CLASS, TABLE_SCROLL_CLASS } from './tableStyles';
+import { CARD_CLASS, CARD_FOOT_CLASS, FOOT_ROW_CLASS, HEAD_BG, HEAD_CELL_CLASS, TABLE_SCROLL_CLASS } from './tableStyles';
 import { Panel, PanelHeader } from '@/components/ui/Panel';
 import type { DividendSummary } from './types';
+import { PHONE_QUERY, useMediaQuery } from '@/hooks/useMediaQuery';
 
 const MUTED = 'hsl(var(--muted-foreground))';
 const CELL = 'px-3 py-3 text-right tabular-nums whitespace-nowrap';
 
-/** Dividends credited to the safe, newest first; styled like the per-stock P/L table. */
+/**
+ * Dividends credited to the safe, newest first; styled like the per-stock P/L table.
+ * Phones: one card per dividend, net amount on the right.
+ */
 export function DividendsTable({
   dividends,
   fmt,
@@ -19,6 +23,7 @@ export function DividendsTable({
   displayTicker: (ticker: string) => string;
 }) {
   const { t } = useTranslation();
+  const isPhone = useMediaQuery(PHONE_QUERY);
   const head: [string, 'left'?][] = [
     [t('analyze.table.exDate'), 'left'],
     [t('analyze.table.ticker'), 'left'],
@@ -45,6 +50,38 @@ export function DividendsTable({
           style={{ borderColor: 'hsl(var(--border))', color: MUTED }}
         >
           {t('analyze.noDividends')}
+        </div>
+      ) : isPhone ? (
+        <div className="border-t">
+          <ul className={TABLE_SCROLL_CLASS}>
+            {dividends.receipts.map((d) => (
+              <li key={`${d.ticker}-${d.ex_date}`} className={CARD_CLASS} style={{ borderColor: 'hsl(var(--border))' }}>
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="font-semibold">{displayTicker(d.ticker)}</span>
+                  <span className="font-semibold tabular-nums whitespace-nowrap" style={{ color: plColor(d.net_amount) }}>
+                    {fmt.money(d.net_amount)}
+                  </span>
+                </div>
+                <div className="mt-1 flex items-baseline justify-between gap-3 text-xs text-muted-foreground">
+                  <span className="tabular-nums whitespace-nowrap">
+                    {fmt.date(d.ex_date)} · {fmt.number(d.quantity)} × {fmt.money(d.gross_per_share)}
+                  </span>
+                  <span className="text-right tabular-nums whitespace-nowrap">
+                    {t('analyze.table.gross')} {fmt.money(d.gross_amount)} · {fmt.rate(d.withholding_rate)}
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <div className={CARD_FOOT_CLASS}>
+            <span>{t('analyze.table.sum')}</span>
+            <span className="text-right tabular-nums" style={{ color: plColor(dividends.total_net) }}>
+              {fmt.money(dividends.total_net)}
+              <span className="ml-2 text-xs font-normal text-muted-foreground">
+                {t('analyze.table.gross')} {fmt.money(dividends.total_gross)}
+              </span>
+            </span>
+          </div>
         </div>
       ) : (
         <div className="border-t">

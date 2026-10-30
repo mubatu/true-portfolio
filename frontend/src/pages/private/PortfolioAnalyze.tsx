@@ -5,6 +5,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQuery } from '@tanstack/react-query';
 import { AlertTriangle, Plus, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { InfoNote } from '@/components/ui/Panel';
 import { analyzePortfolio, getPortfolioBySlug } from '@/services/portfolioService';
 import { getMarketCurrency, toDisplayTicker } from '@/config';
 import { AllocationChart } from '@/components/analysis/AllocationChart';
@@ -124,9 +125,7 @@ export function PortfolioAnalyze() {
           </div>
           <PositionsTable positions={analysis.positions} fmt={fmt} displayTicker={displayTicker} />
           <DividendsTable dividends={analysis.dividends} fmt={fmt} displayTicker={displayTicker} />
-          <p className="text-xs mt-8" style={{ color: 'hsl(var(--muted-foreground))' }}>
-            {t('analyze.subtitle')}
-          </p>
+          <InfoNote className="mt-8">{t('analyze.subtitle')}</InfoNote>
         </>
       )}
     </div>

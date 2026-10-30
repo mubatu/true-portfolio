@@ -2,6 +2,7 @@ import { lazy, Suspense, useState } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { User } from '@supabase/supabase-js';
+import { BottomNav } from '@/components/layout/BottomNav';
 import { Header } from '@/components/layout/Header';
 import { PageLoader } from '@/components/layout/PageLoader';
 import { AuthContext, type AuthContextType } from '@/hooks/authContext';
@@ -70,6 +71,7 @@ export default function DevPreview() {
               </Routes>
             </Suspense>
           </main>
+          <BottomNav />
         </div>
       </AuthContext.Provider>
     </QueryClientProvider>

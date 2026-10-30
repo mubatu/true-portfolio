@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Equal, Plus, type LucideIcon } from 'lucide-react';
-import { Panel } from '@/components/ui/Panel';
+import { InfoNote, Panel } from '@/components/ui/Panel';
 import { cn } from '@/lib/utils';
 import { DailyChange } from './DailyChange';
 import { plColor, type Formatters } from './format';
@@ -64,9 +64,7 @@ export function FundOverview({
                 </>
               )}
             </p>
-            <p className="text-xs mt-3 max-w-sm" style={{ color: 'hsl(var(--muted-foreground))' }}>
-              {t('analyze.fund.unitPriceHint')}
-            </p>
+            <InfoNote className="mt-3 max-w-sm">{t('analyze.fund.unitPriceHint')}</InfoNote>
           </>
         ) : (
           <span className="text-4xl font-bold mt-1" style={{ color: 'hsl(var(--muted-foreground))' }}>

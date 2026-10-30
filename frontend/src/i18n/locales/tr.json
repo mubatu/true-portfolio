@@ -16,6 +16,7 @@
     "noData": "Veri yok",
     "toggleTheme": "Temayı değiştir",
     "language": "Dil",
+    "mainNav": "Ana menü",
     "retry": "Tekrar dene"
   },
   "landing": {
@@ -295,6 +296,7 @@
       "totalPct": "Getiri",
       "closed": "Kapandı",
       "closedOn": "Kapandı {{date}}",
+      "short": { "unrealized": "Gerçekleşmemiş", "realized": "Gerçekleşen" },
       "closedPricesHint": "Satılan adet; ortalama alış maliyeti → ortalama satış fiyatı (komisyonlar dahil, kapandığı günün bölünme bazında)."
     },
     "allocation": {

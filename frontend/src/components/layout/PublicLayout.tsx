@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
+import { BottomNav } from './BottomNav';
 import { Header } from './Header';
 import { PageLoader } from './PageLoader';
 
@@ -14,6 +15,7 @@ export function PublicLayout() {
           <Outlet />
         </Suspense>
       </main>
+      <BottomNav />
     </div>
   );
 }

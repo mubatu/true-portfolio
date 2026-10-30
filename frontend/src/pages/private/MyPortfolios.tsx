@@ -87,7 +87,7 @@ export function MyPortfolios() {
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold">{t('myPortfolios.title')}</h1>
-          <p className="text-sm mt-1 text-muted-foreground">{t('myPortfolios.subtitle')}</p>
+          <p className="hidden sm:block text-sm mt-1 text-muted-foreground">{t('myPortfolios.subtitle')}</p>
         </div>
         {portfolios.length > 0 && createButton}
       </div>
@@ -125,15 +125,15 @@ export function MyPortfolios() {
           {regular.length > 0 && renderCards(regular)}
           {experimental.length > 0 && (
             <section className={regular.length > 0 ? 'mt-10' : undefined} aria-labelledby="experimental-title">
-              <div className="flex items-start gap-3 mb-4">
-                <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+              <div className="flex items-center sm:items-start gap-3 mb-4">
+                <span className="sm:mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
                   <FlaskConical className="h-[18px] w-[18px]" aria-hidden="true" />
                 </span>
                 <div>
                   <h2 id="experimental-title" className="text-base font-semibold leading-tight">
                     {t('myPortfolios.experimental.title')}
                   </h2>
-                  <p className="text-sm mt-1 text-muted-foreground">{t('myPortfolios.experimental.hint')}</p>
+                  <p className="hidden sm:block text-sm mt-1 text-muted-foreground">{t('myPortfolios.experimental.hint')}</p>
                 </div>
               </div>
               {renderCards(experimental)}

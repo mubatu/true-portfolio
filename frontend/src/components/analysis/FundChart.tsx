@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Area,
@@ -14,7 +14,9 @@ import {
   YAxis,
 } from 'recharts';
 import { LineChart as LineChartIcon } from 'lucide-react';
-import { Panel, PanelHeader } from '@/components/ui/Panel';
+import { InfoNote, Panel, PanelHeader } from '@/components/ui/Panel';
+import { PHONE_QUERY, useMediaQuery } from '@/hooks/useMediaQuery';
+import { cn } from '@/lib/utils';
 import { Segmented } from '@/components/ui/Segmented';
 import { plColor, type Formatters } from './format';
 import { RANGE_KEYS, anchoredLine, periodStats, sliceRange, unitPrice, type RangeKey } from './performance';
@@ -45,6 +47,15 @@ const GAIN = 'hsl(var(--gain))';
 const LOSS = 'hsl(var(--loss))';
 const GOLD = 'var(--series-gold)';
 const USD = 'var(--series-usd)';
+
+const Y_AXIS_WIDTH = 72;
+const PHONE_Y_AXIS_WIDTH = 60;
+const X_AXIS_HEIGHT = 30;
+const CHART_MARGIN = { top: 12, right: 12, left: 0, bottom: 4 };
+/** Phones: room per day, so the chart is wider than the screen and scrolls sideways. */
+const PHONE_PX_PER_POINT = 3;
+/** Phones: the tooltip's width, to keep it on screen (see phoneTooltipPosition). */
+const PHONE_TOOLTIP_WIDTH = 196;
 
 /** Lines drawn next to the unit price, all started from the same point. */
 const COMPARISONS = [
@@ -99,6 +110,10 @@ export function FundChart({
   const [mode, setMode] = useState<Mode>('unit');
   const [shown, setShown] = useState<Record<ComparisonKey, boolean>>({ benchmark: true, gold: true, usd: true });
   const [shownPortfolios, setShownPortfolios] = useState<Record<string, boolean>>({});
+  const isPhone = useMediaQuery(PHONE_QUERY);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  // Phones: where the tooltip goes (see onPhoneMouseMove).
+  const [phoneTooltipX, setPhoneTooltipX] = useState(0);
 
   const slice = useMemo(() => sliceRange(points, range), [points, range]);
   const stats = useMemo(() => periodStats(slice), [slice]);
@@ -157,6 +172,215 @@ export function FundChart({
     drawdown && drawdown.peakDate && drawdown.peakDate >= (rows[0]?.date ?? '') ? drawdown.peakDate : rows[0]?.date;
 
   const formatAxis = (v: number) => (mode === 'unit' ? fmt.unit(v) : fmt.compactMoney(v));
+
+  // Phones: open the scrolling chart at its latest date.
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollLeft = el.scrollWidth;
+  }, [isPhone, rows.length, mode]);
+
+  // The chart is wider than the screen, so recharts would place the tooltip
+  // off screen: pin it to the top corner of the visible part, away from the finger.
+  const onPhoneMouseMove = (state: { activeCoordinate?: { x: number } }) => {
+    const el = scrollRef.current;
+    if (!el || !state.activeCoordinate) return;
+    const onLeft = state.activeCoordinate.x - el.scrollLeft < el.clientWidth / 2;
+    const x = onLeft ? Math.max(el.scrollLeft, el.scrollLeft + el.clientWidth - PHONE_TOOLTIP_WIDTH) : el.scrollLeft;
+    if (x !== phoneTooltipX) setPhoneTooltipX(x);
+  };
+
+  // The comparison lines, the value line and its area. ``ghost`` copies
+  // draw nothing: they give the separate phone Y axis the same domain.
+  const renderSeries = (ghost: boolean) => (
+    <>
+      {mode === 'unit' &&
+        drawn.map((c) => (
+          <Line
+            key={c.key}
+            type="monotone"
+            dataKey={(row: ChartRow) => row.comparisons[c.key]?.value ?? null}
+            stroke={ghost ? 'none' : c.color}
+            strokeWidth={1.5}
+            strokeDasharray="5 4"
+            dot={false}
+            connectNulls
+            isAnimationActive={false}
+          />
+        ))}
+      {mode === 'unit' &&
+        drawnPortfolios.map((l) => (
+          <Line
+            key={l.key}
+            type="monotone"
+            dataKey={(row: ChartRow) => row.portfolios[l.key]?.value ?? null}
+            stroke={ghost ? 'none' : l.color}
+            strokeWidth={1.5}
+            dot={false}
+            connectNulls
+            isAnimationActive={false}
+          />
+        ))}
+      {mode === 'value' && (
+        <Line
+          type="stepAfter"
+          dataKey="secondary"
+          stroke={ghost ? 'none' : MUTED}
+          strokeWidth={1.5}
+          strokeDasharray="5 4"
+          dot={false}
+          isAnimationActive={false}
+        />
+      )}
+      <Area
+        type="monotone"
+        dataKey="value"
+        stroke={ghost ? 'none' : mode === 'pl' ? 'url(#plStroke)' : PRIMARY}
+        strokeWidth={2}
+        fill={ghost ? 'none' : mode === 'pl' ? 'url(#plFill)' : 'url(#unitFill)'}
+        isAnimationActive={false}
+        activeDot={ghost ? false : { r: 4, strokeWidth: 2, stroke: 'hsl(var(--card))' }}
+      />
+    </>
+  );
+
+  const renderYAxis = (hide: boolean, width = Y_AXIS_WIDTH) => (
+    <YAxis
+      hide={hide}
+      width={width}
+      tickFormatter={(v) => formatAxis(Number(v))}
+      tick={{ fontSize: 12, fill: MUTED }}
+      tickLine={false}
+      axisLine={false}
+      domain={['auto', 'auto']}
+    />
+  );
+
+  // ``split`` (phones): no Y axis of its own (it sits beside the scrolling
+  // chart) and the tooltip stays inside the visible part.
+  const renderChart = (split: boolean) => (
+    <ComposedChart data={rows} margin={CHART_MARGIN} onMouseMove={split ? onPhoneMouseMove : undefined}>
+      <defs>
+        <linearGradient id="unitFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset={0} stopColor={PRIMARY} stopOpacity={0.22} />
+          <stop offset={1} stopColor={PRIMARY} stopOpacity={0.02} />
+        </linearGradient>
+        <linearGradient id="plFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset={0} stopColor={GAIN} stopOpacity={0.25} />
+          <stop offset={zeroOffset} stopColor={GAIN} stopOpacity={0.04} />
+          <stop offset={zeroOffset} stopColor={LOSS} stopOpacity={0.04} />
+          <stop offset={1} stopColor={LOSS} stopOpacity={0.25} />
+        </linearGradient>
+        <linearGradient id="plStroke" x1="0" y1="0" x2="0" y2="1">
+          <stop offset={zeroOffset} stopColor={GAIN} />
+          <stop offset={zeroOffset} stopColor={LOSS} />
+        </linearGradient>
+      </defs>
+      <CartesianGrid strokeDasharray="4 4" stroke="hsl(var(--border))" vertical={false} />
+      <XAxis
+        dataKey="date"
+        height={X_AXIS_HEIGHT}
+        minTickGap={40}
+        tickFormatter={(v) => fmt.shortDate(String(v))}
+        tick={{ fontSize: 12, fill: MUTED }}
+        tickLine={false}
+        axisLine={{ stroke: 'hsl(var(--border))' }}
+      />
+      {renderYAxis(split)}
+
+      {mode === 'pl' && <ReferenceLine y={0} stroke={MUTED} strokeOpacity={0.6} />}
+      {mode === 'unit' && <ReferenceLine y={1} stroke={MUTED} strokeOpacity={0.35} strokeDasharray="2 4" />}
+
+      {mode === 'unit' && drawdown && drawdownStart && (
+        <ReferenceArea x1={drawdownStart} x2={drawdown.troughDate} fill={LOSS} fillOpacity={0.045} ifOverflow="hidden" />
+      )}
+
+      {renderSeries(false)}
+
+      {maxRow && (
+        <ReferenceDot x={maxRow.date} y={maxRow.value} r={5} fill={GAIN} stroke="hsl(var(--card))" strokeWidth={2} />
+      )}
+      {minRow && minRow !== maxRow && (
+        <ReferenceDot x={minRow.date} y={minRow.value} r={5} fill={LOSS} stroke="hsl(var(--card))" strokeWidth={2} />
+      )}
+
+      <Tooltip
+        cursor={{ stroke: MUTED, strokeDasharray: '3 3' }}
+        position={split ? { x: phoneTooltipX, y: 0 } : undefined}
+        isAnimationActive={!split}
+        content={({ active, payload }) => {
+          const row = active ? (payload?.[0]?.payload as ChartRow | undefined) : undefined;
+          if (!row) return null;
+          const p = row.point;
+          return (
+            <div
+              className="rounded-lg border px-2.5 py-2 text-xs shadow-lg min-w-[184px] max-sm:w-[196px] max-sm:min-w-0 backdrop-blur-sm"
+              style={{ borderColor: 'hsl(var(--border))', backgroundColor: 'hsl(var(--popover) / 0.92)' }}
+            >
+              <p className="text-[11px] font-medium" style={{ color: MUTED }}>
+                {fmt.date(p.date)}
+              </p>
+              <p className="flex items-baseline justify-between gap-3 mt-0.5">
+                <span className="text-sm font-semibold tabular-nums">{fmt.unit(unitPrice(p))}</span>
+                <span className="tabular-nums font-medium" style={{ color: plColor(row.daily) }}>
+                  {fmt.pct(row.daily)}
+                  <span className="ml-1 font-normal" style={{ color: MUTED }}>
+                    {t('analyze.chart.dailyShort')}
+                  </span>
+                </span>
+              </p>
+
+              <p className="mt-2 mb-0.5 text-[10px] font-medium uppercase tracking-wide" style={{ color: MUTED }}>
+                {t('analyze.chart.sinceRangeStart')}
+              </p>
+              <TooltipLine dot={PRIMARY} label={t('analyze.performance.portfolio')} value={fmt.pct(row.sinceStart)} color={plColor(row.sinceStart)} strong />
+              {mode === 'unit' &&
+                drawn.map((c) => {
+                  const cmp = row.comparisons[c.key];
+                  return (
+                    cmp && (
+                      <TooltipLine
+                        key={c.key}
+                        dot={c.color}
+                        label={t(`analyze.chart.comparisons.${c.key}`)}
+                        value={fmt.pct(cmp.pct)}
+                        color={plColor(cmp.pct)}
+                      />
+                    )
+                  );
+                })}
+              {mode === 'unit' &&
+                drawnPortfolios.map((l) => {
+                  const own = row.portfolios[l.key];
+                  return (
+                    own && (
+                      <TooltipLine
+                        key={l.key}
+                        dot={l.color}
+                        label={l.label}
+                        value={fmt.pct(own.pct)}
+                        color={plColor(own.pct)}
+                      />
+                    )
+                  );
+                })}
+
+              {!hideAmounts && (
+                <>
+                  <div className="my-1.5 border-t" style={{ borderColor: 'hsl(var(--border))' }} />
+                  <TooltipLine label={t('analyze.performance.totalValue')} value={fmt.money(p.total_value)} />
+                  <TooltipLine label={t('analyze.performance.invested')} value={fmt.money(p.invested)} />
+                  <TooltipLine label={t('analyze.performance.totalPl')} value={fmt.signedMoney(p.total_pl)} color={plColor(p.total_pl)} strong />
+                  <p className="text-right tabular-nums text-[11px]" style={{ color: plColor(p.total_pl) }}>
+                    {fmt.pct(p.pl_pct)}
+                  </p>
+                </>
+              )}
+            </div>
+          );
+        }}
+      />
+    </ComposedChart>
+  );
 
   return (
     <Panel className="p-4 md:p-6 mb-6" aria-labelledby="fund-chart-title">
@@ -234,6 +458,8 @@ export function FundChart({
 
           {mode === 'unit' && (
             <Legend
+              // Phones: the tick boxes above already carry the line colors.
+              className={drawnPortfolios.length === 0 ? 'max-sm:hidden' : undefined}
               items={[
                 { color: PRIMARY, label: t('analyze.chart.portfolioUnit') },
                 ...drawn.map((c) => ({ color: c.color, label: t(`analyze.chart.comparisonLines.${c.key}`), dashed: true })),
@@ -250,187 +476,39 @@ export function FundChart({
             />
           )}
 
-          <div className="h-[300px] md:h-[360px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={rows} margin={{ top: 12, right: 12, left: 0, bottom: 4 }}>
-                <defs>
-                  <linearGradient id="unitFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset={0} stopColor={PRIMARY} stopOpacity={0.22} />
-                    <stop offset={1} stopColor={PRIMARY} stopOpacity={0.02} />
-                  </linearGradient>
-                  <linearGradient id="plFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset={0} stopColor={GAIN} stopOpacity={0.25} />
-                    <stop offset={zeroOffset} stopColor={GAIN} stopOpacity={0.04} />
-                    <stop offset={zeroOffset} stopColor={LOSS} stopOpacity={0.04} />
-                    <stop offset={1} stopColor={LOSS} stopOpacity={0.25} />
-                  </linearGradient>
-                  <linearGradient id="plStroke" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset={zeroOffset} stopColor={GAIN} />
-                    <stop offset={zeroOffset} stopColor={LOSS} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="4 4" stroke="hsl(var(--border))" vertical={false} />
-                <XAxis
-                  dataKey="date"
-                  minTickGap={40}
-                  tickFormatter={(v) => fmt.shortDate(String(v))}
-                  tick={{ fontSize: 12, fill: MUTED }}
-                  tickLine={false}
-                  axisLine={{ stroke: 'hsl(var(--border))' }}
-                />
-                <YAxis
-                  width={72}
-                  tickFormatter={(v) => formatAxis(Number(v))}
-                  tick={{ fontSize: 12, fill: MUTED }}
-                  tickLine={false}
-                  axisLine={false}
-                  domain={['auto', 'auto']}
-                />
+          {isPhone ? (
+            // Phones: a fixed Y axis beside a chart that scrolls sideways,
+            // opened at its latest date.
+            <div className="flex h-[300px]">
+              <div className="h-full shrink-0" style={{ width: PHONE_Y_AXIS_WIDTH + 1 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={rows} margin={{ ...CHART_MARGIN, right: 0 }}>
+                    <XAxis dataKey="date" height={X_AXIS_HEIGHT} tick={false} tickLine={false} axisLine={false} />
+                    {renderYAxis(false, PHONE_Y_AXIS_WIDTH)}
+                    {renderSeries(true)}
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+              <div ref={scrollRef} className="h-full min-w-0 flex-1 overflow-x-auto overscroll-x-contain">
+                <div className="h-full" style={{ width: rows.length * PHONE_PX_PER_POINT, minWidth: '100%' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    {renderChart(true)}
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="h-[300px] md:h-[360px]">
+              <ResponsiveContainer width="100%" height="100%">
+                {renderChart(false)}
+              </ResponsiveContainer>
+            </div>
+          )}
 
-                {mode === 'pl' && <ReferenceLine y={0} stroke={MUTED} strokeOpacity={0.6} />}
-                {mode === 'unit' && <ReferenceLine y={1} stroke={MUTED} strokeOpacity={0.35} strokeDasharray="2 4" />}
-
-                {mode === 'unit' && drawdown && drawdownStart && (
-                  <ReferenceArea x1={drawdownStart} x2={drawdown.troughDate} fill={LOSS} fillOpacity={0.045} ifOverflow="hidden" />
-                )}
-
-                {mode === 'unit' &&
-                  drawn.map((c) => (
-                    <Line
-                      key={c.key}
-                      type="monotone"
-                      dataKey={(row: ChartRow) => row.comparisons[c.key]?.value ?? null}
-                      stroke={c.color}
-                      strokeWidth={1.5}
-                      strokeDasharray="5 4"
-                      dot={false}
-                      connectNulls
-                      isAnimationActive={false}
-                    />
-                  ))}
-                {mode === 'unit' &&
-                  drawnPortfolios.map((l) => (
-                    <Line
-                      key={l.key}
-                      type="monotone"
-                      dataKey={(row: ChartRow) => row.portfolios[l.key]?.value ?? null}
-                      stroke={l.color}
-                      strokeWidth={1.5}
-                      dot={false}
-                      connectNulls
-                      isAnimationActive={false}
-                    />
-                  ))}
-                {mode === 'value' && (
-                  <Line
-                    type="stepAfter"
-                    dataKey="secondary"
-                    stroke={MUTED}
-                    strokeWidth={1.5}
-                    strokeDasharray="5 4"
-                    dot={false}
-                    isAnimationActive={false}
-                  />
-                )}
-                <Area
-                  type="monotone"
-                  dataKey="value"
-                  stroke={mode === 'pl' ? 'url(#plStroke)' : PRIMARY}
-                  strokeWidth={2}
-                  fill={mode === 'pl' ? 'url(#plFill)' : 'url(#unitFill)'}
-                  isAnimationActive={false}
-                  activeDot={{ r: 4, strokeWidth: 2, stroke: 'hsl(var(--card))' }}
-                />
-
-                {maxRow && (
-                  <ReferenceDot x={maxRow.date} y={maxRow.value} r={5} fill={GAIN} stroke="hsl(var(--card))" strokeWidth={2} />
-                )}
-                {minRow && minRow !== maxRow && (
-                  <ReferenceDot x={minRow.date} y={minRow.value} r={5} fill={LOSS} stroke="hsl(var(--card))" strokeWidth={2} />
-                )}
-
-                <Tooltip
-                  cursor={{ stroke: MUTED, strokeDasharray: '3 3' }}
-                  content={({ active, payload }) => {
-                    const row = active ? (payload?.[0]?.payload as ChartRow | undefined) : undefined;
-                    if (!row) return null;
-                    const p = row.point;
-                    return (
-                      <div
-                        className="rounded-lg border px-2.5 py-2 text-xs shadow-lg min-w-[184px] backdrop-blur-sm"
-                        style={{ borderColor: 'hsl(var(--border))', backgroundColor: 'hsl(var(--popover) / 0.92)' }}
-                      >
-                        <p className="text-[11px] font-medium" style={{ color: MUTED }}>
-                          {fmt.date(p.date)}
-                        </p>
-                        <p className="flex items-baseline justify-between gap-3 mt-0.5">
-                          <span className="text-sm font-semibold tabular-nums">{fmt.unit(unitPrice(p))}</span>
-                          <span className="tabular-nums font-medium" style={{ color: plColor(row.daily) }}>
-                            {fmt.pct(row.daily)}
-                            <span className="ml-1 font-normal" style={{ color: MUTED }}>
-                              {t('analyze.chart.dailyShort')}
-                            </span>
-                          </span>
-                        </p>
-
-                        <p className="mt-2 mb-0.5 text-[10px] font-medium uppercase tracking-wide" style={{ color: MUTED }}>
-                          {t('analyze.chart.sinceRangeStart')}
-                        </p>
-                        <TooltipLine dot={PRIMARY} label={t('analyze.performance.portfolio')} value={fmt.pct(row.sinceStart)} color={plColor(row.sinceStart)} strong />
-                        {mode === 'unit' &&
-                          drawn.map((c) => {
-                            const cmp = row.comparisons[c.key];
-                            return (
-                              cmp && (
-                                <TooltipLine
-                                  key={c.key}
-                                  dot={c.color}
-                                  label={t(`analyze.chart.comparisons.${c.key}`)}
-                                  value={fmt.pct(cmp.pct)}
-                                  color={plColor(cmp.pct)}
-                                />
-                              )
-                            );
-                          })}
-                        {mode === 'unit' &&
-                          drawnPortfolios.map((l) => {
-                            const own = row.portfolios[l.key];
-                            return (
-                              own && (
-                                <TooltipLine
-                                  key={l.key}
-                                  dot={l.color}
-                                  label={l.label}
-                                  value={fmt.pct(own.pct)}
-                                  color={plColor(own.pct)}
-                                />
-                              )
-                            );
-                          })}
-
-                        {!hideAmounts && (
-                          <>
-                            <div className="my-1.5 border-t" style={{ borderColor: 'hsl(var(--border))' }} />
-                            <TooltipLine label={t('analyze.performance.totalValue')} value={fmt.money(p.total_value)} />
-                            <TooltipLine label={t('analyze.performance.invested')} value={fmt.money(p.invested)} />
-                            <TooltipLine label={t('analyze.performance.totalPl')} value={fmt.signedMoney(p.total_pl)} color={plColor(p.total_pl)} strong />
-                            <p className="text-right tabular-nums text-[11px]" style={{ color: plColor(p.total_pl) }}>
-                              {fmt.pct(p.pl_pct)}
-                            </p>
-                          </>
-                        )}
-                      </div>
-                    );
-                  }}
-                />
-              </ComposedChart>
-            </ResponsiveContainer>
-          </div>
-
-          <p className="text-xs mt-2" style={{ color: MUTED }}>
+          <InfoNote className="mt-2">
             {t(`analyze.chart.hints.${mode}`)}
             {mode === 'unit' && drawnPortfolios.length > 0 && <> {t('analyze.chart.portfoliosHint')}</>}
-          </p>
+          </InfoNote>
 
           {periodSummary && (
             <div className="grid gap-3 sm:grid-cols-2 mt-5">
@@ -474,9 +552,9 @@ export function FundChart({
   );
 }
 
-function Legend({ items }: { items: { color: string; label: string; dashed?: boolean }[] }) {
+function Legend({ items, className }: { items: { color: string; label: string; dashed?: boolean }[]; className?: string }) {
   return (
-    <ul className="flex flex-wrap gap-4 mb-2 text-xs" style={{ color: MUTED }}>
+    <ul className={cn('flex flex-wrap gap-4 mb-2 text-xs', className)} style={{ color: MUTED }}>
       {items.map((item) => (
         <li key={item.label} className="inline-flex items-center gap-1.5">
           <svg width="18" height="6" aria-hidden="true">

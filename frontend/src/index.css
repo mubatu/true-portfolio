@@ -127,6 +127,16 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* iOS Safari zooms the page in when a field under 16px gets focus and
+   leaves it zoomed. Unlayered, so it wins over text-sm on phones. */
+@media (max-width: 639px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
 /* Figures line up in tables and cards. */
 .tabular-nums {
   font-variant-numeric: tabular-nums;

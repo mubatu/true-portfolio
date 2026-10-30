@@ -3,9 +3,18 @@ import { useTranslation } from 'react-i18next';
 import { ArrowDown, ArrowUp, Layers } from 'lucide-react';
 import { Segmented } from '@/components/ui/Segmented';
 import { plColor, type Formatters } from './format';
-import { FOOT_CORNER_STYLE, FOOT_ROW_CLASS, HEAD_BG, HEAD_CELL_CLASS, TABLE_SCROLL_CLASS } from './tableStyles';
+import {
+  CARD_CLASS,
+  CARD_FOOT_CLASS,
+  FOOT_CORNER_STYLE,
+  FOOT_ROW_CLASS,
+  HEAD_BG,
+  HEAD_CELL_CLASS,
+  TABLE_SCROLL_CLASS,
+} from './tableStyles';
 import { Panel, PanelHeader } from '@/components/ui/Panel';
 import type { Position } from './types';
+import { PHONE_QUERY, useMediaQuery } from '@/hooks/useMediaQuery';
 
 type SortKey =
   | 'ticker'
@@ -23,6 +32,7 @@ const STICKY_BG = { backgroundColor: 'hsl(var(--card))' };
 /**
  * Per-stock P/L: what is still open (unrealized) and what was already
  * locked in by selling (realized), plus dividends, for every stock ever held.
+ * Phones get one card per stock (PositionCard) in the same order, unsorted.
  */
 export function PositionsTable({
   positions,
@@ -36,6 +46,7 @@ export function PositionsTable({
   const { t } = useTranslation();
   const [filter, setFilter] = useState<Filter>('all');
   const [sort, setSort] = useState<{ key: SortKey; desc: boolean } | null>(null);
+  const isPhone = useMediaQuery(PHONE_QUERY);
 
   const visible = useMemo(() => {
     const filtered = positions.filter((p) =>
@@ -98,6 +109,23 @@ export function PositionsTable({
           style={{ borderColor: 'hsl(var(--border))', color: 'hsl(var(--muted-foreground))' }}
         >
           {t('analyze.positions.empty')}
+        </div>
+      ) : isPhone ? (
+        <div className="border-t">
+          <ul className={TABLE_SCROLL_CLASS}>
+            {visible.map((p) => (
+              <PositionCard key={p.ticker} position={p} fmt={fmt} displayTicker={displayTicker} />
+            ))}
+          </ul>
+          <div className={CARD_FOOT_CLASS}>
+            <span>{t('analyze.table.sum')}</span>
+            <span className="text-right tabular-nums" style={{ color: plColor(totals.total_pl) }}>
+              {fmt.signedMoney(totals.total_pl)}
+              {totals.invested > 0 && (
+                <span className="ml-2 text-xs">{fmt.pct((totals.total_pl / totals.invested) * 100)}</span>
+              )}
+            </span>
+          </div>
         </div>
       ) : (
         <div className="border-t">
@@ -225,6 +253,71 @@ export function PositionsTable({
   );
 }
 
+/**
+ * Phones: ticker and total P/L on top; quantity, cost → price and value
+ * under; the non-zero parts of the P/L one per line at the bottom. Closed
+ * stocks show their closing date in place of the value.
+ */
+function PositionCard({
+  position: p,
+  fmt,
+  displayTicker,
+}: {
+  position: Position;
+  fmt: Formatters;
+  displayTicker: (ticker: string) => string;
+}) {
+  const { t } = useTranslation();
+  const open = p.quantity > 0;
+  const [from, to] = open ? [p.avg_cost, p.price] : [p.avg_sold_cost, p.avg_sell_price];
+  const quantity = open ? p.quantity : p.sold_quantity;
+  const parts = (
+    [
+      [t('analyze.positions.short.unrealized'), p.unrealized_pl],
+      [t('analyze.positions.short.realized'), p.realized_pl],
+      [t('analyze.positions.dividends'), p.dividend_income],
+    ] as const
+  ).filter(([, value]) => Math.abs(value) >= 0.005);
+  return (
+    <li className={CARD_CLASS} style={{ borderColor: 'hsl(var(--border))' }}>
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="inline-flex items-center gap-2 font-semibold">
+          <span
+            className="h-2 w-2 rounded-full"
+            style={{ backgroundColor: open ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground) / 0.5)' }}
+            aria-hidden="true"
+          />
+          {displayTicker(p.ticker)}
+        </span>
+        <span className="text-right font-semibold tabular-nums whitespace-nowrap" style={{ color: plColor(p.total_pl) }}>
+          {fmt.signedMoney(p.total_pl)}
+          <span className="ml-2 text-xs">{fmt.pct(p.total_pl_pct)}</span>
+        </span>
+      </div>
+      <div className="mt-1 flex items-baseline justify-between gap-3 text-xs text-muted-foreground">
+        <span className="tabular-nums whitespace-nowrap">
+          {quantity > 0 && <>{fmt.number(quantity)} · </>}
+          {from != null ? (
+            <>
+              {fmt.money(from)} → <span className="text-foreground">{to != null ? fmt.money(to) : '—'}</span>
+            </>
+          ) : (
+            '—'
+          )}
+        </span>
+        <span className="text-right tabular-nums whitespace-nowrap">
+          {open
+            ? `${fmt.money(p.market_value)} · ${fmt.share(p.weight_pct)}`
+            : p.closed_on
+              ? t('analyze.positions.closedOn', { date: fmt.date(p.closed_on) })
+              : t('analyze.positions.closed')}
+        </span>
+      </div>
+      {parts.length > 1 && <CardLines lines={parts.map(([label, value]) => [label, fmt.signedMoney(value), plColor(value)])} />}
+    </li>
+  );
+}
+
 function SortHeader({
   k,
   label,
@@ -254,6 +347,22 @@ function SortHeader({
         {active && (sort.desc ? <ArrowDown className="h-3 w-3" /> : <ArrowUp className="h-3 w-3" />)}
       </button>
     </th>
+  );
+}
+
+/** Phones: a card's details, one per line: label on the left, value on the right. */
+export function CardLines({ lines }: { lines: (readonly [label: string, value: string, color?: string])[] }) {
+  return (
+    <dl className="mt-2 space-y-0.5 text-xs">
+      {lines.map(([label, value, color]) => (
+        <div key={label} className="flex items-baseline justify-between gap-3">
+          <dt className="text-muted-foreground">{label}</dt>
+          <dd className="tabular-nums font-medium whitespace-nowrap" style={{ color }}>
+            {value}
+          </dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 

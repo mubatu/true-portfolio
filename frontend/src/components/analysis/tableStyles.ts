@@ -25,3 +25,8 @@ export const HEAD_CELL_CLASS = 'sticky top-0 z-20 px-3 py-3 text-xs font-medium 
 export const FOOT_ROW_CLASS =
   'font-semibold [&>*]:sticky [&>*]:bottom-0 [&>*]:z-20 [&>*]:bg-muted [&>*]:shadow-[inset_0_2px_0_hsl(var(--border))]';
 export const FOOT_CORNER_STYLE: CSSProperties = { zIndex: 30 };
+
+/** Phones: the tables become lists of cards; one card per row. */
+export const CARD_CLASS = 'border-t px-4 py-3 text-sm first:border-t-0';
+/** Phones: the totals under a card list, in place of the sticky totals row. */
+export const CARD_FOOT_CLASS = 'flex items-baseline justify-between gap-3 border-t-2 bg-muted px-4 py-3 text-sm font-semibold';

@@ -3,6 +3,7 @@ import { Pencil, Ticket, Trash2, TrendingDown, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { HEAD_BG, HEAD_CELL_CLASS, TABLE_SCROLL_CLASS } from '@/components/analysis/tableStyles';
 import { toDisplayTicker } from '@/config';
+import { PHONE_QUERY, useMediaQuery } from '@/hooks/useMediaQuery';
 import type { Transaction } from '@/services/portfolioService';
 import { useTransactionFormatters, type TransactionFormatters } from './format';
 
@@ -21,7 +22,8 @@ const CELL = 'px-3 py-3 text-right tabular-nums whitespace-nowrap';
 
 /**
  * Every trade, newest first, styled like the analysis tables. Split-adjusted
- * figures appear under the price only when a split changed them.
+ * figures appear under the price only when a split changed them. Phones get
+ * one card per trade instead (TransactionCard).
  */
 export function TransactionsTable({
   transactions,
@@ -38,6 +40,26 @@ export function TransactionsTable({
 }) {
   const { t } = useTranslation();
   const fmt = useTransactionFormatters(market);
+  const isPhone = useMediaQuery(PHONE_QUERY);
+
+  if (isPhone) {
+    return (
+      <ul className={TABLE_SCROLL_CLASS}>
+        {transactions.map((transaction) => (
+          <TransactionCard
+            key={transaction.id}
+            transaction={transaction}
+            market={market}
+            fmt={fmt}
+            isDeletePending={isDeletePending}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
+        ))}
+      </ul>
+    );
+  }
+
   const head: [string, 'left' | 'right'][] = [
     [t('portfolio.transactions.date'), 'left'],
     [t('portfolio.transactions.ticker'), 'left'],
@@ -85,6 +107,100 @@ export function TransactionsTable({
   );
 }
 
+type RowProps = {
+  transaction: Transaction;
+  market: string;
+  fmt: TransactionFormatters;
+  isDeletePending: boolean;
+  onEdit: (transaction: Transaction) => void;
+  onDelete: (transaction: Transaction) => void;
+};
+
+/** The numbers both layouts show for a trade. */
+function tradeFigures(transaction: Transaction) {
+  const quantity = Number(transaction.quantity);
+  const adjustedQuantity = Number(transaction.adjusted_quantity ?? transaction.quantity);
+  const price = Number(transaction.price);
+  return {
+    quantity,
+    adjustedQuantity,
+    price,
+    adjustedPrice: Number(transaction.adjusted_price ?? transaction.price),
+    commissionRate: Number(transaction.commission_rate ?? 0),
+    adjusted: Math.abs(adjustedQuantity - quantity) > 1e-6,
+  };
+}
+
+function OperationBadge({ operation }: { operation: Operation }) {
+  const { t } = useTranslation();
+  const Icon = OPERATION_ICONS[operation];
+  return (
+    <span
+      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap"
+      style={OPERATION_STYLES[operation]}
+    >
+      <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+      {t(`portfolio.transactions.${operation}`)}
+    </span>
+  );
+}
+
+/** Phones: ticker, operation and amount on top; date and quantity × price under. Tap to edit. */
+function TransactionCard({ transaction, market, fmt, isDeletePending, onEdit, onDelete }: RowProps) {
+  const { t } = useTranslation();
+  const { quantity, adjustedQuantity, price, adjustedPrice, commissionRate, adjusted } = tradeFigures(transaction);
+  return (
+    <li className="flex items-center gap-1 border-t pl-4 pr-1" style={{ borderColor: 'hsl(var(--border))' }}>
+      <button
+        type="button"
+        onClick={() => onEdit(transaction)}
+        aria-label={`${t('common.edit')}: ${toDisplayTicker(transaction.ticker, market)} ${fmt.date(transaction.date)}`}
+        className="min-w-0 flex-1 py-3 text-left text-sm"
+      >
+        <span className="flex items-center justify-between gap-3">
+          <span className="flex min-w-0 items-center gap-2">
+            <span className="font-semibold">{toDisplayTicker(transaction.ticker, market)}</span>
+            <OperationBadge operation={transaction.operation} />
+          </span>
+          <span className="font-semibold tabular-nums whitespace-nowrap">{fmt.money(quantity * price)}</span>
+        </span>
+        <span className="mt-1 flex items-baseline justify-between gap-3 text-xs" style={{ color: MUTED }}>
+          <span className="tabular-nums whitespace-nowrap">
+            {fmt.date(transaction.date)} · {fmt.number(quantity)} × {fmt.money(price)}
+          </span>
+          {commissionRate > 0 && (
+            <span className="tabular-nums text-[11px] text-right">
+              {t('portfolio.transactions.commission', {
+                amount: fmt.money(quantity * price * commissionRate),
+                rate: fmt.rate(commissionRate),
+              })}
+            </span>
+          )}
+        </span>
+        {adjusted && (
+          <span className="mt-0.5 block text-[11px] tabular-nums" style={{ color: MUTED }}>
+            {t('portfolio.transactions.adjustedLine', {
+              quantity: fmt.number(adjustedQuantity),
+              price: fmt.money(adjustedPrice),
+            })}
+          </span>
+        )}
+      </button>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-9 w-9 shrink-0"
+        type="button"
+        aria-label={t('common.delete')}
+        onClick={() => onDelete(transaction)}
+        disabled={isDeletePending}
+      >
+        <Trash2 className="h-4 w-4" style={{ color: 'hsl(var(--destructive))' }} />
+      </Button>
+    </li>
+  );
+}
+
 function TransactionRow({
   transaction,
   market,
@@ -92,22 +208,9 @@ function TransactionRow({
   isDeletePending,
   onEdit,
   onDelete,
-}: {
-  transaction: Transaction;
-  market: string;
-  fmt: TransactionFormatters;
-  isDeletePending: boolean;
-  onEdit: (transaction: Transaction) => void;
-  onDelete: (transaction: Transaction) => void;
-}) {
+}: RowProps) {
   const { t } = useTranslation();
-  const quantity = Number(transaction.quantity);
-  const adjustedQuantity = Number(transaction.adjusted_quantity ?? transaction.quantity);
-  const price = Number(transaction.price);
-  const adjustedPrice = Number(transaction.adjusted_price ?? transaction.price);
-  const commissionRate = Number(transaction.commission_rate ?? 0);
-  const adjusted = Math.abs(adjustedQuantity - quantity) > 1e-6;
-  const OperationIcon = OPERATION_ICONS[transaction.operation];
+  const { quantity, adjustedQuantity, price, adjustedPrice, commissionRate, adjusted } = tradeFigures(transaction);
 
   return (
     <tr className="group border-t transition-colors hover:bg-muted/40" style={{ borderColor: 'hsl(var(--border))' }}>
@@ -118,13 +221,7 @@ function TransactionRow({
         {toDisplayTicker(transaction.ticker, market)}
       </th>
       <td className="px-3 py-3 text-left">
-        <span
-          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap"
-          style={OPERATION_STYLES[transaction.operation]}
-        >
-          <OperationIcon className="h-3.5 w-3.5" aria-hidden="true" />
-          {t(`portfolio.transactions.${transaction.operation}`)}
-        </span>
+        <OperationBadge operation={transaction.operation} />
       </td>
       <td className={CELL}>{fmt.number(quantity)}</td>
       <td className={CELL}>

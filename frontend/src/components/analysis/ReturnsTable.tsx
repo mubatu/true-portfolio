@@ -107,7 +107,7 @@ export function ReturnsTable({
       />
 
       <div className="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0">
-        <table className={`w-full text-sm ${hideAmounts ? '' : 'min-w-[480px]'}`}>
+        <table className={`w-full text-sm ${hideAmounts ? '' : 'sm:min-w-[480px]'}`}>
           <thead>
             <tr style={{ color: MUTED }}>
               <th scope="col" className="text-left font-medium py-2 pr-4" />

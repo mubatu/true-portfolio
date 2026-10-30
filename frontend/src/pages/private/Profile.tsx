@@ -66,7 +66,7 @@ export function Profile() {
     <div className="container mx-auto px-4 py-6 md:py-8 max-w-5xl">
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('profile.title')}</h1>
-        <p className="text-sm mt-1 text-muted-foreground">{t('profile.subtitle')}</p>
+        <p className="hidden sm:block text-sm mt-1 text-muted-foreground">{t('profile.subtitle')}</p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)] items-start">

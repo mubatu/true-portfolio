@@ -176,6 +176,7 @@ export function PortfolioDetail() {
               icon={ListOrdered}
               title={t('portfolio.transactions.title')}
               description={transactions.length > 0 ? t('portfolio.transactions.count', { count: transactions.length }) : undefined}
+              keepDescription
               className="p-4 md:p-6"
             />
 

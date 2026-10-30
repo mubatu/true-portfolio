@@ -5,6 +5,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { Briefcase, FlaskConical, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { InfoNote } from '@/components/ui/Panel';
 import { AllocationChart } from '@/components/analysis/AllocationChart';
 import { AnalysisSkeleton } from '@/components/analysis/AnalysisSkeleton';
 import { FundChart, type PortfolioLine } from '@/components/analysis/FundChart';
@@ -110,7 +111,7 @@ export function Overview() {
       <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
         <div className="min-w-0">
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('overview.title')}</h1>
-          <p className="text-sm mt-1 text-muted-foreground">{t('overview.subtitle')}</p>
+          <p className="hidden sm:block text-sm mt-1 text-muted-foreground">{t('overview.subtitle')}</p>
           {included.length > 0 && experimentalCount > 0 && (
             <Link
               to="/my-portfolios"
@@ -205,7 +206,7 @@ export function Overview() {
             />
           </div>
           <PortfolioBreakdownTable rows={overview.rows} totals={overview.totals} fmt={fmt} />
-          <p className="text-xs mt-8 text-muted-foreground">{t('overview.footnote')}</p>
+          <InfoNote className="mt-8">{t('overview.footnote')}</InfoNote>
         </>
       )}
     </div>

@@ -29,7 +29,7 @@ export function Explore() {
     <div className="container mx-auto px-4 py-6 md:py-8 max-w-7xl">
       <header className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('explore.title')}</h1>
-        <p className="text-sm mt-1 text-muted-foreground max-w-2xl">{t('explore.subtitle')}</p>
+        <p className="hidden sm:block text-sm mt-1 text-muted-foreground max-w-2xl">{t('explore.subtitle')}</p>
         <p className="text-xs mt-2 inline-flex items-center gap-1.5 text-muted-foreground">
           <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />
           {t('explore.amountsHidden')}

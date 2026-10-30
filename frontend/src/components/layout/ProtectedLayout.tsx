@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { BottomNav } from './BottomNav';
 import { Header } from './Header';
 import { PageLoader } from './PageLoader';
 
@@ -28,6 +29,7 @@ export function ProtectedLayout() {
           <Outlet />
         </Suspense>
       </main>
+      <BottomNav />
     </div>
   );
 }
