@@ -108,7 +108,7 @@ export function Overview() {
 
   return (
     <div className="container mx-auto px-4 py-6 md:py-8 max-w-7xl">
-      <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
+      <header className="flex items-start sm:items-end justify-between gap-4 mb-6">
         <div className="min-w-0">
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('overview.title')}</h1>
           <p className="hidden sm:block text-sm mt-1 text-muted-foreground">{t('overview.subtitle')}</p>
@@ -125,7 +125,7 @@ export function Overview() {
         {overview && (
           <Button
             variant="outline"
-            className="gap-1.5 self-start sm:self-auto"
+            className="shrink-0 gap-1.5 max-sm:-mt-0.5"
             onClick={analyses.refetch}
             disabled={analyses.fetching}
             aria-label={t('analyze.refresh')}
