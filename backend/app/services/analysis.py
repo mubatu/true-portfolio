@@ -1,0 +1,231 @@
+"""
+Portfolio analysis from already-loaded data. Pure: no DB, no network.
+
+Everything is derived from one ledger replay (``app.services.ledger``),
+so the metric cards, the tables and every point of the daily series use
+identical math.
+
+Daily series — one point per market open day, valued at that day's close
+(the latest earlier close if a ticker did not trade):
+  market_value    open positions at close (at cost if no close is known)
+  cash            the safe: sale proceeds + net dividends not yet reinvested
+  invested        the pocket: cumulative money brought in from outside
+  total_value     market_value + cash
+  realized_pl / unrealized_pl / dividend_income / total_pl   cumulative, TL
+  pl_pct          total_pl / invested — "how far up was I on that day?"
+  twr_pct         cumulative time-weighted return — performance with the
+                  effect of new money removed; use it for drawdowns and
+                  period returns.
+
+TWR uses flows at the start of the day: each day's growth factor is
+``total_value / (previous total_value + new money)``.
+"""
+
+from datetime import date, timedelta
+from decimal import Decimal
+
+from app.services.ledger import (
+    DividendEvent,
+    Ledger,
+    LedgerTransaction,
+    group_by_date,
+    replay,
+)
+
+ZERO = Decimal(0)
+
+
+def build_analysis(
+    transactions: list[LedgerTransaction],
+    closes: dict[str, dict[date, Decimal]],
+    dividends: list[DividendEvent],
+    open_days: list[date],
+    as_of: date,
+) -> dict:
+    """Totals, tables and the daily series as of ``as_of`` (yesterday).
+
+    ``dividends`` must already be limited to ex-dates ≤ ``as_of``: a
+    dividend going ex today is not credited because today's price drop
+    is not in the valuation either.
+    """
+    ledger = replay(transactions, dividends)
+    latest_closes = {
+        ticker: by_date[max(d for d in by_date if d <= as_of)]
+        for ticker, by_date in closes.items()
+        if any(d <= as_of for d in by_date)
+    }
+
+    current_holdings: list[dict] = []
+    closed_positions: list[dict] = []
+
+    for ticker in sorted(ledger.positions):
+        position = ledger.positions[ticker]
+
+        # Any sale → realized result row (partial sales show in both tables)
+        if position.sold_value > 0:
+            closed_positions.append({
+                "ticker": ticker,
+                "total_invested": float(position.sold_cost),
+                "total_returned": float(position.sold_value),
+                "realized_pl": float(position.realized_pl),
+                "realized_pl_pct": _pct(position.realized_pl, position.sold_cost, 2),
+            })
+
+        if position.quantity > 0:
+            price = latest_closes.get(ticker)
+            if price is not None:
+                current_value = position.quantity * price
+                unrealized = position.quantity * (price - position.avg_cost)
+            else:
+                current_value = position.cost_basis
+                unrealized = ZERO
+
+            current_holdings.append({
+                "ticker": ticker,
+                "quantity": float(position.quantity),
+                "avg_cost": float(position.avg_cost),
+                "current_price": float(price) if price is not None else None,
+                "current_value": float(current_value),
+                "cost_basis": float(position.cost_basis),
+                "unrealized_pl": float(unrealized),
+                "unrealized_pl_pct": _pct(unrealized, position.cost_basis, 2),
+            })
+
+    realized = ledger.realized_total
+    unrealized = ledger.unrealized_total(latest_closes)
+    dividend_income = ledger.dividend_total
+    total_pl = realized + unrealized + dividend_income
+
+    totals = {
+        "total_invested": _tl(ledger.pocket),
+        "portfolio_value": _tl(ledger.market_value(latest_closes)),
+        "in_the_safe": _tl(ledger.safe),
+        "realized_pl": _tl(realized),
+        "unrealized_pl": _tl(unrealized),
+        "dividend_income": _tl(dividend_income),
+        "total_pl": _tl(total_pl),
+        "total_pl_pct": _pct(total_pl, ledger.pocket, 2),
+    }
+
+    return {
+        "current_holdings": current_holdings,
+        "closed_positions": closed_positions,
+        "dividends": _dividends_payload(ledger),
+        "totals": totals,
+        "performance_series": build_daily_series(
+            transactions, closes, dividends, open_days, as_of
+        ),
+    }
+
+
+def build_daily_series(
+    transactions: list[LedgerTransaction],
+    closes: dict[str, dict[date, Decimal]],
+    dividends: list[DividendEvent],
+    open_days: list[date],
+    as_of: date,
+) -> dict:
+    """Daily series from the first buy through ``as_of`` (see module doc)."""
+    first_buy = next((t.date for t in transactions if t.operation == "buy"), None)
+    if first_buy is None:
+        return {"start_date": None, "end_date": None, "points": []}
+    if first_buy > as_of:
+        return {
+            "start_date": first_buy.isoformat(),
+            "end_date": as_of.isoformat(),
+            "points": [],
+        }
+
+    events = group_by_date((t for t in transactions if t.date <= as_of), dividends)
+    prices_by_date: dict[date, list[tuple[str, Decimal]]] = {}
+    for ticker, by_date in closes.items():
+        for price_date, close in by_date.items():
+            prices_by_date.setdefault(price_date, []).append((ticker, close))
+    open_set = set(open_days)
+
+    ledger = Ledger()
+    latest_closes: dict[str, Decimal] = {}
+
+    # Events before the first buy (e.g. stray sells) still move the cash.
+    for day in sorted(d for d in events if d < first_buy):
+        ledger.apply_day(*events[day])
+    for day in sorted(d for d in prices_by_date if d < first_buy):
+        latest_closes.update(prices_by_date[day])
+
+    twr_factor = Decimal(1)
+    prev_value = ZERO
+    prev_invested = ledger.pocket
+    points: list[dict] = []
+
+    day = first_buy
+    while day <= as_of:
+        if day in events:
+            ledger.apply_day(*events[day])
+        latest_closes.update(prices_by_date.get(day, []))
+
+        if day in open_set:
+            market_value = ledger.market_value(latest_closes)
+            total_value = market_value + ledger.safe
+            invested = ledger.pocket
+
+            start_value = prev_value + (invested - prev_invested)
+            if start_value > 0:
+                twr_factor *= total_value / start_value
+            prev_value, prev_invested = total_value, invested
+
+            realized = ledger.realized_total
+            unrealized = ledger.unrealized_total(latest_closes)
+            dividend_income = ledger.dividend_total
+            total_pl = realized + unrealized + dividend_income
+
+            points.append({
+                "date": day.isoformat(),
+                "market_value": _tl(market_value),
+                "cash": _tl(ledger.safe),
+                "invested": _tl(invested),
+                "total_value": _tl(total_value),
+                "realized_pl": _tl(realized),
+                "unrealized_pl": _tl(unrealized),
+                "dividend_income": _tl(dividend_income),
+                "total_pl": _tl(total_pl),
+                "pl_pct": _pct(total_pl, invested, 4),
+                "twr_pct": round(float((twr_factor - 1) * 100), 4),
+            })
+
+        day += timedelta(days=1)
+
+    return {
+        "start_date": first_buy.isoformat(),
+        "end_date": as_of.isoformat(),
+        "points": points,
+    }
+
+
+def _dividends_payload(ledger: Ledger) -> dict:
+    receipts = sorted(
+        ledger.dividend_receipts, key=lambda r: (r.ex_date, r.ticker), reverse=True
+    )
+    return {
+        "total_gross": _tl(sum((r.gross_amount for r in receipts), ZERO)),
+        "total_net": _tl(sum((r.net_amount for r in receipts), ZERO)),
+        "receipts": [
+            {
+                "ex_date": r.ex_date.isoformat(),
+                "ticker": r.ticker,
+                "quantity": float(r.quantity),
+                "gross_per_share": float(r.gross_per_share),
+                "withholding_rate": float(r.withholding_rate),
+                "gross_amount": _tl(r.gross_amount),
+                "net_amount": _tl(r.net_amount),
+            }
+            for r in receipts
+        ],
+    }
+
+
+def _tl(value: Decimal) -> float:
+    return round(float(value), 2)
+
+
+def _pct(part: Decimal, whole: Decimal, digits: int) -> float:
+    return round(float(part / whole * 100), digits) if whole > 0 else 0.0

@@ -128,6 +128,7 @@ export function PortfolioDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions', slug] });
       queryClient.invalidateQueries({ queryKey: ['portfolios'] });
+      queryClient.invalidateQueries({ queryKey: ['portfolio-analysis'] });
       closeAddModal();
     },
     onError: (error: Error) => {
@@ -141,6 +142,7 @@ export function PortfolioDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions', slug] });
       queryClient.invalidateQueries({ queryKey: ['portfolios'] });
+      queryClient.invalidateQueries({ queryKey: ['portfolio-analysis'] });
     },
   });
 
@@ -150,6 +152,7 @@ export function PortfolioDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions', slug] });
       queryClient.invalidateQueries({ queryKey: ['portfolios'] });
+      queryClient.invalidateQueries({ queryKey: ['portfolio-analysis'] });
       closeEditModal();
     },
     onError: (error: Error) => {

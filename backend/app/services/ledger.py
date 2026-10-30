@@ -154,6 +154,18 @@ class Ledger:
     def dividend_total(self) -> Decimal:
         return sum((p.dividend_income for p in self.positions.values()), ZERO)
 
+    def market_value(self, closes: dict[str, Decimal]) -> Decimal:
+        """Value of open positions; a position without a close counts at cost."""
+        total = ZERO
+        for ticker, position in self.positions.items():
+            if position.quantity <= 0:
+                continue
+            close = closes.get(ticker)
+            total += (
+                position.quantity * close if close is not None else position.cost_basis
+            )
+        return total
+
     def unrealized_total(self, closes: dict[str, Decimal]) -> Decimal:
         """Unrealized P/L of open positions that have a known close."""
         total = ZERO

@@ -49,60 +49,8 @@ export const getMe = async () => {
   return response.data;
 };
 
-// Portfolio
-export const getPortfolios = async () => {
-  const response = await apiClient.get('/portfolios');
-  return response.data;
-};
-
-export const getPortfolioById = async (id: string) => {
-  const response = await apiClient.get(`/portfolios/${id}`);
-  return response.data;
-};
-
-export const getPortfolioSummary = async (id: string) => {
-  const response = await apiClient.get(`/portfolios/${id}/summary`);
-  return response.data;
-};
-
-export const createPortfolio = async (name: string, description?: string) => {
-  const response = await apiClient.post('/portfolios', { name, description });
-  return response.data;
-};
-
-// Transactions
-export const getTransactions = async (portfolioId: string) => {
-  const response = await apiClient.get(`/portfolios/${portfolioId}/transactions`);
-  return response.data;
-};
-
-export const createTransaction = async (
-  portfolioId: string,
-  data: {
-    symbol: string;
-    type: 'buy' | 'sell';
-    quantity: number;
-    price: number;
-    date: string;
-  }
-) => {
-  const response = await apiClient.post(`/portfolios/${portfolioId}/transactions`, data);
-  return response.data;
-};
-
-// Analysis
+// Analysis (portfolio/transaction CRUD goes straight to Supabase, see services/portfolioService.ts)
 export const analyzePortfolio = async (portfolioId: number) => {
   const response = await apiClient.get(`/portfolios/${portfolioId}/analyze`);
-  return response.data;
-};
-
-// Stocks
-export const searchStocks = async (query: string) => {
-  const response = await apiClient.get(`/stocks/search?q=${query}`);
-  return response.data;
-};
-
-export const getStockPrice = async (symbol: string) => {
-  const response = await apiClient.get(`/stocks/${symbol}/price`);
   return response.data;
 };

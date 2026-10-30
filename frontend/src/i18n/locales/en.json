@@ -84,7 +84,7 @@
       "noData": "No historical performance data available for this period.",
       "seriesLabel": "Portfolio Index",
       "plLabel": "P/L",
-      "dailyPlLabel": "Daily P/L",
+      "dailyReturnLabel": "Daily Return",
       "priceAxis": "Price",
       "dateAxis": "Date"
     },
@@ -103,8 +103,7 @@
     "noDividends": "No dividends received yet.",
     "warnings": {
       "title": "Some market data could not be loaded. Results may be incomplete.",
-      "dividends_unavailable": "Dividends for {{ticker}} are missing.",
-      "splits_unavailable": "Split adjustments for {{ticker}} could not be refreshed."
+      "market_data_unavailable": "Market data for {{ticker}} could not be refreshed; the last stored data is shown."
     },
     "table": {
       "ticker": "Ticker",

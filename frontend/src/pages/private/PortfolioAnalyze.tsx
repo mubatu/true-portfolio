@@ -80,18 +80,30 @@ interface DividendSummary {
 }
 
 interface AnalysisWarning {
-  code: 'dividends_unavailable' | 'splits_unavailable';
+  code: 'market_data_unavailable';
   ticker: string;
 }
 
+/** One market day, valued at that day's close (see backend analysis.py). */
 interface PerformancePoint {
   date: string;
-  price: number;
+  market_value: number;
+  cash: number;
+  invested: number;
+  total_value: number;
+  realized_pl: number;
+  unrealized_pl: number;
+  dividend_income: number;
+  total_pl: number;
+  /** Cumulative P/L as % of money invested so far. */
   pl_pct: number;
+  /** Cumulative time-weighted return: performance without new-money effects. */
+  twr_pct: number;
 }
 
 interface ChartPerformancePoint extends PerformancePoint {
-  daily_pl_pct: number;
+  index: number;
+  daily_return_pct: number;
 }
 
 interface PerformanceSeries {
@@ -102,7 +114,7 @@ interface PerformanceSeries {
 
 interface AnalysisResponse {
   portfolio_id: number;
-  backfill: unknown;
+  market_data: { synced: string[]; failed: string[] };
   performance_series: PerformanceSeries;
   current_holdings: CurrentHolding[];
   closed_positions: ClosedPosition[];
@@ -622,18 +634,14 @@ function PerformanceChart({
   const fmtPct = (value: number) =>
     `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
 
+  // Daily return comes from the time-weighted series, so days with new
+  // money show the market move only, not the change in invested capital.
   const chartPoints: ChartPerformancePoint[] = series.points.map((point, index) => {
-    if (index === 0) {
-      return { ...point, daily_pl_pct: 0 };
-    }
+    const previousGrowth = index > 0 ? 1 + series.points[index - 1].twr_pct / 100 : 1;
+    const dailyReturnPct =
+      previousGrowth > 0 ? ((1 + point.twr_pct / 100) / previousGrowth - 1) * 100 : 0;
 
-    const previous = series.points[index - 1];
-    const dailyPct =
-      previous.price !== 0
-        ? ((point.price / previous.price) - 1) * 100
-        : 0;
-
-    return { ...point, daily_pl_pct: dailyPct };
+    return { ...point, index: 100 + point.pl_pct, daily_return_pct: dailyReturnPct };
   });
 
   const rangeText =
@@ -688,7 +696,7 @@ function PerformanceChart({
                 }}
               />
               <YAxis
-                dataKey="price"
+                dataKey="index"
                 width={72}
                 tickFormatter={(value) => fmtIndex(Number(value))}
                 tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
@@ -725,10 +733,10 @@ function PerformanceChart({
                         {fmtDate(String(label), true)}
                       </p>
                       <p>
-                        {t('analyze.chart.seriesLabel')}: {fmtIndex(point.price)}
+                        {t('analyze.chart.seriesLabel')}: {fmtIndex(point.index)}
                       </p>
-                      <p style={{ color: plColor(point.daily_pl_pct) }}>
-                        {t('analyze.chart.dailyPlLabel')}: {fmtPct(point.daily_pl_pct)}
+                      <p style={{ color: plColor(point.daily_return_pct) }}>
+                        {t('analyze.chart.dailyReturnLabel')}: {fmtPct(point.daily_return_pct)}
                       </p>
                     </div>
                   );
@@ -736,7 +744,7 @@ function PerformanceChart({
               />
               <Line
                 type="monotone"
-                dataKey="price"
+                dataKey="index"
                 name={t('analyze.chart.seriesLabel')}
                 stroke={lineColor}
                 strokeWidth={2.5}

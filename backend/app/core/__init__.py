@@ -4,7 +4,7 @@ from app.core.markets import (
     MARKETS,
     MarketConfig,
     get_dividend_withholding_rate,
-    get_market_benchmark_candidates,
+    get_market_benchmark,
     get_market_config,
 )
 from app.core.security import decode_access_token
@@ -15,7 +15,7 @@ __all__ = [
     "MARKETS",
     "MarketConfig",
     "get_dividend_withholding_rate",
-    "get_market_benchmark_candidates",
+    "get_market_benchmark",
     "get_market_config",
     "decode_access_token",
 ]

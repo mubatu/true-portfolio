@@ -8,14 +8,14 @@ from app.api.deps import CurrentUser
 from app.db import get_db
 from app.services.portfolio_service import (
     CorporateActionsUnavailable,
-    backfill_portfolio_prices,
+    analyze_portfolio,
     calculate_adjusted_transaction_values,
-    calculate_portfolio_performance_series,
-    calculate_portfolio_pl,
-    refresh_portfolio_adjusted_prices,
 )
 
 router = APIRouter(prefix="/portfolios", tags=["Portfolios"])
+
+# Handlers are plain ``def``: they do blocking DB and Yahoo I/O, so FastAPI
+# runs them in its threadpool instead of stalling the event loop.
 
 
 def _ensure_portfolio_ownership(
@@ -34,52 +34,25 @@ def _ensure_portfolio_ownership(
 
 
 @router.get("/{portfolio_id}/analyze")
-async def analyze_portfolio(
+def get_portfolio_analysis(
     current_user: CurrentUser,
     db: Annotated[Session, Depends(get_db)],
     portfolio_id: int = Path(..., description="The portfolio ID to analyze"),
 ):
     """
     Analyze a portfolio:
-      Step 1 — backfill raw (dividend-unadjusted) market_prices for every
-               holding, rewriting stored history if its basis changed.
-      Step 2 — refresh split-adjusted transaction prices.
-      Step 3 — calculate profit/loss (average cost method), including net
-               cash dividends credited on their ex-dates.
+      1. Sync market data (prices, splits, dividends) for the portfolio's
+         tickers and market benchmark — at most once a day per ticker.
+      2. Refresh split-adjusted transaction fields.
+      3. Compute holdings, realized results, dividends, totals and the
+         daily performance series from stored data only.
     """
     _ensure_portfolio_ownership(db, portfolio_id, str(current_user.id))
-
-    # Step 1: backfill prices
-    backfill_result = backfill_portfolio_prices(db, portfolio_id)
-
-    # Step 2: refresh adjusted prices
-    adjusted_price_result = refresh_portfolio_adjusted_prices(db, portfolio_id)
-
-    # Step 3: calculate profit/loss
-    pl_result = calculate_portfolio_pl(db, portfolio_id)
-
-    # Step 4: build normalized daily performance line (base 100)
-    performance_series = calculate_portfolio_performance_series(
-        db, portfolio_id
-    )
-
-    split_warnings = [
-        {"code": "splits_unavailable", "ticker": ticker}
-        for ticker in adjusted_price_result["tickers_failed"]
-    ]
-
-    return {
-        "portfolio_id": portfolio_id,
-        "backfill": backfill_result,
-        "adjusted_prices": adjusted_price_result,
-        "performance_series": performance_series,
-        **pl_result,
-        "warnings": split_warnings + pl_result["warnings"],
-    }
+    return analyze_portfolio(db, portfolio_id)
 
 
 @router.get("/{portfolio_id}/adjusted-price")
-async def get_adjusted_transaction_price(
+def get_adjusted_transaction_price(
     current_user: CurrentUser,
     db: Annotated[Session, Depends(get_db)],
     portfolio_id: int = Path(..., description="The portfolio ID"),
@@ -88,12 +61,13 @@ async def get_adjusted_transaction_price(
     price: Decimal = Query(..., gt=0, description="Transaction price"),
     txn_date: date = Query(..., alias="date", description="Transaction date"),
 ):
-    """Get split-adjusted price for a transaction input."""
+    """Get split-adjusted transaction values for a transaction input."""
     _ensure_portfolio_ownership(db, portfolio_id, str(current_user.id))
 
     normalized_ticker = ticker.strip().upper()
     try:
         adjusted_quantity, adjusted_price, split_factor = calculate_adjusted_transaction_values(
+            db,
             ticker=normalized_ticker,
             quantity=quantity,
             price=price,
