@@ -21,17 +21,16 @@
   "landing": {
     "hero": {
       "eyebrow": "For BIST stocks and TEFAS funds",
-      "title": "Track your portfolio",
-      "titleHighlight": "like a fund",
-      "subtitle": "Replays your past trades day by day and shows your P/L, unit price and how you stand against the market at a glance.",
+      "title": "See your portfolios'",
+      "titleHighlight": "true performance",
+      "subtitle": "Track not just your investments' current P/L but how they have moved from day one, just like a fund.",
       "howItWorks": "How it works",
       "points": {
         "bist": "BIST stocks and TEFAS funds",
         "dividends": "Dividends and withholding, automatic",
         "splits": "Split and rights issue corrections",
         "compare": "Compare with BIST 100, gold and the dollar"
-      },
-      "explore": "Explore portfolios"
+      }
     },
     "preview": {
       "unitPrice": "Unit price",
@@ -89,10 +88,6 @@
           "description": "Unit price, returns, highlights and per-stock P/L are ready."
         }
       }
-    },
-    "cta": {
-      "title": "See the real story of your portfolio",
-      "subtitle": "Set up in minutes; create your first portfolio right away."
     },
     "footer": {
       "copyright": "© 2026 True Portfolio. All rights reserved."

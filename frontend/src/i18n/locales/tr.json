@@ -21,17 +21,16 @@
   "landing": {
     "hero": {
       "eyebrow": "BIST hisseleri ve TEFAS fonları için",
-      "title": "Portföyünü",
-      "titleHighlight": "bir fon gibi takip et",
-      "subtitle": "Geçmiş alım satımlarını gün gün yeniden oynatır; kâr/zararını, pay fiyatını ve piyasaya göre durumunu tek bakışta gösterir.",
+      "title": "Portföylerinin",
+      "titleHighlight": "gerçek performansını gör",
+      "subtitle": "Yatırımlarının sadece güncel kâr/zararını değil geçmişten bugüne nasıl ilerlediğini tıpkı bir fon gibi takip etmeni sağlar.",
       "howItWorks": "Nasıl çalışır?",
       "points": {
         "bist": "BIST hisseleri ve TEFAS fonları",
         "dividends": "Temettü ve stopaj otomatik",
         "splits": "Bölünme ve bedelli düzeltmeleri",
         "compare": "BIST 100, altın ve dolarla kıyas"
-      },
-      "explore": "Portföyleri keşfet"
+      }
     },
     "preview": {
       "unitPrice": "Pay fiyatı",
@@ -89,10 +88,6 @@
           "description": "Pay fiyatı, getiriler, öne çıkanlar ve hisse bazında kâr/zarar hazır."
         }
       }
-    },
-    "cta": {
-      "title": "Portföyünün gerçek hikâyesini gör",
-      "subtitle": "Birkaç dakikada kurulur; ilk portföyünü hemen oluştur."
     },
     "footer": {
       "copyright": "© 2026 True Portfolio. Tüm hakları saklıdır."

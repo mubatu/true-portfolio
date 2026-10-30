@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useFormatters } from '@/components/analysis/format';
-import { ExploreRow } from '@/components/explore/ExploreParts';
+import { ExploreShowcaseCard } from '@/components/explore/ExploreParts';
 import { Header } from '@/components/layout';
 import { Logo } from '@/components/layout/Logo';
 import { useAuth } from '@/hooks/useAuth';
@@ -70,7 +70,7 @@ export function LandingPage() {
                 <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden="true" />
                 {t('landing.hero.eyebrow')}
               </span>
-              <h1 className="mt-5 text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.05]">
+              <h1 className="mt-5 text-4xl sm:text-5xl xl:text-6xl font-bold tracking-tight leading-[1.05]">
                 {t('landing.hero.title')}{' '}
                 <span className="bg-gradient-to-r from-[hsl(var(--logo-from))] to-[hsl(var(--logo-to))] bg-clip-text text-transparent">
                   {t('landing.hero.titleHighlight')}
@@ -82,12 +82,6 @@ export function LandingPage() {
                   <Button size="lg" className="gap-2 rounded-full px-6 h-11">
                     {isAuthenticated ? t('common.myPortfolios') : t('common.getStarted')}
                     <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
-                <Link to="/explore">
-                  <Button size="lg" variant="outline" className="gap-2 rounded-full px-6 h-11">
-                    <Compass className="h-4 w-4" />
-                    {t('landing.hero.explore')}
                   </Button>
                 </Link>
                 <a href="#how-it-works">
@@ -151,32 +145,6 @@ export function LandingPage() {
             </ol>
           </div>
         </section>
-
-        {/* Closing call to action */}
-        <section className="container mx-auto max-w-7xl px-4 py-16 md:py-24">
-          <div className="relative overflow-hidden rounded-3xl bg-primary px-6 py-12 md:px-12 text-primary-foreground shadow-lg">
-            <div
-              className="pointer-events-none absolute inset-0"
-              aria-hidden="true"
-              style={{ background: 'radial-gradient(50% 80% at 100% 0%, rgb(255 255 255 / 0.18), transparent 70%)' }}
-            />
-            <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-              <div>
-                <h2 className="text-2xl md:text-3xl font-bold tracking-tight">{t('landing.cta.title')}</h2>
-                <p className="mt-2 opacity-90">{t('landing.cta.subtitle')}</p>
-              </div>
-              <Link to={start}>
-                <button
-                  type="button"
-                  className="inline-flex h-11 items-center gap-2 rounded-full bg-white px-6 text-sm font-semibold text-[hsl(216_80%_42%)] shadow-sm transition-transform hover:scale-[1.02]"
-                >
-                  {isAuthenticated ? t('common.myPortfolios') : t('common.getStarted')}
-                  <ArrowRight className="h-4 w-4" />
-                </button>
-              </Link>
-            </div>
-          </div>
-        </section>
       </main>
 
       <footer className="border-t bg-card/60">
@@ -236,9 +204,9 @@ function ExploreShowcase() {
         <div className="mt-4 flex flex-col gap-3" aria-busy={isLoading}>
           {isLoading
             ? Array.from({ length: SHOWCASE_SIZE }, (_, i) => (
-                <div key={i} className="h-[82px] rounded-2xl border bg-muted/40 animate-pulse" />
+                <div key={i} className="h-[212px] rounded-2xl border bg-muted/40 animate-pulse" />
               ))
-            : top.map((p) => <ExploreRow key={p.slug} portfolio={p} fmt={fmt} />)}
+            : top.map((p) => <ExploreShowcaseCard key={p.slug} portfolio={p} fmt={fmt} />)}
         </div>
 
         {data && data.length > SHOWCASE_SIZE && (

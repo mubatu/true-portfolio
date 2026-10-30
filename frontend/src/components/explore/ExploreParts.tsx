@@ -87,39 +87,56 @@ export function ExploreCard({ portfolio: p, fmt }: { portfolio: PublicPortfolioS
 }
 
 /**
- * A public portfolio as one compact row (landing page): name, owner and
- * age on the left, its unit price trend and since-start return on the
- * right. The whole row opens it.
+ * A public portfolio as the landing page features it: name, owner and
+ * age with the since-start return beside them, its unit price trend
+ * across the card and the last month and year below. The whole card
+ * opens it.
  */
-export function ExploreRow({ portfolio: p, fmt }: { portfolio: PublicPortfolioSummary; fmt: Formatters }) {
+export function ExploreShowcaseCard({ portfolio: p, fmt }: { portfolio: PublicPortfolioSummary; fmt: Formatters }) {
   const { t } = useTranslation();
   const duration = useDuration()(p.start_date, p.end_date);
+  const periods = [
+    ['1M', p.return_1m_pct],
+    ['1Y', p.return_1y_pct],
+  ] as const;
 
   return (
-    <article className="group relative flex items-center gap-4 rounded-2xl border bg-card p-4 shadow-sm transition-all hover:shadow-md hover:border-primary/40 focus-within:shadow-md">
-      <div className="min-w-0 flex-1">
-        <h3 className="font-semibold truncate">
-          <Link
-            to={`/explore/${p.slug}`}
-            className="after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none"
-          >
-            {p.name}
-          </Link>
-        </h3>
-        <div className="mt-1.5 flex items-center gap-2 min-w-0">
-          <OwnerChip owner={p.owner} />
-          {duration && <span className="shrink-0 text-xs text-muted-foreground">· {duration}</span>}
+    <article className="group relative flex flex-col gap-4 rounded-2xl border bg-card p-5 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 hover:border-primary/40 focus-within:shadow-md">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h3 className="text-lg font-semibold truncate">
+            <Link
+              to={`/explore/${p.slug}`}
+              className="after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none"
+            >
+              {p.name}
+            </Link>
+          </h3>
+          <div className="mt-1.5 flex items-center gap-2 min-w-0">
+            <OwnerChip owner={p.owner} />
+            {duration && <span className="shrink-0 text-xs text-muted-foreground">· {duration}</span>}
+          </div>
+        </div>
+        <div className="shrink-0 text-right">
+          <p className="text-3xl font-bold tabular-nums tracking-tight" style={{ color: plColor(p.return_pct ?? 0) }}>
+            {p.return_pct != null ? fmt.pct(p.return_pct) : '—'}
+          </p>
+          <p className="text-xs text-muted-foreground">{t('explore.sinceStart')}</p>
         </div>
       </div>
-      <div className="hidden sm:block w-24 shrink-0">
-        <Sparkline values={p.sparkline.map((v) => 1 + v / 100)} height={36} label={t('myPortfolios.sparklineLabel')} />
-      </div>
-      <div className="shrink-0 text-right">
-        <p className="text-lg font-bold tabular-nums tracking-tight" style={{ color: plColor(p.return_pct ?? 0) }}>
-          {p.return_pct != null ? fmt.pct(p.return_pct) : '—'}
-        </p>
-        <p className="text-[11px] text-muted-foreground">{t('explore.sinceStart')}</p>
-      </div>
+
+      <Sparkline values={p.sparkline.map((v) => 1 + v / 100)} height={64} label={t('myPortfolios.sparklineLabel')} />
+
+      <dl className="flex items-center gap-5 border-t pt-3 text-sm">
+        {periods.map(([key, value]) => (
+          <div key={key} className="flex items-baseline gap-1.5">
+            <dt className="text-xs text-muted-foreground">{t(`analyze.performance.ranges.${key}`)}</dt>
+            <dd className="font-semibold tabular-nums" style={{ color: value != null ? plColor(value) : undefined }}>
+              {value != null ? fmt.pct(value) : '—'}
+            </dd>
+          </div>
+        ))}
+      </dl>
     </article>
   );
 }
