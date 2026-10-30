@@ -30,7 +30,8 @@ async function copyText(text: string) {
  * Shares a public portfolio's Explore link: the system share sheet where
  * there is one (phones), else the link is copied and the button says so.
  * ``ghost`` and ``outline`` are icon buttons (cards, headers next to other
- * icon buttons); ``labelled`` spells out "Share".
+ * icon buttons); ``labelled`` spells out "Share", ``labelled-ghost`` too
+ * but quietly, its word hidden on phones like its neighbors'.
  */
 export function ShareButton({
   slug,
@@ -40,7 +41,7 @@ export function ShareButton({
 }: {
   slug: string;
   name: string;
-  variant?: 'ghost' | 'outline' | 'labelled';
+  variant?: 'ghost' | 'outline' | 'labelled' | 'labelled-ghost';
   className?: string;
 }) {
   const { t } = useTranslation();
@@ -81,11 +82,19 @@ export function ShareButton({
     </span>
   );
 
-  if (variant === 'labelled') {
+  if (variant === 'labelled' || variant === 'labelled-ghost') {
+    const quiet = variant === 'labelled-ghost';
     return (
-      <Button variant="outline" className={cn('gap-1.5', className)} onClick={share}>
+      <Button
+        variant={quiet ? 'ghost' : 'outline'}
+        className={cn('gap-1.5', className)}
+        onClick={share}
+        aria-label={t('explore.share.label')}
+      >
         <Icon className={iconClass} />
-        {status === 'idle' ? t('explore.share.short') : label}
+        <span className={quiet && status === 'idle' ? 'hidden sm:inline' : undefined}>
+          {status === 'idle' ? t('explore.share.short') : label}
+        </span>
         {live}
       </Button>
     );

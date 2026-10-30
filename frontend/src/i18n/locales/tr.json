@@ -376,7 +376,8 @@
     "delete": {
       "title": "Portföyü sil",
       "description": "Portföy ve tüm işlemleri kalıcı olarak silinir."
-    }
+    },
+    "short": "Ayarlar"
   },
   "explore": {
     "title": "Keşfet",

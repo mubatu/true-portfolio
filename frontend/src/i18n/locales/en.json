@@ -377,7 +377,8 @@
     "delete": {
       "title": "Delete portfolio",
       "description": "The portfolio and all its trades are deleted for good."
-    }
+    },
+    "short": "Settings"
   },
   "explore": {
     "title": "Explore",
