@@ -51,7 +51,7 @@ export interface DividendSummary {
 }
 
 export interface AnalysisWarning {
-  code: 'market_data_unavailable' | 'rights_issue_review';
+  code: 'market_data_unavailable' | 'rights_issue_review' | 'fund_prices_outdated';
   ticker: string;
 }
 

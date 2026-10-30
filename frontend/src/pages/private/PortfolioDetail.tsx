@@ -11,6 +11,7 @@ import {
 import { TransactionsTable } from '@/components/transactions/TransactionsTable';
 import { DeleteTransactionDialog } from '@/components/transactions/DeleteTransactionDialog';
 import { RightsIssuesSection } from '@/components/transactions/RightsIssuesSection';
+import { FundPricesSection } from '@/components/transactions/FundPricesSection';
 import {
   getPortfolioBySlug,
   getTransactionsBySlug,
@@ -19,7 +20,7 @@ import {
   deleteTransaction,
   type Transaction,
 } from '@/services/portfolioService';
-import { toDisplayTicker } from '@/config';
+import { hasUploadedPrices, toDisplayTicker } from '@/config';
 import { PortfolioHeader } from '@/components/portfolio/PortfolioHeader';
 
 type FormState =
@@ -110,6 +111,9 @@ export function PortfolioDetail() {
 
   const activeMutation = form?.mode === 'edit' ? updateMutation : createMutation;
   const market = portfolio?.market ?? 'BIST';
+  const isFund = hasUploadedPrices(market);
+  // Fund buys carry no broker commission.
+  const addForm: FormState = { mode: 'add', prefill: isFund ? { commission_rate: 0 } : undefined };
 
   const isLoading = portfolioLoading || transactionsLoading;
   const error = portfolioError || transactionsError;
@@ -135,7 +139,7 @@ export function PortfolioDetail() {
         portfolio={portfolio}
         actions={
           portfolio && (
-            <Button onClick={() => openForm({ mode: 'add' })} className="gap-2">
+            <Button onClick={() => openForm(addForm)} className="gap-2">
               <Plus className="h-4 w-4" />
               {t('portfolio.addTransaction')}
             </Button>
@@ -187,7 +191,7 @@ export function PortfolioDetail() {
                 >
                   {t('portfolio.transactions.empty.description')}
                 </p>
-                <Button onClick={() => openForm({ mode: 'add' })} className="gap-2">
+                <Button onClick={() => openForm(addForm)} className="gap-2">
                   <Plus className="h-4 w-4" />
                   {t('portfolio.addTransaction')}
                 </Button>
@@ -203,7 +207,9 @@ export function PortfolioDetail() {
             )}
           </div>
 
-          {transactions.length > 0 && (
+          {isFund && <FundPricesSection portfolioId={portfolio.id} market={portfolio.market} />}
+
+          {!isFund && transactions.length > 0 && (
             <RightsIssuesSection
               portfolioId={portfolio.id}
               market={portfolio.market}
@@ -228,6 +234,7 @@ export function PortfolioDetail() {
       {form && (
         <TransactionFormModal
           key={formKey}
+          isFund={isFund}
           title={t(
             form.mode === 'edit'
               ? 'portfolio.editTransactionModal.title'

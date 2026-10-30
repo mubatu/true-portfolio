@@ -25,6 +25,8 @@ const MAX_COMMISSION_PCT = 10;
 const rateToPct = (rate: number) => String(Number((rate * 100).toPrecision(10)));
 
 const OPERATIONS: Operation[] = ['buy', 'sell', 'rights_sale'];
+/** Funds have no rights issues. */
+const FUND_OPERATIONS: Operation[] = ['buy', 'sell'];
 
 const OPERATION_COLORS: Record<Operation, { color: string; background: string }> = {
   buy: { color: 'hsl(142 76% 36%)', background: 'hsl(142 76% 36% / 0.1)' },
@@ -41,6 +43,7 @@ const INPUT_STYLE = { borderColor: 'hsl(var(--input))' };
  */
 export function TransactionFormModal({
   title,
+  isFund = false,
   initial,
   isPending,
   error,
@@ -48,6 +51,8 @@ export function TransactionFormModal({
   onSubmit,
 }: {
   title: string;
+  /** A TEFAS fund portfolio: fund wording, no rights sales. */
+  isFund?: boolean;
   /** Prefilled fields; ticker in display form (without the market suffix). */
   initial?: {
     ticker?: string;
@@ -79,6 +84,7 @@ export function TransactionFormModal({
   const gross = Number(quantity) * Number(price);
   const commissionAmount = commissionValid && gross > 0 ? (gross * commissionValue) / 100 : null;
   const isRightsSale = operation === 'rights_sale';
+  const labels = isFund ? 'portfolio.addTransactionModal.fund' : 'portfolio.addTransactionModal';
 
   const handleSubmit = (e?: FormEvent) => {
     e?.preventDefault();
@@ -110,13 +116,13 @@ export function TransactionFormModal({
       }
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Field id="txn-ticker" label={t('portfolio.addTransactionModal.tickerLabel')}>
+        <Field id="txn-ticker" label={t(`${labels}.tickerLabel`)}>
           <input
             id="txn-ticker"
             type="text"
             value={ticker}
             onChange={(e) => setTicker(e.target.value.toUpperCase())}
-            placeholder={t('portfolio.addTransactionModal.tickerPlaceholder')}
+            placeholder={t(`${labels}.tickerPlaceholder`)}
             autoFocus={!initial?.ticker}
             className={`${INPUT_CLASS} uppercase`}
             style={INPUT_STYLE}
@@ -125,7 +131,7 @@ export function TransactionFormModal({
 
         <Field label={t('portfolio.addTransactionModal.operationLabel')}>
           <div className="flex gap-2">
-            {OPERATIONS.map((op) => {
+            {(isFund ? FUND_OPERATIONS : OPERATIONS).map((op) => {
               const selected = operation === op;
               const { color, background } = OPERATION_COLORS[op];
               return (
@@ -154,7 +160,7 @@ export function TransactionFormModal({
             label={t(
               isRightsSale
                 ? 'portfolio.addTransactionModal.rightsQuantityLabel'
-                : 'portfolio.addTransactionModal.quantityLabel'
+                : `${labels}.quantityLabel`
             )}
           >
             <input
@@ -164,7 +170,7 @@ export function TransactionFormModal({
               min="0"
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
-              placeholder={t('portfolio.addTransactionModal.quantityPlaceholder')}
+              placeholder={t(`${labels}.quantityPlaceholder`)}
               className={INPUT_CLASS}
               style={INPUT_STYLE}
             />
@@ -174,7 +180,7 @@ export function TransactionFormModal({
             label={t(
               isRightsSale
                 ? 'portfolio.addTransactionModal.rightsPriceLabel'
-                : 'portfolio.addTransactionModal.priceLabel'
+                : `${labels}.priceLabel`
             )}
           >
             <input

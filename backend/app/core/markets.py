@@ -8,6 +8,8 @@ class MarketConfig:
     code: str
     currency: str
     country: str
+    # Ticker suffix: the yfinance exchange suffix, or for uploaded markets
+    # just a marker that keeps their codes apart from exchange tickers.
     yfinance_suffix: str
     # Index synced like any holding: its trading days are the market
     # calendar, and its closes are the comparison line.
@@ -15,6 +17,9 @@ class MarketConfig:
     # Cash-dividend withholding tax as ``(effective_from, rate)`` pairs,
     # sorted by date. The rate in force on a dividend's ex-date applies.
     dividend_withholding: tuple[tuple[date, Decimal], ...] = ()
+    # "yahoo": synced daily; "upload": prices come only from files the user
+    # uploads (TEFAS funds — Yahoo has none and TEFAS blocks automated reads).
+    price_source: str = "yahoo"
 
 
 # Central backend market registry.
@@ -36,6 +41,17 @@ MARKETS: dict[str, MarketConfig] = {
             (date(2024, 12, 22), Decimal("0.15")),
         ),
     ),
+    # TEFAS mutual funds. Prices are uploaded from TEFAS's "Fon Verileri"
+    # Excel export; funds pay no cash dividends and never split. Withholding
+    # on fund gains (stopaj) is not modelled: returns are before tax.
+    "TEFAS": MarketConfig(
+        code="TEFAS",
+        currency="TRY",
+        country="TR",
+        yfinance_suffix=".TEFAS",
+        benchmark_ticker="XU100.IS",
+        price_source="upload",
+    ),
 }
 
 
@@ -43,6 +59,14 @@ def get_market_config(market_code: str | None) -> MarketConfig | None:
     if not market_code:
         return None
     return MARKETS.get(market_code.upper())
+
+
+def uses_uploaded_prices(ticker: str) -> bool:
+    """True for tickers of upload-priced markets: never sent to Yahoo."""
+    return any(
+        config.price_source == "upload" and ticker.endswith(config.yfinance_suffix)
+        for config in MARKETS.values()
+    )
 
 
 def get_market_benchmark(market_code: str | None) -> str | None:

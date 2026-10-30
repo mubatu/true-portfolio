@@ -32,6 +32,7 @@ from decimal import Decimal
 from sqlalchemy import bindparam, text
 from sqlalchemy.orm import Session
 
+from app.core.markets import uses_uploaded_prices
 from app.services import rights, yahoo
 from app.services.rights import RightsIssue
 
@@ -74,8 +75,9 @@ def ensure_market_data(
 
     Stale tickers are downloaded in a single batched Yahoo request.
     Tickers Yahoo returns nothing for keep their stored data and are
-    reported in ``failed``.
+    reported in ``failed``. Upload-priced tickers (TEFAS funds) are skipped.
     """
+    needs = {t: window for t, window in needs.items() if not uses_uploaded_prices(t)}
     today = today or date.today()
     yesterday = today - timedelta(days=1)
     windows = load_sync_windows(db, list(needs))
@@ -220,6 +222,50 @@ def _store_history(
         db.rollback()
         raise
     return True
+
+
+def save_uploaded_closes(db: Session, ticker: str, closes: dict[date, Decimal]) -> None:
+    """Merge uploaded closes into ``market_prices`` (a day already stored is
+    overwritten; days outside the file are kept). One transaction."""
+    if not closes:
+        return
+    days = sorted(closes)
+    try:
+        db.execute(
+            text(
+                """
+                INSERT INTO market_prices (ticker, date, close)
+                SELECT :ticker, d, c
+                FROM unnest(CAST(:dates AS date[]), CAST(:closes AS numeric[])) AS t(d, c)
+                ON CONFLICT (ticker, date) DO UPDATE SET close = EXCLUDED.close
+                """
+            ),
+            {"ticker": ticker, "dates": days, "closes": [closes[d] for d in days]},
+        )
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+
+
+def load_price_ranges(
+    db: Session, tickers: list[str]
+) -> dict[str, tuple[date, date, int]]:
+    """``(first_date, last_date, day_count)`` of stored closes per ticker."""
+    if not tickers:
+        return {}
+    rows = db.execute(
+        text(
+            """
+            SELECT ticker, MIN(date), MAX(date), COUNT(*)
+            FROM market_prices
+            WHERE ticker IN :tickers
+            GROUP BY ticker
+            """
+        ).bindparams(bindparam("tickers", expanding=True)),
+        {"tickers": tickers},
+    ).fetchall()
+    return {t: (first, last, count) for t, first, last, count in rows}
 
 
 def _stored_closes(db: Session, ticker: str, start: date, end: date) -> dict[date, Decimal]:

@@ -16,8 +16,13 @@ from decimal import Decimal
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from app.core.markets import get_dividend_withholding_rate, get_market_benchmark
-from app.services import analysis
+from app.core.markets import (
+    get_dividend_withholding_rate,
+    get_market_benchmark,
+    get_market_config,
+    uses_uploaded_prices,
+)
+from app.services import analysis, tefas
 from app.services.ledger import DividendEvent, LedgerTransaction, replay
 from app.services.market_data import (
     adjust_unadjusted_closes,
@@ -25,9 +30,11 @@ from app.services.market_data import (
     ensure_market_data,
     load_closes,
     load_corporate_actions,
+    load_price_ranges,
     load_rights_issues,
     load_sync_windows,
     save_rights_issue,
+    save_uploaded_closes,
     split_factor_between_dates,
 )
 from app.services.rights import RightsIssue, correct_closes, correct_dividend
@@ -113,6 +120,9 @@ def analyze_portfolio(db: Session, portfolio_id: int) -> dict:
         {"code": "rights_issue_review", "ticker": r["ticker"]}
         for r in rights_issues
         if r["needs_review"]
+    ] + [
+        {"code": "fund_prices_outdated", "ticker": ticker}
+        for ticker in _outdated_uploaded_prices(transactions, closes, yesterday)
     ]
     return {
         "portfolio_id": portfolio_id,
@@ -121,6 +131,75 @@ def analyze_portfolio(db: Session, portfolio_id: int) -> dict:
         "rights_issues": rights_issues,
         "warnings": warnings,
     }
+
+
+# ------------------------------------------------------------------
+# Uploaded fund prices (TEFAS)
+# ------------------------------------------------------------------
+
+# Uploaded prices older than this before yesterday count as outdated
+# (covers weekends and the longest bayram holidays).
+UPLOADED_PRICES_MAX_AGE = timedelta(days=10)
+
+
+def upload_fund_prices(
+    db: Session, portfolio_id: int, fund_code: str, content: bytes
+) -> dict:
+    """Store a fund's daily prices from a TEFAS Excel export.
+
+    Raises ``tefas.InvalidFundPrices`` for a non-fund portfolio, a bad
+    fund code or an unreadable file.
+    """
+    config = get_market_config(_portfolio_market(db, portfolio_id))
+    if config is None or config.price_source != "upload":
+        raise tefas.InvalidFundPrices("not_fund_portfolio")
+    ticker = tefas.normalize_fund_code(fund_code) + config.yfinance_suffix
+    prices = tefas.parse_price_export(content)
+    save_uploaded_closes(db, ticker, prices)
+    return next(r for r in list_fund_prices(db, portfolio_id, [ticker]) if r["ticker"] == ticker)
+
+
+def list_fund_prices(
+    db: Session, portfolio_id: int, extra_tickers: list[str] | None = None
+) -> list[dict]:
+    """Stored price range of each upload-priced ticker of the portfolio."""
+    tickers = {
+        t.ticker for t in _load_ledger_transactions(db, portfolio_id)
+        if uses_uploaded_prices(t.ticker)
+    } | set(extra_tickers or [])
+    ranges = load_price_ranges(db, sorted(tickers))
+    return [
+        {
+            "ticker": ticker,
+            "first_date": ranges[ticker][0].isoformat() if ticker in ranges else None,
+            "last_date": ranges[ticker][1].isoformat() if ticker in ranges else None,
+            "days": ranges[ticker][2] if ticker in ranges else 0,
+        }
+        for ticker in sorted(tickers)
+    ]
+
+
+def _outdated_uploaded_prices(
+    transactions: list[LedgerTransaction],
+    closes: dict[str, dict[date, Decimal]],
+    yesterday: date,
+) -> list[str]:
+    """Upload-priced holdings whose prices miss recent days or a trade."""
+    ledger = replay(transactions, [])
+    first_trade: dict[str, date] = {}
+    for txn in transactions:
+        first_trade.setdefault(txn.ticker, txn.date)
+
+    outdated = []
+    for ticker, position in sorted(ledger.positions.items()):
+        if not uses_uploaded_prices(ticker):
+            continue
+        days = closes.get(ticker, {})
+        if not days or min(days) > first_trade[ticker]:
+            outdated.append(ticker)
+        elif position.quantity > 0 and max(days) < yesterday - UPLOADED_PRICES_MAX_AGE:
+            outdated.append(ticker)
+    return outdated
 
 
 # ------------------------------------------------------------------
@@ -230,6 +309,9 @@ def calculate_adjusted_transaction_values(
     Raises ``CorporateActionsUnavailable`` if the ticker's split data is
     neither stored nor downloadable.
     """
+    if uses_uploaded_prices(ticker):  # funds never split
+        return _quantize_quantity(quantity), _quantize_price(price), Decimal(1)
+
     today = date.today()
     ensure_market_data(db, {ticker: (txn_date, today)}, today=today)
     if ticker not in load_sync_windows(db, [ticker]):

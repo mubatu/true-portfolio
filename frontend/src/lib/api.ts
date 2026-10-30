@@ -96,3 +96,31 @@ export const deleteRightsIssue = async (portfolioId: number, ticker: string, exD
     `/portfolios/${portfolioId}/rights-issues/${encodeURIComponent(ticker)}/${exDate}`
   );
 };
+
+/** Stored price range of a TEFAS fund (prices come from uploaded Excel files). */
+export interface FundPrices {
+  ticker: string;
+  first_date: string | null;
+  last_date: string | null;
+  days: number;
+}
+
+export const getFundPrices = async (portfolioId: number): Promise<FundPrices[]> => {
+  const response = await apiClient.get<FundPrices[]>(`/portfolios/${portfolioId}/fund-prices`);
+  return response.data;
+};
+
+export const uploadFundPrices = async (
+  portfolioId: number,
+  fundCode: string,
+  file: File
+): Promise<FundPrices> => {
+  const body = new FormData();
+  body.append('fund_code', fundCode);
+  body.append('file', file);
+  // Unset the JSON default so the browser adds the multipart boundary.
+  const response = await apiClient.post<FundPrices>(`/portfolios/${portfolioId}/fund-prices`, body, {
+    headers: { 'Content-Type': undefined },
+  });
+  return response.data;
+};

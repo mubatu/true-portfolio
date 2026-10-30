@@ -104,7 +104,8 @@
     "warnings": {
       "title": "Bazı piyasa verileri yüklenemedi. Sonuçlar eksik olabilir.",
       "market_data_unavailable": "{{ticker}} için piyasa verisi güncellenemedi; kayıtlı son veriler gösteriliyor.",
-      "rights_issue_review": "{{ticker}} için bir bedelli sermaye artırımı kaydı kontrol bekliyor; İşlemler sayfasındaki Bedelli bölümünden şartlarını gir veya onayla."
+      "rights_issue_review": "{{ticker}} için bir bedelli sermaye artırımı kaydı kontrol bekliyor; İşlemler sayfasındaki Bedelli bölümünden şartlarını gir veya onayla.",
+      "fund_prices_outdated": "{{ticker}} için yüklü fon fiyatları eksik veya güncel değil; TEFAS'tan güncel Excel'i İşlemler sayfasındaki Fon Fiyatları bölümünden yükle."
     },
     "table": {
       "ticker": "Hisse",
@@ -284,7 +285,14 @@
       "commissionAmount": "Komisyon: ₺{{amount}}",
       "commissionInvalid": "0 ile %{{max}} arasında bir oran gir.",
       "rightsPriceLabel": "Hak Başına Satış Fiyatı",
-      "dateLabel": "İşlem Tarihi"
+      "dateLabel": "İşlem Tarihi",
+      "fund": {
+        "tickerLabel": "Fon Kodu",
+        "tickerPlaceholder": "örn. IPB, KPC, IDH",
+        "quantityLabel": "Pay Adedi",
+        "quantityPlaceholder": "Pay adedi",
+        "priceLabel": "Pay Fiyatı"
+      }
     },
     "editTransactionModal": {
       "title": "İşlemi Düzenle"
@@ -357,6 +365,31 @@
     "deleteConfirm": {
       "title": "Bedelli Kaydını Sil",
       "message": "{{ticker}} için {{date}} tarihli bedelli kaydı silinecek. Bu kayıt hisseyi tutan tüm portföyleri etkiler; silinirse geçmiş fiyatlar yeniden Yahoo'nun düşürülmüş haline döner."
+    }
+  },
+  "fundPrices": {
+    "title": "Fon Fiyatları",
+    "upload": "Fiyat Yükle",
+    "hint": "Fonların günlük fiyatı Yahoo'da yok. TEFAS'ta Fon Verileri sayfasında fonu seçip tarih aralığını girin, Excel'i indirin ve buradan yükleyin. Güncel kalması için arada bir yeniden yükleyin; yeni dosya eskisiyle birleştirilir.",
+    "empty": "Henüz fon yok. Önce bir alış işlemi ekle, sonra fiyatlarını yükle.",
+    "range": "{{from}} – {{to}} · {{days}} gün",
+    "missing": "Fiyat yüklenmedi",
+    "form": {
+      "title": "TEFAS Fiyatlarını Yükle",
+      "hint": "TEFAS → Fon Verileri → fonu seç → Excel. Fiyatlar fonu tutan tüm portföylerde kullanılır.",
+      "file": "Excel dosyası",
+      "code": "Fon kodu",
+      "codeHint": "Dosyanın içinde fon kodu yok; dosya adından dolduruldu, kontrol et.",
+      "submit": "Yükle"
+    },
+    "errors": {
+      "not_excel": "Dosya okunamadı; TEFAS'tan indirilen .xlsx dosyasını seç.",
+      "no_price_table": "Dosyada Tarih / Fiyat tablosu bulunamadı.",
+      "no_prices": "Dosyada fiyat yok.",
+      "bad_row": "Dosyada okunamayan bir satır var.",
+      "invalid_fund_code": "Fon kodu 3 karakter olmalı (ör. IPB).",
+      "not_fund_portfolio": "Fiyat yükleme yalnızca TEFAS portföylerinde var.",
+      "file_too_large": "Dosya çok büyük; tek bir fonun Excel'ini yükle."
     }
   }
 }

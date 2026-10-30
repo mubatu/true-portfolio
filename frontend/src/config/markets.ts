@@ -3,7 +3,7 @@
  * Add new markets here as your app expands
  */
 
-export type Market = 'BIST';
+export type Market = 'BIST' | 'TEFAS';
 
 export interface MarketConfig {
   value: Market;
@@ -11,6 +11,8 @@ export interface MarketConfig {
   currency: string;    // ISO 4217 currency code
   country: string;     // For future use (flags, etc.)
   suffix: string;      // yfinance exchange suffix (e.g. '.IS' for Istanbul)
+  /** Prices come from uploaded files (TEFAS Excel), not Yahoo. */
+  uploadedPrices?: boolean;
 }
 
 export const MARKETS: MarketConfig[] = [
@@ -20,6 +22,14 @@ export const MARKETS: MarketConfig[] = [
     currency: 'TRY',
     country: 'TR',
     suffix: '.IS',
+  },
+  {
+    value: 'TEFAS',
+    label: 'TEFAS (Yatırım fonları)',
+    currency: 'TRY',
+    country: 'TR',
+    suffix: '.TEFAS',
+    uploadedPrices: true,
   },
   // Future markets:
   // { value: 'NYSE', label: 'NYSE (New York Stock Exchange)', currency: 'USD', country: 'US', suffix: '' },
@@ -40,6 +50,10 @@ export const getMarketCurrency = (marketCode: string): string => {
 export const getMarketConfig = (marketCode: string): MarketConfig | undefined => {
   return MARKETS.find((m) => m.value === marketCode);
 };
+
+/** True for markets whose prices the user uploads (TEFAS funds). */
+export const hasUploadedPrices = (marketCode: string): boolean =>
+  Boolean(getMarketConfig(marketCode)?.uploadedPrices);
 
 /**
  * Get the yfinance suffix for a market (e.g. '.IS' for BIST)

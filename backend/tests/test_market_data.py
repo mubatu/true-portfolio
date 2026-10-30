@@ -180,3 +180,15 @@ def test_parse_batched_download_frame():
     assert history.splits == {date(2023, 4, 4): D("7.0")}
     assert history.dividends == {date(2023, 4, 5): D("6.487455")}
     assert yahoo._parse_ticker(frame, "MISSING.IS") is None
+
+
+def test_fund_tickers_are_never_sent_to_yahoo(sync_env):
+    sync_env["available"] = {"AAA.IS"}
+    result = market_data.ensure_market_data(
+        None,
+        {"AAA.IS": (date(2025, 3, 1), YESTERDAY), "IPB.TEFAS": (date(2025, 3, 1), YESTERDAY)},
+        today=TODAY,
+    )
+    assert sync_env["downloads"] == [(("AAA.IS",), date(2025, 3, 1), TODAY)]
+    assert result.synced == ["AAA.IS"]
+    assert result.failed == []

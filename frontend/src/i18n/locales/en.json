@@ -104,7 +104,8 @@
     "warnings": {
       "title": "Some market data could not be loaded. Results may be incomplete.",
       "market_data_unavailable": "Market data for {{ticker}} could not be refreshed; the last stored data is shown.",
-      "rights_issue_review": "A rights issue for {{ticker}} needs review; enter or confirm its terms in the Rights Issues section of the Transactions page."
+      "rights_issue_review": "A rights issue for {{ticker}} needs review; enter or confirm its terms in the Rights Issues section of the Transactions page.",
+      "fund_prices_outdated": "Uploaded fund prices for {{ticker}} are missing or out of date; upload a fresh TEFAS Excel in the Fund Prices section of the Transactions page."
     },
     "table": {
       "ticker": "Ticker",
@@ -284,7 +285,14 @@
       "commissionAmount": "Commission: ₺{{amount}}",
       "commissionInvalid": "Enter a rate between 0 and {{max}}%.",
       "rightsPriceLabel": "Sale Price per Right",
-      "dateLabel": "Transaction Date"
+      "dateLabel": "Transaction Date",
+      "fund": {
+        "tickerLabel": "Fund Code",
+        "tickerPlaceholder": "e.g. IPB, KPC, IDH",
+        "quantityLabel": "Units",
+        "quantityPlaceholder": "Number of units",
+        "priceLabel": "Unit Price"
+      }
     },
     "editTransactionModal": {
       "title": "Edit Transaction"
@@ -357,6 +365,31 @@
     "deleteConfirm": {
       "title": "Delete Rights Issue",
       "message": "The {{date}} rights issue of {{ticker}} will be deleted. It affects every portfolio holding the stock; past prices go back to Yahoo's lowered values."
+    }
+  },
+  "fundPrices": {
+    "title": "Fund Prices",
+    "upload": "Upload Prices",
+    "hint": "Yahoo has no daily prices for funds. On TEFAS, open Fund Data, pick the fund and a date range, download the Excel and upload it here. Re-upload now and then to stay current; a new file is merged with the old one.",
+    "empty": "No funds yet. Add a buy first, then upload its prices.",
+    "range": "{{from}} – {{to}} · {{days}} days",
+    "missing": "No prices uploaded",
+    "form": {
+      "title": "Upload TEFAS Prices",
+      "hint": "TEFAS → Fund Data → pick the fund → Excel. Prices are shared by every portfolio holding the fund.",
+      "file": "Excel file",
+      "code": "Fund code",
+      "codeHint": "The file does not contain the fund code; it was filled from the file name, please check.",
+      "submit": "Upload"
+    },
+    "errors": {
+      "not_excel": "The file could not be read; choose the .xlsx downloaded from TEFAS.",
+      "no_price_table": "No Date / Price table found in the file.",
+      "no_prices": "The file has no prices.",
+      "bad_row": "The file has a row that could not be read.",
+      "invalid_fund_code": "The fund code must be 3 characters (e.g. IPB).",
+      "not_fund_portfolio": "Price upload is only for TEFAS portfolios.",
+      "file_too_large": "The file is too large; upload one fund's Excel."
     }
   }
 }

@@ -1,7 +1,7 @@
 from datetime import date
 from decimal import Decimal
 from typing import Annotated
-from fastapi import APIRouter, Depends, Path, HTTPException, Query, status
+from fastapi import APIRouter, Depends, File, Form, Path, HTTPException, Query, UploadFile, status
 from pydantic import BaseModel, Field
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -13,9 +13,12 @@ from app.services.portfolio_service import (
     add_rights_issue,
     analyze_portfolio,
     calculate_adjusted_transaction_values,
+    list_fund_prices,
     list_rights_issues,
     remove_rights_issue,
+    upload_fund_prices,
 )
+from app.services.tefas import InvalidFundPrices
 
 router = APIRouter(prefix="/portfolios", tags=["Portfolios"])
 
@@ -153,4 +156,41 @@ def delete_rights_issue_route(
         if not remove_rights_issue(db, portfolio_id, ticker.strip().upper(), ex_date):
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="not_found")
     except InvalidRightsIssue as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+# ── Fund prices (TEFAS) ──────────────────────────────────────────────────
+
+# A five-year TEFAS export is ~60 KB; anything far larger is not one.
+MAX_PRICE_FILE_BYTES = 2_000_000
+
+
+@router.get("/{portfolio_id}/fund-prices")
+def get_fund_prices(
+    current_user: CurrentUser,
+    db: Annotated[Session, Depends(get_db)],
+    portfolio_id: int = Path(..., description="The portfolio ID"),
+):
+    """Stored price range of each fund the portfolio holds."""
+    _ensure_portfolio_ownership(db, portfolio_id, str(current_user.id))
+    return list_fund_prices(db, portfolio_id)
+
+
+@router.post("/{portfolio_id}/fund-prices")
+def post_fund_prices(
+    current_user: CurrentUser,
+    db: Annotated[Session, Depends(get_db)],
+    fund_code: Annotated[str, Form(description="TEFAS fund code, e.g. IPB")],
+    file: Annotated[UploadFile, File(description="TEFAS 'Fon Verileri' Excel export")],
+    portfolio_id: int = Path(..., description="The portfolio ID"),
+):
+    """Store a fund's daily prices from a TEFAS Excel export (merged with
+    what is stored; prices are shared by every portfolio holding the fund)."""
+    _ensure_portfolio_ownership(db, portfolio_id, str(current_user.id))
+    content = file.file.read(MAX_PRICE_FILE_BYTES + 1)
+    if len(content) > MAX_PRICE_FILE_BYTES:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="file_too_large")
+    try:
+        return upload_fund_prices(db, portfolio_id, fund_code, content)
+    except InvalidFundPrices as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
