@@ -6,6 +6,7 @@ loaded data to the pure ``analysis`` module.
 Price basis: ``market_prices`` holds Yahoo's raw closes — restated for
 splits, not for dividends — matching the split-adjusted transaction
 fields. Cash dividends are counted separately as income by the ledger.
+Rights issues Yahoo restated silently are undone on read (``rights``).
 """
 
 from datetime import date, timedelta
@@ -18,12 +19,16 @@ from app.core.markets import get_dividend_withholding_rate, get_market_benchmark
 from app.services import analysis
 from app.services.ledger import DividendEvent, LedgerTransaction, replay
 from app.services.market_data import (
+    delete_rights_issue,
     ensure_market_data,
     load_closes,
     load_corporate_actions,
+    load_rights_issues,
     load_sync_windows,
+    save_rights_issue,
     split_factor_between_dates,
 )
+from app.services.rights import RightsIssue, correct_closes, correct_dividend
 
 SPLIT_PRICE_SCALE = Decimal("0.00000001")
 SPLIT_QUANTITY_SCALE = Decimal("0.00000001")
@@ -67,13 +72,15 @@ def analyze_portfolio(db: Session, portfolio_id: int) -> dict:
     )
     benchmark_closes = closes.pop(benchmark, {}) if benchmark else {}
     actions = load_corporate_actions(db, tickers)
+    issues = load_rights_issues(db, tickers)
+    closes = {t: correct_closes(c, issues.get(t, [])) for t, c in closes.items()}
 
     dividends = sorted(
         (
             DividendEvent(
                 ex_date=ex_date,
                 ticker=ticker,
-                gross_per_share=gross,
+                gross_per_share=correct_dividend(ex_date, gross, issues[ticker]),
                 withholding_rate=get_dividend_withholding_rate(market, ex_date),
             )
             for ticker in tickers
@@ -91,16 +98,114 @@ def analyze_portfolio(db: Session, portfolio_id: int) -> dict:
         as_of=yesterday,
         benchmark_closes=benchmark_closes,
     )
+    rights_issues = _rights_summary(transactions, issues)
     warnings = [
         {"code": "market_data_unavailable", "ticker": ticker}
         for ticker in sync.failed
+    ] + [
+        {"code": "rights_issue_review", "ticker": r["ticker"]}
+        for r in rights_issues
+        if r["needs_review"]
     ]
     return {
         "portfolio_id": portfolio_id,
         "market_data": {"synced": sync.synced, "failed": sync.failed},
         **result,
+        "rights_issues": rights_issues,
         "warnings": warnings,
     }
+
+
+# ------------------------------------------------------------------
+# Rights issues (bedelli sermaye artırımı)
+# ------------------------------------------------------------------
+
+MAX_RIGHTS_RATIO = Decimal(20)
+
+
+class InvalidRightsIssue(ValueError):
+    """Rejected rights-issue input; the message is safe to show."""
+
+
+def list_rights_issues(db: Session, portfolio_id: int) -> list[dict]:
+    """Rights issues of the portfolio's tickers, with what the portfolio
+    was entitled to on each ex-date."""
+    transactions = _load_ledger_transactions(db, portfolio_id)
+    tickers = sorted({t.ticker for t in transactions})
+    return _rights_summary(transactions, load_rights_issues(db, tickers))
+
+
+def add_rights_issue(
+    db: Session,
+    portfolio_id: int,
+    ticker: str,
+    ex_date: date,
+    ratio: Decimal,
+    subscription_price: Decimal,
+) -> dict:
+    """Record a rights issue from its KAP terms for a ticker of the portfolio.
+
+    The issue is shared by every portfolio holding the ticker, so input is
+    restricted to the caller's own tickers and sane terms.
+    """
+    transactions = _load_ledger_transactions(db, portfolio_id)
+    if ticker not in {t.ticker for t in transactions}:
+        raise InvalidRightsIssue("ticker_not_in_portfolio")
+    if ex_date > date.today():
+        raise InvalidRightsIssue("ex_date_in_future")
+    if not (0 < ratio <= MAX_RIGHTS_RATIO) or subscription_price < 0:
+        raise InvalidRightsIssue("invalid_terms")
+    held = replay([t for t in transactions if t.date < ex_date], []).positions.get(ticker)
+    if held is None or held.quantity <= 0:
+        raise InvalidRightsIssue("not_held_on_ex_date")
+
+    yesterday = date.today() - timedelta(days=1)
+    ensure_market_data(db, {ticker: (ex_date - timedelta(days=30), yesterday)})
+    save_rights_issue(db, ticker, ex_date, ratio, subscription_price)
+    return next(
+        r for r in list_rights_issues(db, portfolio_id)
+        if r["ticker"] == ticker and r["ex_date"] == ex_date.isoformat()
+    )
+
+
+def remove_rights_issue(db: Session, portfolio_id: int, ticker: str, ex_date: date) -> bool:
+    transactions = _load_ledger_transactions(db, portfolio_id)
+    if ticker not in {t.ticker for t in transactions}:
+        raise InvalidRightsIssue("ticker_not_in_portfolio")
+    return delete_rights_issue(db, ticker, ex_date)
+
+
+def _rights_summary(
+    transactions: list[LedgerTransaction],
+    issues: dict[str, list[RightsIssue]],
+) -> list[dict]:
+    """Issues the portfolio held shares for, newest first."""
+    summary: list[dict] = []
+    for ticker, ticker_issues in issues.items():
+        for issue in ticker_issues:
+            held = replay([t for t in transactions if t.date < issue.ex_date], [])
+            position = held.positions.get(ticker)
+            entitled = position.quantity if position else Decimal(0)
+            if entitled <= 0:
+                continue
+            rights = entitled * issue.ratio if issue.ratio is not None else None
+            summary.append({
+                "ticker": ticker,
+                "ex_date": issue.ex_date.isoformat(),
+                "ratio": float(issue.ratio) if issue.ratio is not None else None,
+                "subscription_price": (
+                    float(issue.subscription_price)
+                    if issue.subscription_price is not None
+                    else None
+                ),
+                "price_factor": float(issue.price_factor),
+                "source": issue.source,
+                "needs_review": issue.needs_review or issue.ratio is None,
+                "entitled_shares": float(entitled),
+                "rights": float(rights) if rights is not None else None,
+            })
+    summary.sort(key=lambda r: (r["ex_date"], r["ticker"]), reverse=True)
+    return summary
 
 
 def calculate_adjusted_transaction_values(
@@ -306,12 +411,17 @@ def _load_ledger_transactions(
         LedgerTransaction(
             date=txn_date,
             ticker=ticker,
-            operation="buy" if operation.lower() == "buy" else "sell",
+            operation=_operation(operation),
             quantity=Decimal(str(quantity)),
             price=Decimal(str(price)),
         )
         for txn_date, ticker, operation, quantity, price in rows
     ]
+
+
+def _operation(value: str) -> str:
+    value = value.lower()
+    return value if value in ("buy", "rights_sale") else "sell"
 
 
 def _portfolio_market(db: Session, portfolio_id: int) -> str | None:

@@ -2,14 +2,19 @@ from datetime import date
 from decimal import Decimal
 from typing import Annotated
 from fastapi import APIRouter, Depends, Path, HTTPException, Query, status
+from pydantic import BaseModel, Field
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from app.api.deps import CurrentUser
 from app.db import get_db
 from app.services.portfolio_service import (
     CorporateActionsUnavailable,
+    InvalidRightsIssue,
+    add_rights_issue,
     analyze_portfolio,
     calculate_adjusted_transaction_values,
+    list_rights_issues,
+    remove_rights_issue,
 )
 
 router = APIRouter(prefix="/portfolios", tags=["Portfolios"])
@@ -89,3 +94,63 @@ def get_adjusted_transaction_price(
         "adjusted_price": float(adjusted_price),
         "split_factor": float(split_factor),
     }
+
+
+# ── Rights issues (bedelli sermaye artırımı) ─────────────────────────────
+
+
+class RightsIssueInput(BaseModel):
+    ticker: str = Field(..., min_length=1, description="Full ticker, e.g. KONTR.IS")
+    ex_date: date = Field(..., description="Hak kullanım başlangıç tarihi")
+    ratio: Decimal = Field(..., gt=0, description="New shares per share (1 = %100)")
+    subscription_price: Decimal = Field(..., ge=0, description="TL per new share")
+
+
+@router.get("/{portfolio_id}/rights-issues")
+def get_rights_issues(
+    current_user: CurrentUser,
+    db: Annotated[Session, Depends(get_db)],
+    portfolio_id: int = Path(..., description="The portfolio ID"),
+):
+    """Rights issues the portfolio held shares for, with entitlements."""
+    _ensure_portfolio_ownership(db, portfolio_id, str(current_user.id))
+    return list_rights_issues(db, portfolio_id)
+
+
+@router.post("/{portfolio_id}/rights-issues")
+def create_rights_issue(
+    payload: RightsIssueInput,
+    current_user: CurrentUser,
+    db: Annotated[Session, Depends(get_db)],
+    portfolio_id: int = Path(..., description="The portfolio ID"),
+):
+    """Create or update a rights issue from its KAP announcement."""
+    _ensure_portfolio_ownership(db, portfolio_id, str(current_user.id))
+    try:
+        return add_rights_issue(
+            db,
+            portfolio_id,
+            ticker=payload.ticker.strip().upper(),
+            ex_date=payload.ex_date,
+            ratio=payload.ratio,
+            subscription_price=payload.subscription_price,
+        )
+    except InvalidRightsIssue as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@router.delete("/{portfolio_id}/rights-issues/{ticker}/{ex_date}", status_code=204)
+def delete_rights_issue_route(
+    current_user: CurrentUser,
+    db: Annotated[Session, Depends(get_db)],
+    portfolio_id: int = Path(..., description="The portfolio ID"),
+    ticker: str = Path(..., description="Full ticker, e.g. KONTR.IS"),
+    ex_date: date = Path(..., description="Ex-date of the issue"),
+):
+    """Remove a rights issue (shared by all portfolios holding the ticker)."""
+    _ensure_portfolio_ownership(db, portfolio_id, str(current_user.id))
+    try:
+        if not remove_rights_issue(db, portfolio_id, ticker.strip().upper(), ex_date):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="not_found")
+    except InvalidRightsIssue as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc

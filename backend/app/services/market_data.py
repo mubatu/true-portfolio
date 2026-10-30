@@ -1,10 +1,12 @@
 """
 Market data cache in Postgres, refreshed from Yahoo at most once a day.
 
-Tables (see supabase/migrations/20261030120000_market_data_sync.sql):
-  - ``market_prices``     raw daily closes
+Tables (see supabase/migrations/):
+  - ``market_prices``     raw daily closes, exactly as Yahoo returns them
   - ``corporate_actions`` stock splits and cash dividends
   - ``market_data_sync``  stored window and last sync per ticker
+  - ``rights_issues``     rights issues Yahoo restated silently; their price
+                          factors are applied when reading (see rights.py)
 
 Sync rule: a ticker is refreshed when its stored window does not reach
 back to the earliest date someone needs, or forward to the latest date
@@ -12,6 +14,10 @@ someone needs (yesterday for open positions). A refresh always rewrites
 the *whole* stored window in one transaction, so every stored price and
 corporate action of a ticker shares one basis — also after a new split,
 which makes Yahoo restate the entire raw-close history.
+
+Before a window is rewritten, the stored copy is compared with the fresh
+one: a constant factor up to some day with no split there is a silent
+rights-issue restatement, recorded in ``rights_issues``.
 
 Analysis code only reads from these tables; it never calls Yahoo.
 """
@@ -23,7 +29,8 @@ from decimal import Decimal
 from sqlalchemy import bindparam, text
 from sqlalchemy.orm import Session
 
-from app.services import yahoo
+from app.services import rights, yahoo
+from app.services.rights import RightsIssue
 
 
 @dataclass(frozen=True)
@@ -119,6 +126,10 @@ def _store_history(
     if not closes:
         return False
 
+    detection = rights.detect_restatement(
+        _stored_closes(db, ticker, start, through), dict(closes), history.splits
+    )
+
     actions = [
         (d, kind, v)
         for kind, events in (("split", history.splits), ("dividend", history.dividends))
@@ -195,11 +206,158 @@ def _store_history(
             ),
             window,
         )
+        if detection is not None:
+            _record_detected_issue(db, ticker, detection)
         db.commit()
     except Exception:
         db.rollback()
         raise
     return True
+
+
+def _stored_closes(db: Session, ticker: str, start: date, end: date) -> dict[date, Decimal]:
+    return load_closes(db, [ticker], start, end).get(ticker, {})
+
+
+def _record_detected_issue(db: Session, ticker: str, detection: rights.Detection) -> None:
+    """Add a detected restatement, folding it into a known nearby issue."""
+    nearby = _nearby_issue(db, ticker, detection.ex_date)
+    if nearby is not None:
+        db.execute(
+            text(
+                """
+                UPDATE rights_issues
+                SET price_factor = price_factor * :factor, updated_at = now()
+                WHERE ticker = :ticker AND ex_date = :ex_date
+                """
+            ),
+            {"ticker": ticker, "ex_date": nearby.ex_date, "factor": detection.factor},
+        )
+        return
+
+    db.execute(
+        text(
+            """
+            INSERT INTO rights_issues (ticker, ex_date, price_factor, source, needs_review)
+            VALUES (:ticker, :ex_date, :factor, 'detected', :needs_review)
+            """
+        ),
+        {
+            "ticker": ticker,
+            "ex_date": detection.ex_date,
+            "factor": detection.factor,
+            "needs_review": not detection.exact,
+        },
+    )
+
+
+# ------------------------------------------------------------------
+# Rights issues
+# ------------------------------------------------------------------
+
+def save_rights_issue(
+    db: Session,
+    ticker: str,
+    ex_date: date,
+    ratio: Decimal,
+    subscription_price: Decimal,
+) -> RightsIssue:
+    """Create or update a rights issue from its KAP terms.
+
+    The price factor is inferred from the stored closes around the
+    ex-date (caller syncs them first). A detected record for the same
+    event keeps its measured factor and gets the terms and exact date.
+    """
+    closes = load_closes(
+        db, [ticker], ex_date - timedelta(days=30), ex_date + timedelta(days=10)
+    ).get(ticker, {})
+    factor, certain = rights.infer_price_factor(closes, ex_date, ratio, subscription_price)
+
+    nearby = _nearby_issue(db, ticker, ex_date)
+    if nearby is not None:
+        if nearby.source == "detected" or not certain:
+            factor = nearby.price_factor
+            certain = certain or nearby.source == "detected"
+        db.execute(
+            text("DELETE FROM rights_issues WHERE ticker = :ticker AND ex_date = :ex_date"),
+            {"ticker": ticker, "ex_date": nearby.ex_date},
+        )
+
+    issue = RightsIssue(
+        ticker=ticker,
+        ex_date=ex_date,
+        price_factor=factor,
+        ratio=ratio,
+        subscription_price=subscription_price,
+        source="manual",
+        needs_review=not certain,
+    )
+    db.execute(
+        text(
+            """
+            INSERT INTO rights_issues
+                (ticker, ex_date, price_factor, ratio, subscription_price, source, needs_review)
+            VALUES (:ticker, :ex_date, :factor, :ratio, :price, 'manual', :needs_review)
+            """
+        ),
+        {
+            "ticker": ticker,
+            "ex_date": ex_date,
+            "factor": issue.price_factor,
+            "ratio": ratio,
+            "price": subscription_price,
+            "needs_review": issue.needs_review,
+        },
+    )
+    db.commit()
+    return issue
+
+
+def delete_rights_issue(db: Session, ticker: str, ex_date: date) -> bool:
+    result = db.execute(
+        text("DELETE FROM rights_issues WHERE ticker = :ticker AND ex_date = :ex_date"),
+        {"ticker": ticker, "ex_date": ex_date},
+    )
+    db.commit()
+    return bool(result.rowcount)
+
+
+def load_rights_issues(db: Session, tickers: list[str]) -> dict[str, list[RightsIssue]]:
+    if not tickers:
+        return {}
+    rows = db.execute(
+        text(
+            """
+            SELECT ticker, ex_date, price_factor, ratio, subscription_price, source, needs_review
+            FROM rights_issues
+            WHERE ticker IN :tickers
+            ORDER BY ticker, ex_date
+            """
+        ).bindparams(bindparam("tickers", expanding=True)),
+        {"tickers": tickers},
+    ).fetchall()
+
+    issues: dict[str, list[RightsIssue]] = {t: [] for t in tickers}
+    for ticker, ex_date, factor, ratio, price, source, needs_review in rows:
+        issues[ticker].append(
+            RightsIssue(
+                ticker=ticker,
+                ex_date=ex_date,
+                price_factor=Decimal(str(factor)),
+                ratio=Decimal(str(ratio)) if ratio is not None else None,
+                subscription_price=Decimal(str(price)) if price is not None else None,
+                source=source,
+                needs_review=needs_review,
+            )
+        )
+    return issues
+
+
+def _nearby_issue(db: Session, ticker: str, ex_date: date) -> RightsIssue | None:
+    for issue in load_rights_issues(db, [ticker])[ticker]:
+        if rights.same_event(issue.ex_date, ex_date):
+            return issue
+    return None
 
 
 # ------------------------------------------------------------------

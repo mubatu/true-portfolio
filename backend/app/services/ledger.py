@@ -11,7 +11,9 @@ Rules:
       buy      → paid from the safe first, the remainder from the pocket
       sell     → proceeds go into the safe
       dividend → net cash goes into the safe
+      rights_sale → proceeds of selling rights (rüçhan) go into the safe
     ``pocket`` is therefore the money that came from outside the portfolio.
+  - Sold rights have zero cost: the proceeds are realized P/L of the ticker.
   - A cash dividend is credited on its **ex-date** to the shares held at
     the end of the previous day. Dividends of a day are applied *before*
     that day's trades: shares bought on the ex-date do not receive it,
@@ -33,7 +35,7 @@ ZERO = Decimal(0)
 class LedgerTransaction:
     date: date
     ticker: str
-    operation: Literal["buy", "sell"]
+    operation: Literal["buy", "sell", "rights_sale"]
     quantity: Decimal
     price: Decimal
 
@@ -87,6 +89,12 @@ class Ledger:
     def apply_transaction(self, txn: LedgerTransaction) -> None:
         position = self.positions.setdefault(txn.ticker, TickerPosition())
         amount = txn.quantity * txn.price
+
+        if txn.operation == "rights_sale":
+            position.realized_pl += amount
+            position.sold_value += amount
+            self.safe += amount
+            return
 
         if txn.operation == "buy":
             position.quantity += txn.quantity

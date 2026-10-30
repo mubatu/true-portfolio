@@ -98,7 +98,8 @@
     "noDividends": "Henüz temettü alınmamış.",
     "warnings": {
       "title": "Bazı piyasa verileri yüklenemedi. Sonuçlar eksik olabilir.",
-      "market_data_unavailable": "{{ticker}} için piyasa verisi güncellenemedi; kayıtlı son veriler gösteriliyor."
+      "market_data_unavailable": "{{ticker}} için piyasa verisi güncellenemedi; kayıtlı son veriler gösteriliyor.",
+      "rights_issue_review": "{{ticker}} için bir bedelli sermaye artırımı kaydı kontrol bekliyor; İşlemler sayfasındaki Bedelli bölümünden şartlarını gir veya onayla."
     },
     "table": {
       "ticker": "Hisse",
@@ -227,7 +228,8 @@
       "total": "Tutar",
       "date": "Tarih",
       "buy": "Alış",
-      "sell": "Satış"
+      "sell": "Satış",
+      "rights_sale": "Rüçhan Satışı"
     },
     "addTransactionModal": {
       "title": "İşlem Ekle",
@@ -237,8 +239,10 @@
       "operationLabel": "İşlem",
       "quantityLabel": "Adet",
       "quantityPlaceholder": "Hisse adedi",
+      "rightsQuantityLabel": "Hak Adedi",
       "priceLabel": "Hisse Başına Fiyat",
       "pricePlaceholder": "Fiyat",
+      "rightsPriceLabel": "Hak Başına Satış Fiyatı",
       "dateLabel": "İşlem Tarihi"
     },
     "editTransactionModal": {
@@ -272,6 +276,41 @@
       "weak": "Zayıf",
       "medium": "Orta",
       "strong": "Güçlü"
+    }
+  },
+  "rightsIssues": {
+    "title": "Bedelli Sermaye Artırımları",
+    "hint": "Yahoo bedelli artırımları bildirmez, onun yerine eski fiyatları sessizce düşürür. Burada kayıtlı her bedelli için geçmiş fiyatlar gerçek değerlerine döndürülür. Haklarını kullandıysan \"Kullandım\", sattıysan \"Sattım\" ile işlemi ekle; hiçbir şey yapmadıysan ek bir işlem gerekmez.",
+    "add": "Bedelli Ekle",
+    "empty": "Bu portföydeki hisseler için kayıtlı bir bedelli sermaye artırımı yok.",
+    "detected": "Otomatik tespit",
+    "needsReview": "Kontrol et",
+    "terms": "%{{ratio}} bedelli · pay başına {{price}}",
+    "missingTerms": "Şartlar girilmedi",
+    "entitled": "o gün elde {{shares}} hisse",
+    "rights_one": "{{rights}} hak",
+    "rights_other": "{{rights}} hak",
+    "exercised": "Kullandım",
+    "sold": "Sattım",
+    "form": {
+      "title": "Bedelli Sermaye Artırımı Ekle",
+      "editTitle": "Bedelli Sermaye Artırımını Düzenle",
+      "hint": "Bilgileri KAP'taki \"Sermaye Artırımı - Azaltımı İşlemlerine İlişkin Bildirim\" duyurusundan alabilirsin.",
+      "ticker": "Hisse",
+      "exDate": "Rüçhan hakkı kullanım başlangıç tarihi",
+      "ratio": "Bedelli oranı (%)",
+      "price": "Pay başına kullanım fiyatı (₺)"
+    },
+    "errors": {
+      "ticker_not_in_portfolio": "Bu hisse portföyde yok.",
+      "ex_date_in_future": "Tarih bugünden sonra olamaz; bedelli başladıktan sonra gir.",
+      "invalid_terms": "Oran veya fiyat geçersiz.",
+      "not_held_on_ex_date": "Bu tarihten önceki gün portföyde bu hisse yoktu.",
+      "not_found": "Kayıt bulunamadı."
+    },
+    "deleteConfirm": {
+      "title": "Bedelli Kaydını Sil",
+      "message": "{{ticker}} için {{date}} tarihli bedelli kaydı silinecek. Bu kayıt hisseyi tutan tüm portföyleri etkiler; silinirse geçmiş fiyatlar yeniden Yahoo'nun düşürülmüş haline döner."
     }
   }
 }

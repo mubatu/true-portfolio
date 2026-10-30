@@ -16,9 +16,12 @@ export interface TransactionFormValues {
   date: string;
 }
 
+const OPERATIONS: Operation[] = ['buy', 'sell', 'rights_sale'];
+
 const OPERATION_COLORS: Record<Operation, { color: string; background: string }> = {
   buy: { color: 'hsl(142 76% 36%)', background: 'hsl(142 76% 36% / 0.1)' },
   sell: { color: 'hsl(0 84% 60%)', background: 'hsl(0 84% 60% / 0.1)' },
+  rights_sale: { color: 'hsl(38 92% 40%)', background: 'hsl(38 92% 50% / 0.12)' },
 };
 
 const INPUT_CLASS = 'w-full px-3 py-2 rounded-md border bg-transparent';
@@ -37,8 +40,14 @@ export function TransactionFormModal({
   onSubmit,
 }: {
   title: string;
-  /** Ticker in display form (without the market suffix). */
-  initial?: { ticker: string; operation: Operation; quantity: number; price: number; date: string };
+  /** Prefilled fields; ticker in display form (without the market suffix). */
+  initial?: {
+    ticker?: string;
+    operation?: Operation;
+    quantity?: number;
+    price?: number;
+    date?: string;
+  };
   isPending: boolean;
   error?: string;
   onClose: () => void;
@@ -47,11 +56,12 @@ export function TransactionFormModal({
   const { t } = useTranslation();
   const [ticker, setTicker] = useState(initial?.ticker ?? '');
   const [operation, setOperation] = useState<Operation>(initial?.operation ?? 'buy');
-  const [quantity, setQuantity] = useState(initial ? String(initial.quantity) : '');
-  const [price, setPrice] = useState(initial ? String(initial.price) : '');
+  const [quantity, setQuantity] = useState(initial?.quantity != null ? String(initial.quantity) : '');
+  const [price, setPrice] = useState(initial?.price != null ? String(initial.price) : '');
   const [date, setDate] = useState(initial?.date ?? todayIso());
 
   const isComplete = Boolean(ticker && quantity && price && date);
+  const isRightsSale = operation === 'rights_sale';
 
   const handleSubmit = (e?: FormEvent) => {
     e?.preventDefault();
@@ -89,7 +99,7 @@ export function TransactionFormModal({
             value={ticker}
             onChange={(e) => setTicker(e.target.value.toUpperCase())}
             placeholder={t('portfolio.addTransactionModal.tickerPlaceholder')}
-            autoFocus={!initial}
+            autoFocus={!initial?.ticker}
             className={`${INPUT_CLASS} uppercase`}
             style={INPUT_STYLE}
           />
@@ -97,7 +107,7 @@ export function TransactionFormModal({
 
         <Field label={t('portfolio.addTransactionModal.operationLabel')}>
           <div className="flex gap-2">
-            {(['buy', 'sell'] as const).map((op) => {
+            {OPERATIONS.map((op) => {
               const selected = operation === op;
               const { color, background } = OPERATION_COLORS[op];
               return (
@@ -106,7 +116,7 @@ export function TransactionFormModal({
                   type="button"
                   aria-pressed={selected}
                   onClick={() => setOperation(op)}
-                  className="flex-1 py-2 px-4 rounded-md border text-sm font-medium transition-colors"
+                  className="flex-1 py-2 px-3 rounded-md border text-sm font-medium transition-colors"
                   style={{
                     borderColor: selected ? color : 'hsl(var(--input))',
                     backgroundColor: selected ? background : 'transparent',
@@ -121,7 +131,14 @@ export function TransactionFormModal({
         </Field>
 
         <div className="grid grid-cols-2 gap-4">
-          <Field id="txn-quantity" label={t('portfolio.addTransactionModal.quantityLabel')}>
+          <Field
+            id="txn-quantity"
+            label={t(
+              isRightsSale
+                ? 'portfolio.addTransactionModal.rightsQuantityLabel'
+                : 'portfolio.addTransactionModal.quantityLabel'
+            )}
+          >
             <input
               id="txn-quantity"
               type="number"
@@ -134,7 +151,14 @@ export function TransactionFormModal({
               style={INPUT_STYLE}
             />
           </Field>
-          <Field id="txn-price" label={t('portfolio.addTransactionModal.priceLabel')}>
+          <Field
+            id="txn-price"
+            label={t(
+              isRightsSale
+                ? 'portfolio.addTransactionModal.rightsPriceLabel'
+                : 'portfolio.addTransactionModal.priceLabel'
+            )}
+          >
             <input
               id="txn-price"
               type="number"

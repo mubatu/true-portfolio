@@ -55,3 +55,44 @@ export const analyzePortfolio = async (portfolioId: number): Promise<AnalysisRes
   const response = await apiClient.get<AnalysisResponse>(`/portfolios/${portfolioId}/analyze`);
   return response.data;
 };
+
+// Rights issues (bedelli sermaye artırımı)
+export interface RightsIssue {
+  ticker: string;
+  ex_date: string;
+  /** New shares per existing share (1 = %100); null until the terms are entered. */
+  ratio: number | null;
+  subscription_price: number | null;
+  price_factor: number;
+  source: 'manual' | 'detected';
+  needs_review: boolean;
+  /** Shares the portfolio held at the close before the ex-date. */
+  entitled_shares: number;
+  rights: number | null;
+}
+
+export interface RightsIssueInput {
+  ticker: string;
+  ex_date: string;
+  ratio: number;
+  subscription_price: number;
+}
+
+export const getRightsIssues = async (portfolioId: number): Promise<RightsIssue[]> => {
+  const response = await apiClient.get<RightsIssue[]>(`/portfolios/${portfolioId}/rights-issues`);
+  return response.data;
+};
+
+export const saveRightsIssue = async (
+  portfolioId: number,
+  input: RightsIssueInput
+): Promise<RightsIssue> => {
+  const response = await apiClient.post<RightsIssue>(`/portfolios/${portfolioId}/rights-issues`, input);
+  return response.data;
+};
+
+export const deleteRightsIssue = async (portfolioId: number, ticker: string, exDate: string) => {
+  await apiClient.delete(
+    `/portfolios/${portfolioId}/rights-issues/${encodeURIComponent(ticker)}/${exDate}`
+  );
+};

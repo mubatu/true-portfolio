@@ -13,11 +13,14 @@ export interface Portfolio {
   transaction_count?: number;
 }
 
+/** ``rights_sale``: selling rüçhan rights (quantity = rights, price = per right). */
+export type TransactionOperation = 'buy' | 'sell' | 'rights_sale';
+
 export interface Transaction {
   id: number;
   portfolio_id: number;
   ticker: string;
-  operation: 'buy' | 'sell';
+  operation: TransactionOperation;
   quantity: number;
   adjusted_quantity?: number | null;
   price: number;
@@ -39,7 +42,7 @@ export interface UpdatePortfolioInput {
 export interface CreateTransactionInput {
   portfolio_id: number;
   ticker: string;
-  operation: 'buy' | 'sell';
+  operation: TransactionOperation;
   quantity: number;
   price: number;
   date: string;
@@ -48,7 +51,7 @@ export interface CreateTransactionInput {
 export interface UpdateTransactionInput {
   id: number;
   ticker: string;
-  operation: 'buy' | 'sell';
+  operation: TransactionOperation;
   quantity: number;
   price: number;
   date: string;

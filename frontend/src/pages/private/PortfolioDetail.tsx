@@ -10,6 +10,7 @@ import {
 } from '@/components/transactions/TransactionFormModal';
 import { TransactionsTable } from '@/components/transactions/TransactionsTable';
 import { DeleteTransactionDialog } from '@/components/transactions/DeleteTransactionDialog';
+import { RightsIssuesSection } from '@/components/transactions/RightsIssuesSection';
 import {
   getPortfolioBySlug,
   getTransactionsBySlug,
@@ -20,7 +21,9 @@ import {
 } from '@/services/portfolioService';
 import { getDateLocale, toDisplayTicker } from '@/config';
 
-type FormState = { mode: 'add' } | { mode: 'edit'; transaction: Transaction };
+type FormState =
+  | { mode: 'add'; prefill?: Partial<TransactionFormValues> }
+  | { mode: 'edit'; transaction: Transaction };
 
 export function PortfolioDetail() {
   const { t, i18n } = useTranslation();
@@ -226,6 +229,15 @@ export function PortfolioDetail() {
               />
             )}
           </div>
+
+          {transactions.length > 0 && (
+            <RightsIssuesSection
+              portfolioId={portfolio.id}
+              market={portfolio.market}
+              tickers={[...new Set(transactions.map((txn) => txn.ticker))].sort()}
+              onRecordTransaction={(prefill) => openForm({ mode: 'add', prefill })}
+            />
+          )}
         </>
       )}
 
@@ -257,7 +269,7 @@ export function PortfolioDetail() {
                   price: form.transaction.price,
                   date: form.transaction.date,
                 }
-              : undefined
+              : form.prefill
           }
           isPending={activeMutation.isPending}
           error={activeMutation.error?.message}

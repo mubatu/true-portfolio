@@ -98,7 +98,8 @@
     "noDividends": "No dividends received yet.",
     "warnings": {
       "title": "Some market data could not be loaded. Results may be incomplete.",
-      "market_data_unavailable": "Market data for {{ticker}} could not be refreshed; the last stored data is shown."
+      "market_data_unavailable": "Market data for {{ticker}} could not be refreshed; the last stored data is shown.",
+      "rights_issue_review": "A rights issue for {{ticker}} needs review; enter or confirm its terms in the Rights Issues section of the Transactions page."
     },
     "table": {
       "ticker": "Ticker",
@@ -227,7 +228,8 @@
       "total": "Total",
       "date": "Date",
       "buy": "Buy",
-      "sell": "Sell"
+      "sell": "Sell",
+      "rights_sale": "Rights Sale"
     },
     "addTransactionModal": {
       "title": "Add Transaction",
@@ -237,8 +239,10 @@
       "operationLabel": "Operation",
       "quantityLabel": "Quantity",
       "quantityPlaceholder": "Number of shares",
+      "rightsQuantityLabel": "Number of Rights",
       "priceLabel": "Price per Share",
       "pricePlaceholder": "Price",
+      "rightsPriceLabel": "Sale Price per Right",
       "dateLabel": "Transaction Date"
     },
     "editTransactionModal": {
@@ -272,6 +276,41 @@
       "weak": "Weak",
       "medium": "Medium",
       "strong": "Strong"
+    }
+  },
+  "rightsIssues": {
+    "title": "Rights Issues",
+    "hint": "Yahoo doesn't report rights issues; it silently lowers earlier prices instead. For every rights issue listed here, past prices are restored to their real values. If you exercised your rights use \"Exercised\", if you sold them use \"Sold\"; if you did nothing, no transaction is needed.",
+    "add": "Add Rights Issue",
+    "empty": "No rights issues recorded for this portfolio's stocks.",
+    "detected": "Auto-detected",
+    "needsReview": "Review",
+    "terms": "{{ratio}}% rights · {{price}} per share",
+    "missingTerms": "Terms not entered",
+    "entitled": "{{shares}} shares held",
+    "rights_one": "{{rights}} right",
+    "rights_other": "{{rights}} rights",
+    "exercised": "Exercised",
+    "sold": "Sold",
+    "form": {
+      "title": "Add Rights Issue",
+      "editTitle": "Edit Rights Issue",
+      "hint": "Take the details from the capital increase announcement on KAP.",
+      "ticker": "Stock",
+      "exDate": "Rights exercise start date (ex-date)",
+      "ratio": "Rights ratio (%)",
+      "price": "Subscription price per share (₺)"
+    },
+    "errors": {
+      "ticker_not_in_portfolio": "This stock is not in the portfolio.",
+      "ex_date_in_future": "The date can't be in the future; enter it once the issue has started.",
+      "invalid_terms": "Invalid ratio or price.",
+      "not_held_on_ex_date": "The portfolio didn't hold this stock the day before this date.",
+      "not_found": "Record not found."
+    },
+    "deleteConfirm": {
+      "title": "Delete Rights Issue",
+      "message": "The {{date}} rights issue of {{ticker}} will be deleted. It affects every portfolio holding the stock; past prices go back to Yahoo's lowered values."
     }
   }
 }

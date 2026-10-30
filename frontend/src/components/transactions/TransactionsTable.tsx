@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Pencil, Trash2, TrendingDown, TrendingUp } from 'lucide-react';
+import { Pencil, Ticket, Trash2, TrendingDown, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toDisplayTicker } from '@/config';
 import type { Transaction } from '@/services/portfolioService';
@@ -10,7 +10,10 @@ type Operation = Transaction['operation'];
 const OPERATION_STYLES: Record<Operation, { backgroundColor: string; color: string }> = {
   buy: { backgroundColor: 'hsl(142 76% 36% / 0.1)', color: 'hsl(142 76% 36%)' },
   sell: { backgroundColor: 'hsl(0 84% 60% / 0.1)', color: 'hsl(0 84% 60%)' },
+  rights_sale: { backgroundColor: 'hsl(38 92% 50% / 0.12)', color: 'hsl(38 92% 40%)' },
 };
+
+const OPERATION_ICONS = { buy: TrendingUp, sell: TrendingDown, rights_sale: Ticket } as const;
 
 const GROUP_START_BORDER_STYLE = { borderLeftColor: 'hsl(var(--border))' };
 const GROUP_END_BORDER_STYLE = { borderRightColor: 'hsl(var(--border))' };
@@ -92,7 +95,7 @@ function TransactionRow({
   const adjustedQuantity = Number(transaction.adjusted_quantity ?? transaction.quantity);
   const price = Number(transaction.price);
   const adjustedPrice = Number(transaction.adjusted_price ?? transaction.price);
-  const OperationIcon = transaction.operation === 'buy' ? TrendingUp : TrendingDown;
+  const OperationIcon = OPERATION_ICONS[transaction.operation];
 
   return (
     <tr className="border-t transition-colors hover:bg-muted/50" style={{ borderColor: 'hsl(var(--border))' }}>
@@ -109,7 +112,7 @@ function TransactionRow({
       </td>
       <td className="px-4 py-3">
         <span
-          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-medium"
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-medium whitespace-nowrap"
           style={OPERATION_STYLES[transaction.operation]}
         >
           <OperationIcon className="h-4 w-4" />
