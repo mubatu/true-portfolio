@@ -265,7 +265,7 @@
     },
     "returns": {
       "title": "Getiriler",
-      "hint": "Pay fiyatındaki değişim; para ekleme ve çıkarmalardan etkilenmez, bu yüzden fonlarla ve endeksle doğrudan karşılaştırılabilir.",
+      "hint": "Getiri: grafikte seçili dönemde pay fiyatındaki değişim; para ekleyip çıkarmaktan etkilenmez. Aynı parayla: portföye para koyduğun her gün aynı tutarla hisse yerine bunları alsaydın bugünkü kâr/zararın.",
       "periods": {
         "1M": "1 Ay",
         "3M": "3 Ay",
@@ -274,12 +274,13 @@
         "1Y": "1 Yıl",
         "ALL": "Başlangıçtan"
       },
-      "difference": "Fark (BIST 100)",
-      "points": "{{value}} puan",
       "volatility": "Yıllık oynaklık",
       "volatilityHint": "Günlük getirilerin standart sapmasının yıllık karşılığı; ne kadar yüksekse portföy o kadar dalgalı.",
       "bestDay": "En iyi gün",
-      "worstDay": "En kötü gün"
+      "worstDay": "En kötü gün",
+      "returnIn": "Getiri · {{period}}",
+      "sameMoney": "Aynı parayla K/Z",
+      "sameMoneyHint": "Başlangıçtan bugüne: portföye dışarıdan para girdiği her gün aynı TL tutarla o günün kapanışından alınmış gibi hesaplanır. Portföy satırı gerçek toplam kâr/zararın. BIST 100 fiyat endeksidir (temettü içermez)."
     },
     "positions": {
       "title": "Hisse Bazında Kâr / Zarar",

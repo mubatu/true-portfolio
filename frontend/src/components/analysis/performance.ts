@@ -268,3 +268,37 @@ export function periodReturns(points: PerformancePoint[]): PeriodReturn[] {
     };
   });
 }
+
+export interface SameMoney {
+  /** What the bought units are worth at the last close. */
+  value: number;
+  /** Money put in (the portfolio's own inflows). */
+  invested: number;
+  pl: number;
+  /** pl / invested, %. */
+  plPct: number;
+}
+
+/**
+ * "What if the same money had gone into this instead?" Every TL the
+ * portfolio brought in from outside (a rise in ``invested``) buys the
+ * comparison line at that day's close (the latest earlier one if it did
+ * not trade); a fall sells at it. Valued at the last known close.
+ * Null without a price for some inflow or without any money put in.
+ */
+export function sameMoneyIn(points: PerformancePoint[], field: ComparisonField): SameMoney | null {
+  let units = 0;
+  let invested = 0;
+  let price: number | null = null;
+  for (const p of points) {
+    price = p[field] ?? price;
+    const flow = p.invested - invested;
+    if (Math.abs(flow) < 0.005) continue;
+    if (price == null) return null;
+    units += flow / price;
+    invested = p.invested;
+  }
+  if (price == null || invested <= 0) return null;
+  const value = units * price;
+  return { value, invested, pl: value - invested, plPct: (value / invested - 1) * 100 };
+}

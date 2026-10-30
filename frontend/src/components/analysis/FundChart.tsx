@@ -57,9 +57,19 @@ type ComparisonKey = (typeof COMPARISONS)[number]['key'];
  * BIST 100, gold and the dollar on the same footing; plus value and P/L views and the key
  * numbers of the selected period.
  */
-export function FundChart({ points, fmt }: { points: PerformancePoint[]; fmt: Formatters }) {
+export function FundChart({
+  points,
+  fmt,
+  range,
+  onRangeChange,
+}: {
+  points: PerformancePoint[];
+  fmt: Formatters;
+  /** Selected period; shared with the returns table. */
+  range: RangeKey;
+  onRangeChange: (range: RangeKey) => void;
+}) {
   const { t } = useTranslation();
-  const [range, setRange] = useState<RangeKey>('ALL');
   const [mode, setMode] = useState<Mode>('unit');
   const [shown, setShown] = useState<Record<ComparisonKey, boolean>>({ benchmark: true, gold: true, usd: true });
 
@@ -128,7 +138,7 @@ export function FundChart({ points, fmt }: { points: PerformancePoint[]; fmt: Fo
             label={t('analyze.chart.rangeLabel')}
             options={RANGE_KEYS.map((key) => ({ key, label: t(`analyze.performance.ranges.${key}`) }))}
             value={range}
-            onChange={setRange}
+            onChange={onRangeChange}
           />
         }
       />

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
@@ -14,12 +14,15 @@ import { Insights } from '@/components/analysis/Insights';
 import { PositionsTable } from '@/components/analysis/PositionsTable';
 import { ReturnsTable } from '@/components/analysis/ReturnsTable';
 import { useFormatters } from '@/components/analysis/format';
+import type { RangeKey } from '@/components/analysis/performance';
 import type { AnalysisWarning } from '@/components/analysis/types';
 import { PortfolioHeader } from '@/components/portfolio/PortfolioHeader';
 
 export function PortfolioAnalyze() {
   const { slug } = useParams<{ slug: string }>();
   const { t } = useTranslation();
+  // The chart's period, also used by the returns table.
+  const [range, setRange] = useState<RangeKey>('ALL');
 
   const portfolioQuery = useQuery({
     queryKey: ['portfolio', slug],
@@ -109,9 +112,9 @@ export function PortfolioAnalyze() {
           <Warnings warnings={analysis.warnings} displayTicker={displayTicker} />
           <FundOverview points={points} totals={analysis.totals} dividends={analysis.dividends} fmt={fmt} />
           <Insights points={points} positions={analysis.positions} fmt={fmt} displayTicker={displayTicker} />
-          <FundChart points={points} fmt={fmt} />
+          <FundChart points={points} fmt={fmt} range={range} onRangeChange={setRange} />
           <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] mb-6 items-start [&>*]:min-w-0">
-            <ReturnsTable points={points} fmt={fmt} />
+            <ReturnsTable points={points} fmt={fmt} range={range} />
             <AllocationChart
               positions={analysis.positions}
               cash={analysis.totals.in_the_safe}

@@ -265,7 +265,7 @@
     },
     "returns": {
       "title": "Returns",
-      "hint": "Change in the unit price; not affected by deposits or withdrawals, so it compares directly with funds and the index.",
+      "hint": "Return: unit price change over the period picked on the chart; adding or withdrawing money doesn't affect it. Same money: your P/L today had each amount you put in bought these instead of stocks, on the same days.",
       "periods": {
         "1M": "1 Month",
         "3M": "3 Months",
@@ -274,12 +274,13 @@
         "1Y": "1 Year",
         "ALL": "Since start"
       },
-      "difference": "Difference (BIST 100)",
-      "points": "{{value}} pts",
       "volatility": "Annual volatility",
       "volatilityHint": "Annualized standard deviation of daily returns; the higher, the bumpier the ride.",
       "bestDay": "Best day",
-      "worstDay": "Worst day"
+      "worstDay": "Worst day",
+      "returnIn": "Return · {{period}}",
+      "sameMoney": "Same money P/L",
+      "sameMoneyHint": "From the start until today: each time money came into the portfolio, the same TL amount is bought at that day's close. The portfolio row is your actual total P/L. BIST 100 is a price index (no dividends)."
     },
     "positions": {
       "title": "Profit / Loss by Stock",

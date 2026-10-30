@@ -7,6 +7,7 @@ import {
   periodStats,
   rangeStart,
   rebasedPerformance,
+  sameMoneyIn,
   shiftMonths,
   sliceRange,
   unitPrice,
@@ -183,5 +184,33 @@ describe('fund view', () => {
     expect(annualizedVolatility([pt('2026-01-02', 0)])).toBeNull();
     const flat = Array.from({ length: 30 }, (_, i) => pt(`2026-01-${String(i + 1).padStart(2, '0')}`, 0));
     expect(annualizedVolatility(flat)).toBe(0);
+  });
+});
+
+describe('same money in a comparison line', () => {
+  const day = (date: string, invested: number, bench: number | null): PerformancePoint => ({
+    ...pt(date, 0, 0, bench),
+    invested,
+  });
+
+  it('buys with every inflow at that day\'s close and values at the last', () => {
+    // 1000 at 100 → 10 units; 500 more at 125 → 4 units; 14 units at 150.
+    const result = sameMoneyIn(
+      [day('2026-01-02', 1000, 100), day('2026-01-05', 1000, 110), day('2026-01-06', 1500, 125), day('2026-01-07', 1500, 150)],
+      'benchmark_close'
+    );
+    expect(result?.invested).toBe(1500);
+    expect(result?.value).toBeCloseTo(2100, 10);
+    expect(result?.pl).toBeCloseTo(600, 10);
+    expect(result?.plPct).toBeCloseTo(40, 10);
+  });
+
+  it('uses the latest earlier close on a day the line did not trade', () => {
+    const result = sameMoneyIn([day('2026-01-02', 1000, 100), day('2026-01-05', 2000, null), day('2026-01-06', 2000, 200)], 'benchmark_close');
+    expect(result?.value).toBeCloseTo(4000, 10); // 10 + 10 units at 200
+  });
+
+  it('is unknown without a price for an inflow', () => {
+    expect(sameMoneyIn([day('2026-01-02', 1000, null)], 'benchmark_close')).toBeNull();
   });
 });
