@@ -30,8 +30,15 @@ export function PanelHeader({
 }) {
   return (
     <div className={cn('flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3', className)}>
-      <div className="flex items-start gap-3 min-w-0">
-        <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+      {/* A title alone is centered on the icon; with a description the two
+          lines start at the icon's top. */}
+      <div className={cn('flex gap-3 min-w-0', description ? 'items-start' : 'items-center')}>
+        <span
+          className={cn(
+            'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary',
+            description && 'mt-0.5'
+          )}
+        >
           <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
         </span>
         <div className="min-w-0">
