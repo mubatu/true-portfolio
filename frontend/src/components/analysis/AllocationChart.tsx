@@ -28,11 +28,14 @@ export function AllocationChart({
   cash,
   fmt,
   displayTicker,
+  title,
 }: {
   positions: Position[];
   cash: number;
   fmt: Formatters;
   displayTicker: (ticker: string) => string;
+  /** Defaults to the per-stock "Allocation". */
+  title?: string;
 }) {
   const { t } = useTranslation();
   const { theme } = useTheme();
@@ -73,9 +76,11 @@ export function AllocationChart({
   if (slices.length === 0 || total <= 0) return null;
 
   return (
-    <Panel className="p-4 md:p-6" aria-labelledby="allocation-title">
-      <PanelHeader id="allocation-title" icon={PieChartIcon} title={t('analyze.allocation.title')} className="mb-4" />
-      <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row items-center gap-6">
+    <Panel className="p-4 md:p-6 @container" aria-labelledby="allocation-title">
+      <PanelHeader id="allocation-title" icon={PieChartIcon} title={title ?? t('analyze.allocation.title')} className="mb-4" />
+      {/* Side by side only when the panel itself is wide enough; in the
+          narrow column next to the returns table the legend goes below. */}
+      <div className="flex flex-col @md:flex-row items-center gap-6">
         <div className="relative h-44 w-44 shrink-0">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
@@ -121,12 +126,16 @@ export function AllocationChart({
           </div>
         </div>
 
-        <ul className="w-full space-y-2 text-sm">
+        {/* min-w-0 down the chain, so long names (portfolios) truncate
+            instead of running into the share column. */}
+        <ul className="w-full min-w-0 space-y-2 text-sm">
           {slices.map((s) => (
-            <li key={s.key} className="flex items-center gap-2">
+            <li key={s.key} className="flex items-center gap-2 min-w-0">
               <span className="h-2.5 w-2.5 rounded-sm shrink-0" style={{ backgroundColor: s.color }} aria-hidden="true" />
-              <span className="font-medium truncate">{s.label}</span>
-              <span className="ml-auto tabular-nums" style={{ color: 'hsl(var(--muted-foreground))' }}>
+              <span className="font-medium truncate min-w-0" title={s.label}>
+                {s.label}
+              </span>
+              <span className="ml-auto pl-2 shrink-0 tabular-nums" style={{ color: 'hsl(var(--muted-foreground))' }}>
                 {fmt.share((s.value / total) * 100)}
               </span>
             </li>

@@ -258,7 +258,7 @@ function SortHeader({
   );
 }
 
-function PlCell({ value, fmt, strong, muted }: { value: number; fmt: Formatters; strong?: boolean; muted?: boolean }) {
+export function PlCell({ value, fmt, strong, muted }: { value: number; fmt: Formatters; strong?: boolean; muted?: boolean }) {
   const zero = Math.abs(value) < 0.005;
   return (
     <td
@@ -270,7 +270,7 @@ function PlCell({ value, fmt, strong, muted }: { value: number; fmt: Formatters;
   );
 }
 
-function WeightBar({ pct, label }: { pct: number; label: string }) {
+export function WeightBar({ pct, label }: { pct: number; label: string }) {
   return (
     <span className="inline-flex items-center gap-2 justify-end">
       <span className="h-1.5 w-16 rounded-full overflow-hidden" style={{ backgroundColor: 'hsl(var(--muted))' }} aria-hidden="true">

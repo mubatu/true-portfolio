@@ -325,6 +325,30 @@
       "noOpen": "Elde hisse yok."
     }
   },
+  "overview": {
+    "title": "Özet",
+    "subtitle": "Tüm portföylerin tek bir fon gibi: toplam büyüklük, kâr/zarar ve getiri. Deneysel portföyler dahil değil.",
+    "experimentalExcluded": "{{count}} deneysel portföy hariç",
+    "loadError": "Şu portföylerin analizi yüklenemedi: {{names}}",
+    "allocation": "Portföy Dağılımı",
+    "footnote": "Pay fiyatı ve getiriler, portföylerin günlük toplam değerinden para girişlerinin etkisi arındırılarak hesaplanır.",
+    "empty": {
+      "title": "Özetlenecek portföy yok",
+      "description": "Özet, işlemi olan portföylerinin toplamını gösterir. Bir portföy oluşturup ilk alışını ekle.",
+      "allExperimental": "İşlemi olan portföylerinin hepsi deneysel olarak işaretli. Özet'e dahil etmek istediklerinin işaretini Portföylerim'den kaldırabilirsin."
+    },
+    "table": {
+      "title": "Portföy Bazında Kâr / Zarar",
+      "hint": "Her portföyün büyüklüğü (nakit dahil), toplamdaki payı, yatırılan para ve kâr/zarar dağılımı. Pay fiyatı getirisi para girişlerinden arındırılmış performanstır.",
+      "portfolio": "Portföy",
+      "unitReturn": "Pay fiyatı getirisi"
+    },
+    "insights": {
+      "noWinner": "Henüz kâr eden portföy yok.",
+      "largest": "En büyük portföyde ({{total}} portföyden)",
+      "noOpen": "Değeri olan portföy yok."
+    }
+  },
   "myPortfolios": {
     "title": "Portföylerim",
     "subtitle": "Tüm portföylerinin performansı tek bakışta. Analizine ve işlemlerine buradan ulaş.",
@@ -348,11 +372,17 @@
       "nameLabel": "Portföy Adı",
       "namePlaceholder": "Portföy adını gir"
     },
-    "totalsLabel": "Tüm portföylerin toplamı",
-    "totalValue": "Toplam varlık",
     "noTrades": "Henüz işlem yok. Analizi görmek için ilk alışını ekle.",
     "dailyChange": "Son işlem günündeki değişim",
-    "sparklineLabel": "Son 90 işlem günündeki pay fiyatı"
+    "sparklineLabel": "Son 90 işlem günündeki pay fiyatı",
+    "experimental": {
+      "title": "Deneysel portföyler",
+      "hint": "Denemeler ve sanal portföyler. Kendi analizleri durur ama Özet'e dahil edilmezler.",
+      "badge": "Deneysel",
+      "mark": "Deneysel olarak işaretle (Özet'ten çıkar)",
+      "unmark": "Deneysel işaretini kaldır (Özet'e dahil et)",
+      "error": "Portföy güncellenemedi"
+    }
   },
   "portfolio": {
     "title": "Portföy Detayı",

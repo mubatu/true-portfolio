@@ -325,6 +325,30 @@
       "noOpen": "No open holdings."
     }
   },
+  "overview": {
+    "title": "Overview",
+    "subtitle": "All your portfolios as one fund: total size, profit/loss and return. Experimental portfolios are not included.",
+    "experimentalExcluded": "{{count}} experimental excluded",
+    "loadError": "Could not load the analysis of: {{names}}",
+    "allocation": "Portfolio Allocation",
+    "footnote": "The unit price and returns are computed from the portfolios' combined daily value, with the effect of new money removed.",
+    "empty": {
+      "title": "Nothing to summarize yet",
+      "description": "The Overview adds up your portfolios that have trades. Create a portfolio and add its first buy.",
+      "allExperimental": "All of your portfolios with trades are marked experimental. Unmark the ones you want in the Overview from My Portfolios."
+    },
+    "table": {
+      "title": "Profit / Loss by Portfolio",
+      "hint": "Each portfolio's size (cash included), share of the total, money put in and P/L split. Unit price return is performance without the effect of new money.",
+      "portfolio": "Portfolio",
+      "unitReturn": "Unit price return"
+    },
+    "insights": {
+      "noWinner": "No portfolio is in profit yet.",
+      "largest": "In the largest portfolio (of {{total}})",
+      "noOpen": "No portfolio holds any value."
+    }
+  },
   "myPortfolios": {
     "title": "My Portfolios",
     "subtitle": "All your portfolios' performance at a glance. Open their analysis and transactions from here.",
@@ -348,11 +372,17 @@
       "nameLabel": "Portfolio Name",
       "namePlaceholder": "Enter portfolio name"
     },
-    "totalsLabel": "All portfolios combined",
-    "totalValue": "Total assets",
     "noTrades": "No trades yet. Add your first buy to see the analysis.",
     "dailyChange": "Change on the last trading day",
-    "sparklineLabel": "Unit price over the last 90 trading days"
+    "sparklineLabel": "Unit price over the last 90 trading days",
+    "experimental": {
+      "title": "Experimental portfolios",
+      "hint": "Trials and paper portfolios. They keep their own analysis but are left out of the Overview.",
+      "badge": "Experimental",
+      "mark": "Mark as experimental (leave out of Overview)",
+      "unmark": "Unmark experimental (include in Overview)",
+      "error": "Could not update the portfolio"
+    }
   },
   "portfolio": {
     "title": "Portfolio Details",

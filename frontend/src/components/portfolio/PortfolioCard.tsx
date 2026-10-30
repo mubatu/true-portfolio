@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowRight, ListOrdered, Pencil, Trash2, TrendingDown, TrendingUp } from 'lucide-react';
+import { ArrowRight, FlaskConical, ListOrdered, Pencil, Trash2, TrendingDown, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { plBg, plColor, type Formatters } from '@/components/analysis/format';
 import { dailyReturns, unitPrice } from '@/components/analysis/performance';
@@ -10,7 +10,8 @@ import { Sparkline } from './Sparkline';
 
 /**
  * One portfolio at a glance: unit-price sparkline, value, P/L and daily
- * change, with links to its analysis and transactions and its own actions.
+ * change, with links to its analysis and transactions and its own actions
+ * (rename, mark experimental, delete).
  */
 export function PortfolioCard({
   portfolio,
@@ -20,6 +21,7 @@ export function PortfolioCard({
   onRetry,
   onRename,
   onDelete,
+  onToggleExperimental,
   fmt,
 }: {
   portfolio: Portfolio;
@@ -29,6 +31,7 @@ export function PortfolioCard({
   onRetry: () => void;
   onRename: () => void;
   onDelete: () => void;
+  onToggleExperimental: () => void;
   fmt: Formatters;
 }) {
   const { t } = useTranslation();
@@ -37,10 +40,12 @@ export function PortfolioCard({
   const points = analysis?.performance_series.points ?? [];
   const daily = points.length >= 2 ? dailyReturns(points.slice(-2))[1] : null;
   const recent = points.slice(-90).map(unitPrice);
+  const experimental = !!portfolio.is_experimental;
+  const experimentalLabel = t(experimental ? 'myPortfolios.experimental.unmark' : 'myPortfolios.experimental.mark');
 
   return (
     <article
-      className="group relative rounded-2xl border bg-card p-5 flex flex-col gap-4 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 hover:border-primary/40 focus-within:shadow-md"
+      className={`group relative rounded-2xl border bg-card p-5 ${experimental ? 'border-dashed' : ''} flex flex-col gap-4 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 hover:border-primary/40 focus-within:shadow-md`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -53,11 +58,19 @@ export function PortfolioCard({
               {portfolio.name}
             </Link>
           </h2>
-          <p className="text-xs text-muted-foreground">
-            {portfolio.market} ·{' '}
-            {hasTrades
-              ? t('myPortfolios.card.transactions', { count: portfolio.transaction_count ?? 0 })
-              : t('myPortfolios.card.noTransactions')}
+          <p className="text-xs text-muted-foreground flex items-center flex-wrap gap-x-1.5">
+            <span>
+              {portfolio.market} ·{' '}
+              {hasTrades
+                ? t('myPortfolios.card.transactions', { count: portfolio.transaction_count ?? 0 })
+                : t('myPortfolios.card.noTransactions')}
+            </span>
+            {experimental && (
+              <span className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-px font-medium text-foreground/80">
+                <FlaskConical className="h-3 w-3" aria-hidden="true" />
+                {t('myPortfolios.experimental.badge')}
+              </span>
+            )}
           </p>
         </div>
 
@@ -81,6 +94,17 @@ export function PortfolioCard({
             onClick={onRename}
           >
             <Pencil className="h-4 w-4 text-muted-foreground" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity"
+            aria-label={experimentalLabel}
+            aria-pressed={experimental}
+            title={experimentalLabel}
+            onClick={onToggleExperimental}
+          >
+            <FlaskConical className={`h-4 w-4 ${experimental ? 'text-primary' : 'text-muted-foreground'}`} />
           </Button>
           <Button
             variant="ghost"

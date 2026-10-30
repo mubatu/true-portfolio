@@ -1,24 +1,28 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQueries, useQuery } from '@tanstack/react-query';
-import { Briefcase, PiggyBank, Plus, TrendingUp, Wallet, type LucideIcon } from 'lucide-react';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Briefcase, FlaskConical, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Panel } from '@/components/ui/Panel';
-import { plColor, useFormatters } from '@/components/analysis/format';
-import type { AnalysisResponse } from '@/components/analysis/types';
+import { useFormatters } from '@/components/analysis/format';
 import { PortfolioCard } from '@/components/portfolio/PortfolioCard';
 import {
   CreatePortfolioDialog,
   DeletePortfolioDialog,
   RenamePortfolioDialog,
 } from '@/components/portfolio/PortfolioDialogs';
-import { analyzePortfolio, getPortfolios, type Portfolio } from '@/services/portfolioService';
+import {
+  analyzePortfolio,
+  getPortfolios,
+  setPortfolioExperimental,
+  type Portfolio,
+} from '@/services/portfolioService';
 
 type Dialog = { kind: 'create' } | { kind: 'rename' | 'delete'; portfolio: Portfolio } | null;
 
 /**
- * Home of a signed-in user: every portfolio at a glance, the way into its
- * analysis and transactions, and creating, renaming or deleting them.
+ * Every portfolio at a glance, the way into its analysis and transactions,
+ * and creating, renaming, deleting or marking it experimental. Experimental
+ * portfolios sit in their own section and are left out of the Overview.
  * Cards load their analysis into the same cache the analysis page uses,
  * so opening a portfolio from here is instant.
  */
@@ -26,6 +30,7 @@ export function MyPortfolios() {
   const { t } = useTranslation();
   const fmt = useFormatters('TRY');
   const [dialog, setDialog] = useState<Dialog>(null);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     document.title = `${t('myPortfolios.title')} · ${t('common.appName')}`;
@@ -45,7 +50,6 @@ export function MyPortfolios() {
   });
   const analysisById = new Map(withTrades.map((p, i) => [p.id, analyses[i]]));
 
-  const loaded = analyses.map((q) => q.data).filter((d): d is AnalysisResponse => !!d);
   // Largest first; portfolios without a value yet (loading, no trades) keep
   // their order at the end. Array.sort is stable.
   const valueOf = (p: Portfolio) => {
@@ -58,14 +62,46 @@ export function MyPortfolios() {
     if (va == null || vb == null) return (va == null ? 1 : 0) - (vb == null ? 1 : 0);
     return vb - va;
   });
-  const allLoaded = withTrades.length > 0 && loaded.length === withTrades.length;
-  const total = loaded.reduce(
-    (acc, a) => ({
-      value: acc.value + a.totals.portfolio_value + a.totals.in_the_safe,
-      invested: acc.invested + a.totals.total_invested,
-      pl: acc.pl + a.totals.total_pl,
-    }),
-    { value: 0, invested: 0, pl: 0 }
+  const regular = sorted.filter((p) => !p.is_experimental);
+  const experimental = sorted.filter((p) => p.is_experimental);
+
+  // Optimistic: the card moves sections at once; on failure it moves back.
+  const toggleExperimental = useMutation({
+    mutationFn: (p: Portfolio) => setPortfolioExperimental(p.id, !p.is_experimental),
+    onMutate: async (p) => {
+      await queryClient.cancelQueries({ queryKey: ['portfolios'] });
+      const previous = queryClient.getQueryData<Portfolio[]>(['portfolios']);
+      queryClient.setQueryData<Portfolio[]>(['portfolios'], (list) =>
+        list?.map((x) => (x.id === p.id ? { ...x, is_experimental: !p.is_experimental } : x))
+      );
+      return { previous };
+    },
+    onError: (_error, _p, context) => {
+      if (context?.previous) queryClient.setQueryData(['portfolios'], context.previous);
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['portfolios'] }),
+  });
+
+  const renderCards = (list: Portfolio[]) => (
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      {list.map((p) => {
+        const q = analysisById.get(p.id);
+        return (
+          <PortfolioCard
+            key={p.id}
+            portfolio={p}
+            analysis={q?.data}
+            loading={!!q?.isLoading}
+            failed={!!q?.isError}
+            onRetry={() => q?.refetch()}
+            onRename={() => setDialog({ kind: 'rename', portfolio: p })}
+            onDelete={() => setDialog({ kind: 'delete', portfolio: p })}
+            onToggleExperimental={() => toggleExperimental.mutate(p)}
+            fmt={fmt}
+          />
+        );
+      })}
+    </div>
   );
 
   const createButton = (
@@ -85,21 +121,10 @@ export function MyPortfolios() {
         {portfolios.length > 0 && createButton}
       </div>
 
-      {allLoaded && withTrades.length > 1 && (
-        <Panel
-          className="p-5 mb-6 grid gap-5 sm:grid-cols-3 sm:divide-x"
-          aria-label={t('myPortfolios.totalsLabel')}
-        >
-          <Total icon={Wallet} label={t('myPortfolios.totalValue')} value={fmt.money(total.value)} />
-          <Total icon={PiggyBank} label={t('analyze.totalInvested')} value={fmt.money(total.invested)} />
-          <Total
-            icon={TrendingUp}
-            label={t('analyze.totalPl')}
-            value={fmt.signedMoney(total.pl)}
-            sub={total.invested > 0 ? fmt.pct((total.pl / total.invested) * 100) : undefined}
-            tone={total.pl}
-          />
-        </Panel>
+      {toggleExperimental.isError && (
+        <p className="text-sm mb-4" role="alert" style={{ color: 'hsl(var(--destructive))' }}>
+          {t('myPortfolios.experimental.error')}: {(toggleExperimental.error as Error).message}
+        </p>
       )}
 
       {error ? (
@@ -131,24 +156,25 @@ export function MyPortfolios() {
           {createButton}
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {sorted.map((p) => {
-            const q = analysisById.get(p.id);
-            return (
-              <PortfolioCard
-                key={p.id}
-                portfolio={p}
-                analysis={q?.data}
-                loading={!!q?.isLoading}
-                failed={!!q?.isError}
-                onRetry={() => q?.refetch()}
-                onRename={() => setDialog({ kind: 'rename', portfolio: p })}
-                onDelete={() => setDialog({ kind: 'delete', portfolio: p })}
-                fmt={fmt}
-              />
-            );
-          })}
-        </div>
+        <>
+          {regular.length > 0 && renderCards(regular)}
+          {experimental.length > 0 && (
+            <section className={regular.length > 0 ? 'mt-10' : undefined} aria-labelledby="experimental-title">
+              <div className="flex items-start gap-3 mb-4">
+                <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+                  <FlaskConical className="h-[18px] w-[18px]" aria-hidden="true" />
+                </span>
+                <div>
+                  <h2 id="experimental-title" className="text-base font-semibold leading-tight">
+                    {t('myPortfolios.experimental.title')}
+                  </h2>
+                  <p className="text-sm mt-1 text-muted-foreground">{t('myPortfolios.experimental.hint')}</p>
+                </div>
+              </div>
+              {renderCards(experimental)}
+            </section>
+          )}
+        </>
       )}
 
       {dialog?.kind === 'create' && <CreatePortfolioDialog onClose={() => setDialog(null)} />}
@@ -158,35 +184,6 @@ export function MyPortfolios() {
       {dialog?.kind === 'delete' && (
         <DeletePortfolioDialog portfolio={dialog.portfolio} onClose={() => setDialog(null)} />
       )}
-    </div>
-  );
-}
-
-function Total({
-  icon: Icon,
-  label,
-  value,
-  sub,
-  tone,
-}: {
-  icon: LucideIcon;
-  label: string;
-  value: string;
-  sub?: string;
-  tone?: number;
-}) {
-  return (
-    <div className="flex items-center gap-3 sm:pl-5 first:pl-0">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-        <Icon className="h-5 w-5" aria-hidden="true" />
-      </span>
-      <div className="min-w-0">
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-xl font-bold tabular-nums tracking-tight" style={{ color: tone != null ? plColor(tone) : undefined }}>
-          {value}
-          {sub && <span className="text-sm font-semibold ml-2">{sub}</span>}
-        </p>
-      </div>
     </div>
   );
 }

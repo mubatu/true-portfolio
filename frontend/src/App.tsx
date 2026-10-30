@@ -10,6 +10,7 @@ import './index.css';
 // charting library, and the analysis page loads only when opened.
 const LandingPage = lazy(() => import('@/pages/public/LandingPage').then((m) => ({ default: m.LandingPage })));
 const AuthPage = lazy(() => import('@/pages/public/AuthPage').then((m) => ({ default: m.AuthPage })));
+const Overview = lazy(() => import('@/pages/private/Overview').then((m) => ({ default: m.Overview })));
 const MyPortfolios = lazy(() => import('@/pages/private/MyPortfolios').then((m) => ({ default: m.MyPortfolios })));
 const PortfolioDetail = lazy(() =>
   import('@/pages/private/PortfolioDetail').then((m) => ({ default: m.PortfolioDetail }))
@@ -49,6 +50,7 @@ function App() {
 
                 {/* Private Routes (shared header, lazy pages) */}
                 <Route element={<ProtectedLayout />}>
+                  <Route path="/overview" element={<Overview />} />
                   <Route path="/my-portfolios" element={<MyPortfolios />} />
                   <Route path="/portfolio/:slug" element={<PortfolioDetail />} />
                   <Route path="/portfolio/:slug/analyze" element={<PortfolioAnalyze />} />

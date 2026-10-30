@@ -7,6 +7,7 @@ import { PageLoader } from '@/components/layout/PageLoader';
 import { AuthContext, type AuthContextType } from '@/hooks/authContext';
 import { MOCK_ANALYSES, MOCK_PORTFOLIOS, MOCK_TRANSACTIONS } from './mockData';
 
+const Overview = lazy(() => import('@/pages/private/Overview').then((m) => ({ default: m.Overview })));
 const MyPortfolios = lazy(() => import('@/pages/private/MyPortfolios').then((m) => ({ default: m.MyPortfolios })));
 const PortfolioDetail = lazy(() => import('@/pages/private/PortfolioDetail').then((m) => ({ default: m.PortfolioDetail })));
 const PortfolioAnalyze = lazy(() => import('@/pages/private/PortfolioAnalyze').then((m) => ({ default: m.PortfolioAnalyze })));
@@ -42,7 +43,7 @@ const AUTH: AuthContextType = {
 
 /**
  * Dev-only preview of the signed-in pages with synthetic data, mounted at
- * /dev/* (e.g. /dev/my-portfolios, /dev/portfolio/buber-fon/analyze).
+ * /dev/* (e.g. /dev/overview, /dev/my-portfolios, /dev/portfolio/buber-fon/analyze).
  * In-page links point at the real routes; open preview pages by URL.
  */
 export default function DevPreview() {
@@ -55,6 +56,7 @@ export default function DevPreview() {
           <main className="flex-1">
             <Suspense fallback={<PageLoader />}>
               <Routes>
+                <Route path="overview" element={<Overview />} />
                 <Route path="my-portfolios" element={<MyPortfolios />} />
                 <Route path="portfolio/:slug" element={<PortfolioDetail />} />
                 <Route path="portfolio/:slug/analyze" element={<PortfolioAnalyze />} />

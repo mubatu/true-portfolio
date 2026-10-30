@@ -216,15 +216,26 @@ const mainDividends = [
 const fundPoints = series(11, '2024-10-28', { 0: 200_000, 3: 201_000 }, 0.0005, 0.004);
 const fundRows = positions([['IPB.TEFAS', 719_849, 0.557, 0.6852, 0, 0]], []);
 
+const kpcPoints = series(31, '2025-03-03', { 0: 280_000 }, 0.0006, 0.003);
+const kpcRows = positions([['KPC.TEFAS', 95_000, 2.95, 3.32, 0, 0]], []);
+
+// Marked experimental: shown on My Portfolios, left out of the Overview.
+const trialPoints = series(23, '2025-06-02', { 0: 50_000, 40: 25_000 }, -0.0003, 0.02);
+const trialRows = positions([['THYAO.IS', 200, 310, 285, 0, 0], ['ASELS.IS', 150, 120, 131, 0, 0]], []);
+
 export const MOCK_PORTFOLIOS: Portfolio[] = [
   { id: 9, user_id: 'dev', name: 'Buber Fon', market: 'BIST', slug: 'buber-fon', created_at: '2026-10-30T10:00:00Z', transaction_count: 115 },
   { id: 11, user_id: 'dev', name: 'IPB İstanbul Portföy', market: 'TEFAS', slug: 'ipb', created_at: '2026-10-30T12:00:00Z', transaction_count: 2 },
+  { id: 14, user_id: 'dev', name: 'KPC Kuveyt Türk Portföy', market: 'TEFAS', slug: 'kpc', created_at: '2026-10-30T12:30:00Z', transaction_count: 1 },
   { id: 12, user_id: 'dev', name: 'Yeni Portföy', market: 'BIST', slug: 'yeni', created_at: '2026-10-30T13:00:00Z', transaction_count: 0 },
+  { id: 13, user_id: 'dev', name: 'Deneme Stratejisi', market: 'BIST', slug: 'deneme', created_at: '2026-10-30T14:00:00Z', transaction_count: 6, is_experimental: true },
 ];
 
 export const MOCK_ANALYSES: Record<number, AnalysisResponse> = {
   9: analysis(9, mainPoints, mainRows, mainDividends),
   11: analysis(11, fundPoints, fundRows, []),
+  13: analysis(13, trialPoints, trialRows, []),
+  14: analysis(14, kpcPoints, kpcRows, []),
 };
 
 const txn = (id: number, ticker: string, operation: Transaction['operation'], quantity: number, price: number, date: string, portfolio_id = 9): Transaction => ({

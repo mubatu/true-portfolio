@@ -10,6 +10,8 @@ export interface Portfolio {
   market: Market;
   slug: string;
   created_at: string;
+  /** Trial portfolio: left out of the Overview. Absent before its migration. */
+  is_experimental?: boolean;
   transaction_count?: number;
 }
 
@@ -197,6 +199,28 @@ export async function updatePortfolio(input: UpdatePortfolioInput): Promise<Port
       name: input.name,
     })
     .eq('id', input.id)
+    .eq('user_id', user.id)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data;
+}
+
+export async function setPortfolioExperimental(id: number, isExperimental: boolean): Promise<Portfolio> {
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+
+  const { data, error } = await supabase
+    .from('portfolios')
+    .update({ is_experimental: isExperimental })
+    .eq('id', id)
     .eq('user_id', user.id)
     .select()
     .single();

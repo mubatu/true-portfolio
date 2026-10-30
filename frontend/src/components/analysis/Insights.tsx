@@ -16,19 +16,25 @@ const COMPARISONS: { key: string; field: ComparisonField; color: string }[] = [
  * What the numbers say, in plain sentences: how the portfolio did against
  * BIST 100, gold and the dollar, its best and worst stocks, how far it is
  * from its peak, and how concentrated it is.
+ *
+ * ``kind="portfolio"`` (the Overview) reads each "position" as a whole
+ * portfolio: best/worst portfolio, and concentration as the largest one.
  */
 export function Insights({
   points,
   positions,
   fmt,
   displayTicker,
+  kind = 'stock',
 }: {
   points: PerformancePoint[];
   positions: Position[];
   fmt: Formatters;
   displayTicker: (ticker: string) => string;
+  kind?: 'stock' | 'portfolio';
 }) {
   const { t } = useTranslation();
+  const topCount = kind === 'portfolio' ? 1 : 3;
 
   const data = useMemo(() => {
     const all = sliceRange(points, 'ALL');
@@ -38,7 +44,7 @@ export function Insights({
     );
     const ranked = [...positions].sort((a, b) => b.total_pl - a.total_pl);
     const open = positions.filter((p) => p.quantity > 0).sort((a, b) => b.weight_pct - a.weight_pct);
-    const top = open.slice(0, 3);
+    const top = open.slice(0, topCount);
     return {
       stats,
       comparisons,
@@ -48,7 +54,7 @@ export function Insights({
       topShare: top.reduce((s, p) => s + p.weight_pct, 0),
       openCount: open.length,
     };
-  }, [points, positions]);
+  }, [points, positions, topCount]);
 
   const { stats } = data;
   if (!stats) return null;
@@ -84,7 +90,9 @@ export function Insights({
           {data.best ? (
             <Mover label={t('analyze.insights.best')} ticker={displayTicker(data.best.ticker)} value={fmt.signedMoney(data.best.total_pl)} pct={fmt.pct(data.best.total_pl_pct)} tone={1} />
           ) : (
-            <p className="text-sm text-muted-foreground">{t('analyze.insights.noWinner')}</p>
+            <p className="text-sm text-muted-foreground">
+              {t(kind === 'portfolio' ? 'overview.insights.noWinner' : 'analyze.insights.noWinner')}
+            </p>
           )}
           {data.worst && (
             <Mover label={t('analyze.insights.worst')} ticker={displayTicker(data.worst.ticker)} value={fmt.signedMoney(data.worst.total_pl)} pct={fmt.pct(data.worst.total_pl_pct)} tone={-1} />
@@ -107,7 +115,10 @@ export function Insights({
             <>
               <p className="text-2xl font-semibold tabular-nums">{fmt.share(data.topShare)}</p>
               <p className="text-xs text-muted-foreground mb-2">
-                {t('analyze.insights.topHoldings', { count: data.top.length, total: data.openCount })}
+                {t(kind === 'portfolio' ? 'overview.insights.largest' : 'analyze.insights.topHoldings', {
+                  count: data.top.length,
+                  total: data.openCount,
+                })}
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {data.top.map((p) => (
@@ -118,7 +129,9 @@ export function Insights({
               </div>
             </>
           ) : (
-            <p className="text-sm text-muted-foreground">{t('analyze.insights.noOpen')}</p>
+            <p className="text-sm text-muted-foreground">
+              {t(kind === 'portfolio' ? 'overview.insights.noOpen' : 'analyze.insights.noOpen')}
+            </p>
           )}
         </Insight>
       </div>
