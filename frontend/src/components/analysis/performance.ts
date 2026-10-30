@@ -212,6 +212,30 @@ export function dailyReturns(points: PerformancePoint[]): number[] {
   return points.map((p, i) => (growth(p) / (i > 0 ? growth(points[i - 1]) : 1) - 1) * 100);
 }
 
+export interface DayMove {
+  pct: number;
+  date: string;
+}
+
+/**
+ * The unit price's biggest one-day rise and fall. The first day (measured
+ * against 1.0000, not a close) does not count; null with fewer than two days.
+ */
+export function dailyExtremes(points: PerformancePoint[]): { best: DayMove; worst: DayMove } | null {
+  if (points.length < 2) return null;
+  const daily = dailyReturns(points);
+  let best = 1;
+  let worst = 1;
+  for (let i = 2; i < daily.length; i++) {
+    if (daily[i] > daily[best]) best = i;
+    if (daily[i] < daily[worst]) worst = i;
+  }
+  return {
+    best: { pct: daily[best], date: points[best].date },
+    worst: { pct: daily[worst], date: points[worst].date },
+  };
+}
+
 const TRADING_DAYS_PER_YEAR = 252;
 
 /** Annualized volatility of daily returns, %; null with < 20 days. */
@@ -236,7 +260,7 @@ export type ComparisonField = 'benchmark_close' | 'gold_close' | 'usd_close';
 
 /** Price change of a comparison line over a slice, %: from the baseline's
  * close (else the first known) to the last known close; null without data. */
-export function comparisonChange(slice: RangeSlice, field: ComparisonField): number | null {
+function comparisonChange(slice: RangeSlice, field: ComparisonField): number | null {
   const base = slice.baseline?.[field] ?? slice.points.find((p) => p[field] != null)?.[field] ?? null;
   let last: number | null = null;
   for (let i = slice.points.length - 1; i >= 0 && last == null; i--) last = slice.points[i][field];

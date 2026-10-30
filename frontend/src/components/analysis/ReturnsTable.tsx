@@ -5,7 +5,7 @@ import { Panel, PanelHeader } from '@/components/ui/Panel';
 import { plColor, type Formatters } from './format';
 import {
   annualizedVolatility,
-  dailyReturns,
+  dailyExtremes,
   periodReturns,
   sameMoneyIn,
   type ComparisonField,
@@ -35,28 +35,20 @@ export function ReturnsTable({
   fmt,
   range,
   hideAmounts = false,
+  dayExtremes = false,
 }: {
   points: PerformancePoint[];
   fmt: Formatters;
   range: RangeKey;
   /** Public view: returns only, without the TL "same money" column. */
   hideAmounts?: boolean;
+  /** Best and worst day under the table, where no highlights show them (Explore). */
+  dayExtremes?: boolean;
 }) {
   const { t } = useTranslation();
   const period = useMemo(() => periodReturns(points).find((r) => r.range === range) ?? null, [points, range]);
   const volatility = useMemo(() => annualizedVolatility(points), [points]);
-  const extremes = useMemo(() => {
-    const daily = dailyReturns(points);
-    let best = 1;
-    let worst = 1;
-    for (let i = 1; i < daily.length; i++) {
-      if (daily[i] > daily[best]) best = i;
-      if (daily[i] < daily[worst]) worst = i;
-    }
-    return points.length > 1
-      ? { best: { pct: daily[best], date: points[best].date }, worst: { pct: daily[worst], date: points[worst].date } }
-      : null;
-  }, [points]);
+  const extremes = useMemo(() => (dayExtremes ? dailyExtremes(points) : null), [points, dayExtremes]);
   const comparisons = useMemo(
     () =>
       COMPARISON_ROWS.map((c) => ({

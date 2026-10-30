@@ -4,7 +4,7 @@ import { Briefcase } from 'lucide-react';
 import { Panel, PanelHeader } from '@/components/ui/Panel';
 import { plColor, type Formatters } from '@/components/analysis/format';
 import { PlCell, WeightBar } from '@/components/analysis/PositionsTable';
-import { HEAD_BG, HEAD_CELL_CLASS, TABLE_SCROLL_CLASS } from '@/components/analysis/tableStyles';
+import { FOOT_CORNER_STYLE, FOOT_ROW_CLASS, HEAD_BG, HEAD_CELL_CLASS, TABLE_SCROLL_CLASS } from '@/components/analysis/tableStyles';
 import type { AnalysisTotals } from '@/components/analysis/types';
 import type { PortfolioRow } from './combine';
 
@@ -101,8 +101,8 @@ export function PortfolioBreakdownTable({
               ))}
             </tbody>
             <tfoot>
-              <tr className="border-t-2 font-semibold" style={{ borderColor: 'hsl(var(--border))', backgroundColor: 'hsl(var(--muted) / 0.3)' }}>
-                <th scope="row" className="sticky left-0 z-10 px-3 py-3 text-left" style={{ backgroundColor: 'hsl(var(--muted))' }}>
+              <tr className={FOOT_ROW_CLASS}>
+                <th scope="row" className="left-0 px-3 py-3 text-left" style={FOOT_CORNER_STYLE}>
                   {t('analyze.table.sum')}
                 </th>
                 <td className={CELL}>{fmt.money(totals.portfolio_value + totals.in_the_safe)}</td>

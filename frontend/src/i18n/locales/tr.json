@@ -186,11 +186,9 @@
       "portfoliosHint": "Portföy çizgileri, her portföyün kendi pay fiyatını ilk alımından (ya da dönemin başından) itibaren gösterir; o günkü toplam pay fiyatından başlar. Sonunda toplamın üstünde kalan portföy, o süre boyunca toplamdan iyi gitmiştir."
     },
     "totalInvested": "Yatırılan Para",
-    "portfolioValue": "Hisse Değeri",
-    "inTheSafe": "Kasadaki Nakit",
     "totalPl": "Toplam K/Z",
-    "dividendIncome": "Temettü Geliri",
-    "dividendIncomeSub": "Brüt {{gross}}",
+    "dividendIncome": "Temettü (net)",
+    "dividendIncomeSub": "Stopaj öncesi {{gross}}",
     "dividends": "Alınan Temettüler",
     "dividendsHint": "Hak kullanım tarihinde, bir önceki gün elde tutulan hisseler için stopaj düşülmüş net tutar olarak kasaya eklenir.",
     "noDividends": "Henüz temettü alınmamış.",
@@ -232,12 +230,6 @@
       "return": "Getiri",
       "returnHint": "Zaman ağırlıklı getiri: ne zaman para eklediğinden etkilenmeyen, yatırımlarının kendi performansı.",
       "vsBenchmark": "BIST 100: {{value}} ({{diff}} puan)",
-      "plChange": "K/Z Değişimi",
-      "plNow": "Dönem sonu K/Z: {{value}} ({{pct}})",
-      "peakPl": "Zirve Kâr",
-      "onDate": "{{date}} ({{pct}})",
-      "belowPeak": "Şu an zirvenin {{value}} altında",
-      "atPeak": "Şu an zirvede",
       "maxDrawdown": "En Büyük Düşüş",
       "drawdownHint": "Bir zirveden sonraki en dip noktaya kadar yaşanan en büyük düşüş; zaman ağırlıklı getiri üzerinden ölçülür.",
       "drawdownSpan": "{{from}} → {{to}}",
@@ -251,7 +243,6 @@
       "totalValue": "Toplam değer",
       "invested": "Yatırılan"
     },
-    "commissionPaid": "Ödenen komisyon: {{amount}}",
     "refresh": "Yenile",
     "loading": "Piyasa verileri güncelleniyor; günün ilk açılışında bu birkaç saniye sürebilir…",
     "loadError": "Analiz yüklenemedi.",
@@ -265,7 +256,10 @@
       "asOf": "{{date}} kapanışı",
       "sinceStart": "başlangıçtan beri",
       "unitPriceHint": "Portföyün bir yatırım fonu gibi fiyatlanır: 1,0000'dan başlar ve sadece performansla değişir. Para eklemek ya da çıkarmak pay fiyatını etkilemez.",
-      "size": "Toplam değer"
+      "size": "Toplam değer",
+      "holdingsPart": "Hisse {{value}}",
+      "cashPart": "Nakit {{value}}",
+      "currentValue": "Güncel Toplam Değer"
     },
     "returns": {
       "title": "Getiriler",
@@ -311,10 +305,6 @@
     "insights": {
       "title": "Öne Çıkanlar",
       "hint": "Grafik ve tablolardan çıkan sonuçlar, başlangıçtan bugüne.",
-      "vsMarkets": "Piyasaya göre",
-      "sinceStart": "{{date}} tarihinden beri pay fiyatı",
-      "ahead": "{{value}} puan önde",
-      "behind": "{{value}} puan geride",
       "bestWorst": "Kazandıran ve kaybettiren",
       "best": "En çok kazandıran",
       "worst": "En çok kaybettiren",
@@ -325,13 +315,21 @@
       "noDrawdown": "Hiç düşüş yaşanmadı.",
       "concentration": "Yoğunlaşma",
       "topHoldings": "{{total}} hissenin en büyük {{count}} tanesinde",
-      "noOpen": "Elde hisse yok."
+      "noOpen": "Elde hisse yok.",
+      "days": "En iyi ve en kötü gün",
+      "noDays": "Henüz yeterli gün yok."
     },
     "daily": {
       "today": "Bugün",
       "yesterday": "Dün",
       "hint": "{{date}} kapanışında pay fiyatının bir önceki işlem gününe göre değişimi"
-    }
+    },
+    "unrealizedPl": "Gerçekleşmemiş K/Z",
+    "unrealizedPlSub": "Elde tutulan varlıklarda",
+    "realizedPl": "Gerçekleşen K/Z",
+    "realizedPlSub": "Satışlardan",
+    "plEquation": "Yatırılan para + gerçekleşen K/Z + net temettü + gerçekleşmemiş K/Z = güncel toplam değer. Gerçekleşen K/Z + net temettü + gerçekleşmemiş K/Z = toplam K/Z.",
+    "commissionNote": "Ödenen {{commission}} komisyon maliyetlere dahildir."
   },
   "overview": {
     "title": "Genel Bakış",

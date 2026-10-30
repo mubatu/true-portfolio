@@ -187,11 +187,9 @@
       "portfoliosHint": "Portfolio lines show each portfolio's own unit price from its first buy (or the range start), starting from the combined unit price that day. One ending above the combined line did better than the whole over that time."
     },
     "totalInvested": "Total Invested",
-    "portfolioValue": "Portfolio Value",
-    "inTheSafe": "In the Safe",
     "totalPl": "Total P/L",
-    "dividendIncome": "Dividend Income",
-    "dividendIncomeSub": "Gross {{gross}}",
+    "dividendIncome": "Dividends (net)",
+    "dividendIncomeSub": "{{gross}} before withholding",
     "dividends": "Dividends Received",
     "dividendsHint": "Credited on the ex-date to shares held the day before, net of withholding tax, into the safe.",
     "noDividends": "No dividends received yet.",
@@ -233,12 +231,6 @@
       "return": "Return",
       "returnHint": "Time-weighted return: performance of your holdings, not affected by when you added money.",
       "vsBenchmark": "BIST 100: {{value}} ({{diff}} pts)",
-      "plChange": "P/L Change",
-      "plNow": "P/L at end: {{value}} ({{pct}})",
-      "peakPl": "Peak P/L",
-      "onDate": "on {{date}} ({{pct}})",
-      "belowPeak": "Now {{value}} below the peak",
-      "atPeak": "Currently at the peak",
       "maxDrawdown": "Max Drawdown",
       "drawdownHint": "Largest fall from a high point to a later low, measured on the time-weighted return.",
       "drawdownSpan": "{{from}} → {{to}}",
@@ -252,7 +244,6 @@
       "totalValue": "Total value",
       "invested": "Invested"
     },
-    "commissionPaid": "Commission paid: {{amount}}",
     "refresh": "Refresh",
     "loading": "Updating market data; the first open of the day can take a few seconds…",
     "loadError": "Couldn't load the analysis.",
@@ -266,7 +257,10 @@
       "asOf": "Close of {{date}}",
       "sinceStart": "since start",
       "unitPriceHint": "Your portfolio is priced like a mutual fund: it starts at 1.0000 and moves only with performance. Adding or withdrawing money doesn't move the unit price.",
-      "size": "Total value"
+      "size": "Total value",
+      "holdingsPart": "Holdings {{value}}",
+      "cashPart": "Cash {{value}}",
+      "currentValue": "Current Total Value"
     },
     "returns": {
       "title": "Returns",
@@ -312,10 +306,6 @@
     "insights": {
       "title": "Highlights",
       "hint": "What the charts and tables say, from the start until today.",
-      "vsMarkets": "Against the market",
-      "sinceStart": "Unit price since {{date}}",
-      "ahead": "{{value}} pts ahead",
-      "behind": "{{value}} pts behind",
       "bestWorst": "Winners and losers",
       "best": "Biggest winner",
       "worst": "Biggest loser",
@@ -326,13 +316,21 @@
       "noDrawdown": "No drawdown so far.",
       "concentration": "Concentration",
       "topHoldings": "in the largest {{count}} of {{total}} holdings",
-      "noOpen": "No open holdings."
+      "noOpen": "No open holdings.",
+      "days": "Best and worst day",
+      "noDays": "Not enough days yet."
     },
     "daily": {
       "today": "Today",
       "yesterday": "Yesterday",
       "hint": "Unit price change at the {{date}} close vs. the previous trading day"
-    }
+    },
+    "unrealizedPl": "Unrealized P/L",
+    "unrealizedPlSub": "On holdings you still have",
+    "realizedPl": "Realized P/L",
+    "realizedPlSub": "From sales",
+    "plEquation": "Money invested + realized P/L + net dividends + unrealized P/L = current total value. Realized P/L + net dividends + unrealized P/L = total P/L.",
+    "commissionNote": "The {{commission}} paid in commission is counted in the costs."
   },
   "overview": {
     "title": "Overview",

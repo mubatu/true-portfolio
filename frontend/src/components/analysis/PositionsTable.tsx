@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ArrowDown, ArrowUp, Layers } from 'lucide-react';
 import { Segmented } from '@/components/ui/Segmented';
 import { plColor, type Formatters } from './format';
-import { HEAD_BG, HEAD_CELL_CLASS, TABLE_SCROLL_CLASS } from './tableStyles';
+import { FOOT_CORNER_STYLE, FOOT_ROW_CLASS, HEAD_BG, HEAD_CELL_CLASS, TABLE_SCROLL_CLASS } from './tableStyles';
 import { Panel, PanelHeader } from '@/components/ui/Panel';
 import type { Position } from './types';
 
@@ -148,6 +148,14 @@ export function PositionsTable({
                         scope="row"
                         className="sticky left-0 z-10 px-3 py-3 text-left font-semibold whitespace-nowrap group-hover:bg-muted/50"
                         style={STICKY_BG}
+                        // Closed rows say so by their gray dot; the date shows on hover.
+                        title={
+                          open
+                            ? undefined
+                            : p.closed_on
+                              ? t('analyze.positions.closedOn', { date: fmt.date(p.closed_on) })
+                              : t('analyze.positions.closed')
+                        }
                       >
                         <span className="inline-flex items-center gap-2">
                           <span
@@ -156,16 +164,7 @@ export function PositionsTable({
                             aria-hidden="true"
                           />
                           {displayTicker(p.ticker)}
-                          {!open && (
-                            <span
-                              className="text-[10px] font-medium uppercase tracking-wide px-1.5 py-0.5 rounded tabular-nums"
-                              style={{ backgroundColor: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))' }}
-                            >
-                              {p.closed_on
-                                ? t('analyze.positions.closedOn', { date: fmt.date(p.closed_on) })
-                                : t('analyze.positions.closed')}
-                            </span>
-                          )}
+                          {!open && <span className="sr-only">{t('analyze.positions.closed')}</span>}
                         </span>
                       </th>
                       <td className="px-3 py-3 text-right tabular-nums">
@@ -201,8 +200,8 @@ export function PositionsTable({
                 })}
               </tbody>
               <tfoot>
-                <tr className="border-t-2 font-semibold" style={{ borderColor: 'hsl(var(--border))', backgroundColor: 'hsl(var(--muted) / 0.3)' }}>
-                  <th scope="row" className="sticky left-0 z-10 px-3 py-3 text-left" style={{ backgroundColor: 'hsl(var(--muted))' }}>
+                <tr className={FOOT_ROW_CLASS}>
+                  <th scope="row" className="left-0 px-3 py-3 text-left" style={FOOT_CORNER_STYLE}>
                     {t('analyze.table.sum')}
                   </th>
                   <td />

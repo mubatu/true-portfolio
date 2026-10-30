@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   anchoredLine,
   annualizedVolatility,
+  dailyExtremes,
   dailyReturns,
   maxDrawdown,
   periodReturns,
@@ -179,6 +180,16 @@ describe('fund view', () => {
     expect(byRange['1M'].benchmarkPct).toBeCloseTo(10, 10);
     expect(byRange['1Y'].returnPct).toBeNull();
     expect(byRange.ALL.returnPct).toBeCloseTo(21, 10);
+  });
+
+  it('finds the best and worst day, not counting the first', () => {
+    expect(dailyExtremes([pt('2026-01-02', 50)])).toBeNull();
+    // Daily: +50 (first day, ignored), +10, -5.
+    const ext = dailyExtremes([pt('2026-01-02', 50), pt('2026-01-05', 65), pt('2026-01-06', 56.75)]);
+    expect(ext?.best.date).toBe('2026-01-05');
+    expect(ext?.best.pct).toBeCloseTo(10, 10);
+    expect(ext?.worst.date).toBe('2026-01-06');
+    expect(ext?.worst.pct).toBeCloseTo(-5, 10);
   });
 
   it('needs enough days for volatility', () => {

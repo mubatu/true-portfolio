@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Coins } from 'lucide-react';
 import { plColor, type Formatters } from './format';
-import { HEAD_BG, HEAD_CELL_CLASS, TABLE_SCROLL_CLASS } from './tableStyles';
+import { FOOT_ROW_CLASS, HEAD_BG, HEAD_CELL_CLASS, TABLE_SCROLL_CLASS } from './tableStyles';
 import { Panel, PanelHeader } from '@/components/ui/Panel';
 import type { DividendSummary } from './types';
 
@@ -84,10 +84,7 @@ export function DividendsTable({
                 ))}
               </tbody>
               <tfoot>
-                <tr
-                  className="border-t-2 font-semibold"
-                  style={{ borderColor: 'hsl(var(--border))', backgroundColor: 'hsl(var(--muted) / 0.3)' }}
-                >
+                <tr className={FOOT_ROW_CLASS}>
                   <th scope="row" colSpan={4} className="px-3 py-3 text-left">
                     {t('analyze.table.sum')}
                   </th>

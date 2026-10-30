@@ -67,14 +67,15 @@ const NO_PORTFOLIO_LINES: PortfolioLine[] = [];
 
 /**
  * The portfolio drawn like a fund chart: its unit price over time, with
- * BIST 100, gold and the dollar on the same footing; plus value and P/L views and the key
- * numbers of the selected period.
+ * BIST 100, gold and the dollar on the same footing; plus value and P/L views.
  *
  * ``portfolioLines`` (Overview): each included portfolio as a solid line
  * that can be ticked on, from its first day or the range start.
  *
  * ``hideAmounts`` (Explore): unit price only — no value / P/L views, no
- * TL in the tooltip, and only the percentage stats.
+ * TL in the tooltip. Explore also shows the selected period's return and
+ * largest drop under the chart (``periodSummary``); portfolio pages have
+ * those in their overview and highlights instead.
  */
 export function FundChart({
   points,
@@ -82,6 +83,7 @@ export function FundChart({
   range,
   onRangeChange,
   hideAmounts = false,
+  periodSummary = false,
   portfolioLines = NO_PORTFOLIO_LINES,
 }: {
   points: PerformancePoint[];
@@ -90,6 +92,7 @@ export function FundChart({
   range: RangeKey;
   onRangeChange: (range: RangeKey) => void;
   hideAmounts?: boolean;
+  periodSummary?: boolean;
   portfolioLines?: PortfolioLine[];
 }) {
   const { t } = useTranslation();
@@ -154,7 +157,6 @@ export function FundChart({
     drawdown && drawdown.peakDate && drawdown.peakDate >= (rows[0]?.date ?? '') ? drawdown.peakDate : rows[0]?.date;
 
   const formatAxis = (v: number) => (mode === 'unit' ? fmt.unit(v) : fmt.compactMoney(v));
-  const last = slice.points[slice.points.length - 1];
 
   return (
     <Panel className="p-4 md:p-6 mb-6" aria-labelledby="fund-chart-title">
@@ -430,64 +432,42 @@ export function FundChart({
             {mode === 'unit' && drawnPortfolios.length > 0 && <> {t('analyze.chart.portfoliosHint')}</>}
           </p>
 
-          <div className={`grid gap-3 sm:grid-cols-2 mt-5 ${hideAmounts ? '' : 'xl:grid-cols-4'}`}>
-            <StatCard
-              label={t('analyze.performance.return')}
-              value={fmt.pct(stats.returnPct)}
-              color={plColor(stats.returnPct)}
-              hint={t('analyze.performance.returnHint')}
-              lines={[
-                stats.benchmarkReturnPct != null &&
-                  t('analyze.performance.vsBenchmark', {
-                    value: fmt.pct(stats.benchmarkReturnPct),
-                    diff: fmt.points(stats.returnPct - stats.benchmarkReturnPct),
-                  }),
-              ]}
-            />
-            {!hideAmounts && (
-              <>
-                <StatCard
-                  label={t('analyze.performance.plChange')}
-                  value={fmt.signedMoney(stats.plChange)}
-                  color={plColor(stats.plChange)}
-                  lines={[
-                    last &&
-                      t('analyze.performance.plNow', { value: fmt.money(last.total_pl), pct: fmt.pct(last.pl_pct) }),
-                  ]}
-                />
-                <StatCard
-                  label={t('analyze.performance.peakPl')}
-                  value={fmt.money(stats.peakPl.totalPl)}
-                  color={plColor(stats.peakPl.totalPl)}
-                  lines={[
-                    t('analyze.performance.onDate', { date: fmt.date(stats.peakPl.date), pct: fmt.pct(stats.peakPl.plPct) }),
-                    stats.belowPeakPl < 0
-                      ? t('analyze.performance.belowPeak', { value: fmt.money(-stats.belowPeakPl) })
-                      : t('analyze.performance.atPeak'),
-                  ]}
-                />
-              </>
-            )}
-            <StatCard
-              label={t('analyze.performance.maxDrawdown')}
-              value={drawdown ? fmt.pct(drawdown.pct) : '—'}
-              color={drawdown ? LOSS : MUTED}
-              hint={t('analyze.performance.drawdownHint')}
-              lines={
-                drawdown
-                  ? [
-                      t('analyze.performance.drawdownSpan', {
-                        from: drawdown.peakDate ? fmt.date(drawdown.peakDate) : t('analyze.performance.start'),
-                        to: fmt.date(drawdown.troughDate),
-                      }),
-                      drawdown.recoveryDate
-                        ? t('analyze.performance.recovered', { date: fmt.date(drawdown.recoveryDate) })
-                        : t('analyze.performance.notRecovered', { value: fmt.pct(stats.currentDrawdownPct) }),
-                    ]
-                  : [t('analyze.performance.noDrawdown')]
-              }
-            />
-          </div>
+          {periodSummary && (
+            <div className="grid gap-3 sm:grid-cols-2 mt-5">
+              <StatCard
+                label={t('analyze.performance.return')}
+                value={fmt.pct(stats.returnPct)}
+                color={plColor(stats.returnPct)}
+                hint={t('analyze.performance.returnHint')}
+                lines={[
+                  stats.benchmarkReturnPct != null &&
+                    t('analyze.performance.vsBenchmark', {
+                      value: fmt.pct(stats.benchmarkReturnPct),
+                      diff: fmt.points(stats.returnPct - stats.benchmarkReturnPct),
+                    }),
+                ]}
+              />
+              <StatCard
+                label={t('analyze.performance.maxDrawdown')}
+                value={drawdown ? fmt.pct(drawdown.pct) : '—'}
+                color={drawdown ? LOSS : MUTED}
+                hint={t('analyze.performance.drawdownHint')}
+                lines={
+                  drawdown
+                    ? [
+                        t('analyze.performance.drawdownSpan', {
+                          from: drawdown.peakDate ? fmt.date(drawdown.peakDate) : t('analyze.performance.start'),
+                          to: fmt.date(drawdown.troughDate),
+                        }),
+                        drawdown.recoveryDate
+                          ? t('analyze.performance.recovered', { date: fmt.date(drawdown.recoveryDate) })
+                          : t('analyze.performance.notRecovered', { value: fmt.pct(stats.currentDrawdownPct) }),
+                      ]
+                    : [t('analyze.performance.noDrawdown')]
+                }
+              />
+            </div>
+          )}
         </>
       )}
     </Panel>

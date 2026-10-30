@@ -111,8 +111,8 @@ export function PortfolioAnalyze() {
         <>
           <Warnings warnings={analysis.warnings} displayTicker={displayTicker} />
           <FundOverview points={points} totals={analysis.totals} dividends={analysis.dividends} fmt={fmt} />
-          <Insights points={points} positions={analysis.positions} fmt={fmt} displayTicker={displayTicker} />
           <FundChart points={points} fmt={fmt} range={range} onRangeChange={setRange} />
+          <Insights points={points} positions={analysis.positions} fmt={fmt} displayTicker={displayTicker} />
           <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] mb-6 items-start [&>*]:min-w-0">
             <ReturnsTable points={points} fmt={fmt} range={range} />
             <AllocationChart

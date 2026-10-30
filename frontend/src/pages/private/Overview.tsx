@@ -179,19 +179,19 @@ export function Overview() {
       {overview && !loading && (
         <>
           <FundOverview points={overview.points} totals={overview.totals} dividends={overview.dividends} fmt={fmt} />
-          <Insights
-            points={overview.points}
-            positions={overview.positions}
-            fmt={fmt}
-            displayTicker={portfolioName}
-            kind="portfolio"
-          />
           <FundChart
             points={overview.points}
             fmt={fmt}
             range={range}
             onRangeChange={setRange}
             portfolioLines={overview.lines}
+          />
+          <Insights
+            points={overview.points}
+            positions={overview.positions}
+            fmt={fmt}
+            displayTicker={portfolioName}
+            kind="portfolio"
           />
           <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] mb-6 items-start [&>*]:min-w-0">
             <ReturnsTable points={overview.points} fmt={fmt} range={range} />

@@ -140,9 +140,9 @@ export function ExplorePortfolio() {
             </Panel>
           )}
 
-          <FundChart points={points} fmt={fmt} range={range} onRangeChange={setRange} hideAmounts />
+          <FundChart points={points} fmt={fmt} range={range} onRangeChange={setRange} hideAmounts periodSummary />
           <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] mb-6 items-start [&>*]:min-w-0">
-            <ReturnsTable points={points} fmt={fmt} range={range} hideAmounts />
+            <ReturnsTable points={points} fmt={fmt} range={range} hideAmounts dayExtremes />
             <AllocationChart
               positions={positions}
               cash={data.allocation.cash_pct}
