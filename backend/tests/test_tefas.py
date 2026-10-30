@@ -81,16 +81,20 @@ def test_only_fund_tickers_use_uploaded_prices():
 
 
 def test_outdated_fund_prices_are_flagged():
-    yesterday = date(2026, 10, 29)
+    # Market days: Mon 26 – Wed 28 Oct, then Fri 30 Oct (29th is a holiday).
+    open_days = [date(2026, 10, 26), date(2026, 10, 27), date(2026, 10, 28), date(2026, 10, 30)]
     buy = LedgerTransaction(date(2026, 1, 5), "IPB.TEFAS", "buy", D(100), D("0.5"))
     stock = LedgerTransaction(date(2026, 1, 5), "THYAO.IS", "buy", D(1), D(300))
-    fresh = {date(2026, 1, 5): D("0.5"), date(2026, 10, 28): D("0.68")}
 
-    assert _outdated_uploaded_prices([buy, stock], {"IPB.TEFAS": fresh}, yesterday) == []
+    def prices_through(last: date) -> dict[str, dict[date, D]]:
+        return {"IPB.TEFAS": {date(2026, 1, 5): D("0.5"), last: D("0.68")}}
+
+    assert _outdated_uploaded_prices([buy, stock], prices_through(date(2026, 10, 30)), open_days) == []
+    # Two market days without a price (28 and 30 Oct) are tolerated...
+    assert _outdated_uploaded_prices([buy], prices_through(date(2026, 10, 27)), open_days) == []
+    # ...a third is not.
+    assert _outdated_uploaded_prices([buy], prices_through(date(2026, 10, 26)), open_days) == ["IPB.TEFAS"]
     # Nothing uploaded, or prices that start after the purchase.
-    assert _outdated_uploaded_prices([buy], {}, yesterday) == ["IPB.TEFAS"]
-    late = {date(2026, 3, 2): D("0.55"), date(2026, 10, 28): D("0.68")}
-    assert _outdated_uploaded_prices([buy], {"IPB.TEFAS": late}, yesterday) == ["IPB.TEFAS"]
-    # Last upload weeks ago while the fund is still held.
-    stale = {date(2026, 1, 5): D("0.5"), date(2026, 9, 30): D("0.66")}
-    assert _outdated_uploaded_prices([buy], {"IPB.TEFAS": stale}, yesterday) == ["IPB.TEFAS"]
+    assert _outdated_uploaded_prices([buy], {}, open_days) == ["IPB.TEFAS"]
+    late = {"IPB.TEFAS": {date(2026, 3, 2): D("0.55"), date(2026, 10, 30): D("0.68")}}
+    assert _outdated_uploaded_prices([buy], late, open_days) == ["IPB.TEFAS"]

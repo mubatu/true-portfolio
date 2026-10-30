@@ -104,11 +104,12 @@ def analyze_portfolio(db: Session, portfolio_id: int) -> dict:
         key=lambda e: (e.ex_date, e.ticker),
     )
 
+    open_days = _open_days(benchmark_closes, closes, first_date, yesterday)
     result = analysis.build_analysis(
         transactions,
         closes,
         dividends,
-        _open_days(benchmark_closes, closes, first_date, yesterday),
+        open_days,
         as_of=yesterday,
         benchmark_closes=benchmark_closes,
     )
@@ -122,7 +123,7 @@ def analyze_portfolio(db: Session, portfolio_id: int) -> dict:
         if r["needs_review"]
     ] + [
         {"code": "fund_prices_outdated", "ticker": ticker}
-        for ticker in _outdated_uploaded_prices(transactions, closes, yesterday)
+        for ticker in _outdated_uploaded_prices(transactions, closes, open_days)
     ]
     return {
         "portfolio_id": portfolio_id,
@@ -137,9 +138,9 @@ def analyze_portfolio(db: Session, portfolio_id: int) -> dict:
 # Uploaded fund prices (TEFAS)
 # ------------------------------------------------------------------
 
-# Uploaded prices older than this before yesterday count as outdated
-# (covers weekends and the longest bayram holidays).
-UPLOADED_PRICES_MAX_AGE = timedelta(days=10)
+# Market days a held fund may go without an uploaded price before its
+# prices count as outdated (weekends and holidays are not market days).
+UPLOADED_PRICES_MAX_MISSING_DAYS = 2
 
 
 def upload_fund_prices(
@@ -182,9 +183,10 @@ def list_fund_prices(
 def _outdated_uploaded_prices(
     transactions: list[LedgerTransaction],
     closes: dict[str, dict[date, Decimal]],
-    yesterday: date,
+    open_days: list[date],
 ) -> list[str]:
-    """Upload-priced holdings whose prices miss recent days or a trade."""
+    """Upload-priced holdings whose prices miss a trade, or more than
+    ``UPLOADED_PRICES_MAX_MISSING_DAYS`` of the latest market days."""
     ledger = replay(transactions, [])
     first_trade: dict[str, date] = {}
     for txn in transactions:
@@ -197,8 +199,11 @@ def _outdated_uploaded_prices(
         days = closes.get(ticker, {})
         if not days or min(days) > first_trade[ticker]:
             outdated.append(ticker)
-        elif position.quantity > 0 and max(days) < yesterday - UPLOADED_PRICES_MAX_AGE:
-            outdated.append(ticker)
+        elif position.quantity > 0:
+            last_price = max(days)
+            missing = sum(1 for day in open_days if day > last_price)
+            if missing > UPLOADED_PRICES_MAX_MISSING_DAYS:
+                outdated.append(ticker)
     return outdated
 
 
