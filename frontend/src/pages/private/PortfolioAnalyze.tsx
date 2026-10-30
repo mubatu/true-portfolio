@@ -10,6 +10,7 @@ import { AllocationChart } from '@/components/analysis/AllocationChart';
 import { DividendsTable } from '@/components/analysis/DividendsTable';
 import { FundChart } from '@/components/analysis/FundChart';
 import { FundOverview } from '@/components/analysis/FundOverview';
+import { Insights } from '@/components/analysis/Insights';
 import { PositionsTable } from '@/components/analysis/PositionsTable';
 import { ReturnsTable } from '@/components/analysis/ReturnsTable';
 import { useFormatters } from '@/components/analysis/format';
@@ -107,6 +108,7 @@ export function PortfolioAnalyze() {
         <>
           <Warnings warnings={analysis.warnings} displayTicker={displayTicker} />
           <FundOverview points={points} totals={analysis.totals} dividends={analysis.dividends} fmt={fmt} />
+          <Insights points={points} positions={analysis.positions} fmt={fmt} displayTicker={displayTicker} />
           <FundChart points={points} fmt={fmt} />
           <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] mb-6 items-start [&>*]:min-w-0">
             <ReturnsTable points={points} fmt={fmt} />
@@ -168,10 +170,10 @@ function Warnings({
   return (
     <div
       className="rounded-xl border p-4 mb-6 flex gap-3"
-      style={{ borderColor: 'hsl(38 92% 50%)', backgroundColor: 'hsl(38 92% 50% / 0.1)' }}
+      style={{ borderColor: 'hsl(var(--warning) / 0.6)', backgroundColor: 'hsl(var(--warning) / 0.1)' }}
       role="status"
     >
-      <AlertTriangle className="h-5 w-5 shrink-0" style={{ color: 'hsl(38 92% 40%)' }} />
+      <AlertTriangle className="h-5 w-5 shrink-0" style={{ color: 'hsl(var(--warning))' }} />
       <div className="text-sm">
         <p className="font-medium mb-1">{t('analyze.warnings.title')}</p>
         <ul className="list-disc pl-4">

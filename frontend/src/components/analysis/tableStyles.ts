@@ -1,15 +1,10 @@
 import type { CSSProperties } from 'react';
 
 /**
- * Shared look of the analysis tables (per-stock P/L, dividends): a card
- * that scrolls inside a fixed height, so long histories don't push the
+ * Shared look of the analysis tables (per-stock P/L, dividends): they
+ * scroll inside a fixed height within their panel, so long histories don't push the
  * rest of the page down, with the header row stuck to its top.
  */
-export const TABLE_CARD_CLASS = 'rounded-2xl border overflow-hidden';
-export const TABLE_CARD_STYLE: CSSProperties = {
-  borderColor: 'hsl(var(--border))',
-  backgroundColor: 'hsl(var(--card))',
-};
 export const TABLE_SCROLL_CLASS = 'overflow-auto max-h-[28rem]';
 
 /** The translucent muted header tint, laid over the card so rows scrolling

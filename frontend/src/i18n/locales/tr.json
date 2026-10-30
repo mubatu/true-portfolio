@@ -20,23 +20,78 @@
   },
   "landing": {
     "hero": {
-      "title": "Yatırımlarını",
-      "titleHighlight": "Güvenle Takip Et",
-      "subtitle": "Hisselerini izlemene, performansını analiz etmene ve daha bilinçli yatırım kararları almana yardımcı olan modern bir portföy takip uygulaması."
+      "eyebrow": "BIST hisseleri ve TEFAS fonları için",
+      "title": "Portföyünü",
+      "titleHighlight": "bir fon gibi takip et",
+      "subtitle": "Geçmiş alım satımlarını gün gün yeniden oynatır; kâr/zararını, pay fiyatını ve piyasaya göre durumunu tek bakışta gösterir.",
+      "howItWorks": "Nasıl çalışır?",
+      "points": {
+        "bist": "BIST hisseleri ve TEFAS fonları",
+        "dividends": "Temettü ve stopaj otomatik",
+        "splits": "Bölünme ve bedelli düzeltmeleri",
+        "compare": "BIST 100, altın ve dolarla kıyas"
+      }
+    },
+    "preview": {
+      "unitPrice": "Pay fiyatı",
+      "vs": {
+        "bist": "BIST 100'e göre",
+        "gold": "Altına göre",
+        "usd": "Dolara göre"
+      },
+      "ahead": "+{{value}} puan"
     },
     "features": {
-      "analytics": {
-        "title": "Detaylı Analiz",
-        "description": "Portföyünün geçmiş performansını, zirve ve düşüşlerini ay ay takip et."
-      },
-      "security": {
-        "title": "Güvenli ve Gizli",
-        "description": "Finansal verilerin korunur ve hiçbir zaman üçüncü taraflarla paylaşılmaz."
-      },
-      "speed": {
-        "title": "Hızlı ve Sade",
-        "description": "Hız ve kolay kullanım için tasarlanmış, sade ve modern bir arayüz."
+      "title": "İhtiyacın olan her şey, sade bir ekranda",
+      "subtitle": "Aracı kurum ekstrelerinde kaybolmadan portföyünün gerçek performansını gör.",
+      "items": {
+        "fund": {
+          "title": "Fon gibi pay fiyatı",
+          "description": "Para ekleyip çekmen performansı bozmaz; pay fiyatı 1,0000'dan başlar ve yalnızca getiriyle hareket eder."
+        },
+        "compare": {
+          "title": "BIST 100, altın, dolar",
+          "description": "Aynı parayı endekse, altına ya da dolara koysan ne olurdu? Her dönem için puan farkıyla gör."
+        },
+        "dividends": {
+          "title": "Temettü ve stopaj",
+          "description": "Temettüler hak kullanım gününde, stopaj düşülmüş net tutarla kasana eklenir."
+        },
+        "corporate": {
+          "title": "Bölünme ve bedelli",
+          "description": "Bedelsiz, bedelli ve bölünmelerden sonra fiyatlar ve lotlar otomatik düzeltilir."
+        },
+        "tefas": {
+          "title": "TEFAS fonları",
+          "description": "Fonlarını da ekle; TEFAS Excel'ini yükle, gerisini uygulama halletsin."
+        },
+        "perStock": {
+          "title": "Hisse bazında K/Z",
+          "description": "Her hissenin gerçekleşen, gerçekleşmemiş ve temettü kârı; kapananların alış ve satış ortalamaları."
+        }
       }
+    },
+    "steps": {
+      "title": "Üç adımda başla",
+      "step": "Adım {{n}}",
+      "items": {
+        "create": {
+          "title": "Portföy oluştur",
+          "description": "BIST ya da TEFAS portföyü aç, istediğin kadar portföy tut."
+        },
+        "trades": {
+          "title": "İşlemlerini gir",
+          "description": "Alım, satım ve komisyonları gir; piyasa verisi otomatik gelir."
+        },
+        "insights": {
+          "title": "Sonuçları gör",
+          "description": "Pay fiyatı, getiriler, öne çıkanlar ve hisse bazında kâr/zarar hazır."
+        }
+      }
+    },
+    "cta": {
+      "title": "Portföyünün gerçek hikâyesini gör",
+      "subtitle": "Birkaç dakikada kurulur; ilk portföyünü hemen oluştur."
     },
     "footer": {
       "copyright": "© 2026 PortfolioTracker. Tüm hakları saklıdır."
@@ -63,7 +118,18 @@
       "emailCheck": "E-posta doğrulanamadı. Lütfen tekrar dene.",
       "invalidCredentials": "E-posta veya şifre hatalı.",
       "registrationFailed": "Kayıt başarısız oldu. Lütfen tekrar dene."
-    }
+    },
+    "brand": {
+      "title": "Yatırımlarının geçmişini netleştir.",
+      "points": {
+        "fund": "Portföyün bir fon gibi fiyatlanır, para ekleyip çıkarmak getiriyi bozmaz.",
+        "compare": "BIST 100, altın ve dolarla her dönem için kıyasla.",
+        "automatic": "Temettü, stopaj, bölünme ve bedelliler otomatik hesaplanır."
+      }
+    },
+    "secureNote": "Bağlantın şifrelenir; şifren yalnızca geri çevrilemez biçimde (hash) saklanır.",
+    "showPassword": "Şifreyi göster",
+    "hidePassword": "Şifreyi gizle"
   },
   "analyze": {
     "subtitle": "Ortalama maliyet yöntemi · fiyatlar bugünü içermez · temettüler stopaj düşülmüş net · komisyon dahil",
@@ -194,7 +260,7 @@
         "1Y": "1 Yıl",
         "ALL": "Başlangıçtan"
       },
-      "difference": "Fark",
+      "difference": "Fark (BIST 100)",
       "points": "{{value}} puan",
       "volatility": "Yıllık oynaklık",
       "volatilityHint": "Günlük getirilerin standart sapmasının yıllık karşılığı; ne kadar yüksekse portföy o kadar dalgalı.",
@@ -222,6 +288,25 @@
       "title": "Dağılım",
       "cash": "Kasadaki nakit",
       "other": "Diğer ({{count}})"
+    },
+    "insights": {
+      "title": "Öne Çıkanlar",
+      "hint": "Grafik ve tablolardan çıkan sonuçlar, başlangıçtan bugüne.",
+      "vsMarkets": "Piyasaya göre",
+      "sinceStart": "{{date}} tarihinden beri pay fiyatı",
+      "ahead": "{{value}} puan önde",
+      "behind": "{{value}} puan geride",
+      "bestWorst": "Kazandıran ve kaybettiren",
+      "best": "En çok kazandıran",
+      "worst": "En çok kaybettiren",
+      "noWinner": "Henüz kâr eden hisse yok.",
+      "fromPeak": "Zirveden uzaklık",
+      "atPeak": "Zirvede",
+      "maxDrawdown": "En büyük düşüş {{value}} ({{date}})",
+      "noDrawdown": "Hiç düşüş yaşanmadı.",
+      "concentration": "Yoğunlaşma",
+      "topHoldings": "{{total}} hissenin en büyük {{count}} tanesinde",
+      "noOpen": "Elde hisse yok."
     }
   },
   "myPortfolios": {
@@ -278,7 +363,11 @@
       "buy": "Alış",
       "sell": "Satış",
       "rights_sale": "Rüçhan Satışı",
-      "commission": "kom. {{amount}} ({{rate}})"
+      "commission": "kom. {{amount}} ({{rate}})",
+      "adjustedLine": "Bölünme sonrası {{quantity}} × {{price}}",
+      "adjustedHint": "Bölünme ve bedelsizlerden sonraki bugünkü karşılığı; hesaplar bunu kullanır.",
+      "count_one": "{{count}} işlem",
+      "count_other": "{{count}} işlem"
     },
     "addTransactionModal": {
       "title": "İşlem Ekle",
@@ -326,7 +415,41 @@
   },
   "profile": {
     "title": "Profil",
-    "placeholder": "Profil ayarların burada görünecek..."
+    "subtitle": "Hesabını, şifreni ve tercihlerini buradan yönet.",
+    "noName": "İsimsiz kullanıcı",
+    "memberSince": "{{date}} tarihinden beri üye",
+    "saved": "Kaydedildi",
+    "stats": {
+      "portfolios": "Portföy",
+      "transactions": "İşlem"
+    },
+    "account": {
+      "title": "Hesap bilgileri",
+      "description": "Uygulamada görünen adın.",
+      "emailHint": "E-posta adresi değiştirilemez."
+    },
+    "password": {
+      "title": "Şifre",
+      "description": "Yeni bir şifre belirle.",
+      "new": "Yeni şifre",
+      "confirm": "Yeni şifre (tekrar)",
+      "mismatch": "Şifreler eşleşmiyor.",
+      "submit": "Şifreyi değiştir",
+      "changed": "Şifren değiştirildi"
+    },
+    "preferences": {
+      "title": "Tercihler",
+      "description": "Bu cihazda geçerli görünüm ayarları.",
+      "languageHint": "Arayüz dili",
+      "theme": "Tema",
+      "themeHint": "Açık ya da koyu görünüm",
+      "light": "Açık",
+      "dark": "Koyu"
+    },
+    "session": {
+      "title": "Oturum",
+      "description": "Bu cihazdaki oturumunu kapat."
+    }
   },
   "password": {
     "requirements": {

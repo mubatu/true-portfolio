@@ -2,8 +2,9 @@ import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
-import { Loader2, Upload } from 'lucide-react';
+import { Database, Loader2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Panel, PanelHeader } from '@/components/ui/Panel';
 import { Modal } from '@/components/ui/Modal';
 import { toDisplayTicker } from '@/config';
 import { getFundPrices, uploadFundPrices } from '@/lib/api';
@@ -30,17 +31,19 @@ export function FundPricesSection({ portfolioId, market }: { portfolioId: number
   });
 
   return (
-    <section className="mt-10">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-1">
-        <h2 className="text-xl font-semibold">{t('fundPrices.title')}</h2>
-        <Button variant="outline" size="sm" className="gap-1.5 self-start" onClick={() => setUploading(true)}>
-          <Upload className="h-4 w-4" />
-          {t('fundPrices.upload')}
-        </Button>
-      </div>
-      <p className="text-sm mb-4" style={{ color: 'hsl(var(--muted-foreground))' }}>
-        {t('fundPrices.hint')}
-      </p>
+    <Panel className="mt-6 p-4 md:p-6">
+      <PanelHeader
+        icon={Database}
+        title={t('fundPrices.title')}
+        description={t('fundPrices.hint')}
+        className="mb-4"
+        actions={
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setUploading(true)}>
+            <Upload className="h-4 w-4" />
+            {t('fundPrices.upload')}
+          </Button>
+        }
+      />
 
       {isLoading ? (
         <div className="flex justify-center py-6">
@@ -79,7 +82,7 @@ export function FundPricesSection({ portfolioId, market }: { portfolioId: number
       {uploading && (
         <FundPricesUploadModal portfolioId={portfolioId} onClose={() => setUploading(false)} />
       )}
-    </section>
+    </Panel>
   );
 }
 

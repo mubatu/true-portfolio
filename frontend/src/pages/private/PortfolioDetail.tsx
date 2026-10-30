@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Loader2, TrendingUp } from 'lucide-react';
+import { ListOrdered, Plus, Loader2, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Panel, PanelHeader } from '@/components/ui/Panel';
 import {
   TransactionFormModal,
   type TransactionFormValues,
@@ -170,12 +171,18 @@ export function PortfolioDetail() {
 
       {!isLoading && portfolio && (
         <>
-          <div>
-            <h2 className="text-lg font-semibold mb-4">{t('portfolio.transactions.title')}</h2>
+          <Panel className="overflow-hidden" aria-labelledby="transactions-title">
+            <PanelHeader
+              id="transactions-title"
+              icon={ListOrdered}
+              title={t('portfolio.transactions.title')}
+              description={transactions.length > 0 ? t('portfolio.transactions.count', { count: transactions.length }) : undefined}
+              className="p-4 md:p-6"
+            />
 
             {transactions.length === 0 ? (
               <div
-                className="rounded-lg border-2 border-dashed p-8 text-center"
+                className="rounded-xl border-2 border-dashed p-8 mx-4 mb-4 md:mx-6 md:mb-6 text-center"
                 style={{ borderColor: 'hsl(var(--border))' }}
               >
                 <div
@@ -197,15 +204,17 @@ export function PortfolioDetail() {
                 </Button>
               </div>
             ) : (
-              <TransactionsTable
-                transactions={transactions}
-                market={portfolio.market}
-                isDeletePending={deleteMutation.isPending}
-                onEdit={(transaction) => openForm({ mode: 'edit', transaction })}
-                onDelete={askToDelete}
-              />
+              <div className="border-t">
+                <TransactionsTable
+                  transactions={transactions}
+                  market={portfolio.market}
+                  isDeletePending={deleteMutation.isPending}
+                  onEdit={(transaction) => openForm({ mode: 'edit', transaction })}
+                  onDelete={askToDelete}
+                />
+              </div>
             )}
-          </div>
+          </Panel>
 
           {isFund && <FundPricesSection portfolioId={portfolio.id} market={portfolio.market} />}
 

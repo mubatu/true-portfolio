@@ -20,23 +20,78 @@
   },
   "landing": {
     "hero": {
-      "title": "Track Your Investments",
-      "titleHighlight": "With Confidence",
-      "subtitle": "A modern portfolio tracker that helps you monitor your stocks, analyze performance, and make smarter investment decisions."
+      "eyebrow": "For BIST stocks and TEFAS funds",
+      "title": "Track your portfolio",
+      "titleHighlight": "like a fund",
+      "subtitle": "Replays your past trades day by day and shows your P/L, unit price and how you stand against the market at a glance.",
+      "howItWorks": "How it works",
+      "points": {
+        "bist": "BIST stocks and TEFAS funds",
+        "dividends": "Dividends and withholding, automatic",
+        "splits": "Split and rights issue corrections",
+        "compare": "Compare with BIST 100, gold and the dollar"
+      }
+    },
+    "preview": {
+      "unitPrice": "Unit price",
+      "vs": {
+        "bist": "vs BIST 100",
+        "gold": "vs gold",
+        "usd": "vs dollar"
+      },
+      "ahead": "+{{value}} pts"
     },
     "features": {
-      "analytics": {
-        "title": "Real-time Analytics",
-        "description": "Track your portfolio performance with live market data and detailed analytics."
-      },
-      "security": {
-        "title": "Secure & Private",
-        "description": "Your financial data is encrypted and never shared with third parties."
-      },
-      "speed": {
-        "title": "Fast & Intuitive",
-        "description": "A clean, modern interface designed for speed and ease of use."
+      "title": "Everything you need, on one calm screen",
+      "subtitle": "See your portfolio's real performance without digging through broker statements.",
+      "items": {
+        "fund": {
+          "title": "Fund-style unit price",
+          "description": "Adding or withdrawing money doesn't distort performance; the unit price starts at 1.0000 and moves only with returns."
+        },
+        "compare": {
+          "title": "BIST 100, gold, dollar",
+          "description": "What if the same money had gone into the index, gold or the dollar? See the gap in points for every period."
+        },
+        "dividends": {
+          "title": "Dividends and withholding",
+          "description": "Dividends land in your cash on the ex-date, net of withholding tax."
+        },
+        "corporate": {
+          "title": "Splits and rights issues",
+          "description": "Prices and lots are corrected automatically after bonus issues, rights issues and splits."
+        },
+        "tefas": {
+          "title": "TEFAS funds",
+          "description": "Add your funds too: upload the TEFAS Excel and the app does the rest."
+        },
+        "perStock": {
+          "title": "Per-stock P/L",
+          "description": "Realized, unrealized and dividend gains per stock; buy and sell averages for closed ones."
+        }
       }
+    },
+    "steps": {
+      "title": "Start in three steps",
+      "step": "Step {{n}}",
+      "items": {
+        "create": {
+          "title": "Create a portfolio",
+          "description": "Open a BIST or TEFAS portfolio; keep as many as you like."
+        },
+        "trades": {
+          "title": "Enter your trades",
+          "description": "Add buys, sells and commissions; market data arrives automatically."
+        },
+        "insights": {
+          "title": "See the results",
+          "description": "Unit price, returns, highlights and per-stock P/L are ready."
+        }
+      }
+    },
+    "cta": {
+      "title": "See the real story of your portfolio",
+      "subtitle": "Set up in minutes; create your first portfolio right away."
     },
     "footer": {
       "copyright": "© 2026 PortfolioTracker. All rights reserved."
@@ -63,7 +118,18 @@
       "emailCheck": "Unable to verify email. Please try again.",
       "invalidCredentials": "Invalid email or password.",
       "registrationFailed": "Registration failed. Please try again."
-    }
+    },
+    "brand": {
+      "title": "Make sense of your investing history.",
+      "points": {
+        "fund": "Your portfolio is priced like a fund; adding or withdrawing money doesn't distort returns.",
+        "compare": "Compare against BIST 100, gold and the dollar for every period.",
+        "automatic": "Dividends, withholding, splits and rights issues are handled automatically."
+      }
+    },
+    "secureNote": "Your connection is encrypted; your password is only stored as an irreversible hash.",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
   },
   "analyze": {
     "subtitle": "Average cost method · prices exclude today · dividends net of withholding tax · commission included",
@@ -194,7 +260,7 @@
         "1Y": "1 Year",
         "ALL": "Since start"
       },
-      "difference": "Difference",
+      "difference": "Difference (BIST 100)",
       "points": "{{value}} pts",
       "volatility": "Annual volatility",
       "volatilityHint": "Annualized standard deviation of daily returns; the higher, the bumpier the ride.",
@@ -222,6 +288,25 @@
       "title": "Allocation",
       "cash": "Cash in the safe",
       "other": "Other ({{count}})"
+    },
+    "insights": {
+      "title": "Highlights",
+      "hint": "What the charts and tables say, from the start until today.",
+      "vsMarkets": "Against the market",
+      "sinceStart": "Unit price since {{date}}",
+      "ahead": "{{value}} pts ahead",
+      "behind": "{{value}} pts behind",
+      "bestWorst": "Winners and losers",
+      "best": "Biggest winner",
+      "worst": "Biggest loser",
+      "noWinner": "No stock in profit yet.",
+      "fromPeak": "Distance from peak",
+      "atPeak": "At its peak",
+      "maxDrawdown": "Largest drawdown {{value}} ({{date}})",
+      "noDrawdown": "No drawdown so far.",
+      "concentration": "Concentration",
+      "topHoldings": "in the largest {{count}} of {{total}} holdings",
+      "noOpen": "No open holdings."
     }
   },
   "myPortfolios": {
@@ -278,7 +363,11 @@
       "buy": "Buy",
       "sell": "Sell",
       "rights_sale": "Rights Sale",
-      "commission": "comm. {{amount}} ({{rate}})"
+      "commission": "comm. {{amount}} ({{rate}})",
+      "adjustedLine": "After splits {{quantity}} × {{price}}",
+      "adjustedHint": "Today's equivalent after splits and bonus issues; calculations use it.",
+      "count_one": "{{count}} transaction",
+      "count_other": "{{count}} transactions"
     },
     "addTransactionModal": {
       "title": "Add Transaction",
@@ -326,7 +415,41 @@
   },
   "profile": {
     "title": "Profile",
-    "placeholder": "Your profile settings will appear here..."
+    "subtitle": "Manage your account, password and preferences.",
+    "noName": "Unnamed user",
+    "memberSince": "Member since {{date}}",
+    "saved": "Saved",
+    "stats": {
+      "portfolios": "Portfolios",
+      "transactions": "Transactions"
+    },
+    "account": {
+      "title": "Account",
+      "description": "The name shown in the app.",
+      "emailHint": "The email address can't be changed."
+    },
+    "password": {
+      "title": "Password",
+      "description": "Set a new password.",
+      "new": "New password",
+      "confirm": "New password (again)",
+      "mismatch": "Passwords don't match.",
+      "submit": "Change password",
+      "changed": "Your password was changed"
+    },
+    "preferences": {
+      "title": "Preferences",
+      "description": "Display settings for this device.",
+      "languageHint": "Interface language",
+      "theme": "Theme",
+      "themeHint": "Light or dark appearance",
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "session": {
+      "title": "Session",
+      "description": "Sign out on this device."
+    }
   },
   "password": {
     "requirements": {

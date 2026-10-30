@@ -13,6 +13,8 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { LineChart as LineChartIcon } from 'lucide-react';
+import { Panel, PanelHeader } from '@/components/ui/Panel';
 import { Segmented } from '@/components/ui/Segmented';
 import { plColor, type Formatters } from './format';
 import { RANGE_KEYS, periodStats, sliceRange, unitPrice, type RangeKey } from './performance';
@@ -37,10 +39,10 @@ interface ChartRow {
 
 const PRIMARY = 'hsl(var(--primary))';
 const MUTED = 'hsl(var(--muted-foreground))';
-const GAIN = 'hsl(142 76% 36%)';
-const LOSS = 'hsl(0 84% 60%)';
-const GOLD = 'hsl(38 92% 50%)';
-const USD = 'hsl(262 83% 58%)';
+const GAIN = 'hsl(var(--gain))';
+const LOSS = 'hsl(var(--loss))';
+const GOLD = 'var(--series-gold)';
+const USD = 'var(--series-usd)';
 
 /** Lines drawn next to the unit price, all started from the same point. */
 const COMPARISONS = [
@@ -115,22 +117,21 @@ export function FundChart({ points, fmt }: { points: PerformancePoint[]; fmt: Fo
   const last = slice.points[slice.points.length - 1];
 
   return (
-    <section
-      className="rounded-2xl border p-4 md:p-6 mb-6"
-      style={{ borderColor: 'hsl(var(--border))', backgroundColor: 'hsl(var(--card))' }}
-      aria-labelledby="fund-chart-title"
-    >
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-        <h2 id="fund-chart-title" className="text-lg font-semibold">
-          {t(`analyze.chart.titles.${mode}`)}
-        </h2>
-        <Segmented
-          label={t('analyze.chart.rangeLabel')}
-          options={RANGE_KEYS.map((key) => ({ key, label: t(`analyze.performance.ranges.${key}`) }))}
-          value={range}
-          onChange={setRange}
-        />
-      </div>
+    <Panel className="p-4 md:p-6 mb-6" aria-labelledby="fund-chart-title">
+      <PanelHeader
+        id="fund-chart-title"
+        icon={LineChartIcon}
+        title={t(`analyze.chart.titles.${mode}`)}
+        className="mb-4"
+        actions={
+          <Segmented
+            label={t('analyze.chart.rangeLabel')}
+            options={RANGE_KEYS.map((key) => ({ key, label: t(`analyze.performance.ranges.${key}`) }))}
+            value={range}
+            onChange={setRange}
+          />
+        }
+      />
 
       {!stats ? (
         <div
@@ -227,7 +228,7 @@ export function FundChart({ points, fmt }: { points: PerformancePoint[]; fmt: Fo
                 {mode === 'unit' && <ReferenceLine y={1} stroke={MUTED} strokeOpacity={0.35} strokeDasharray="2 4" />}
 
                 {mode === 'unit' && drawdown && drawdownStart && (
-                  <ReferenceArea x1={drawdownStart} x2={drawdown.troughDate} fill={LOSS} fillOpacity={0.07} ifOverflow="hidden" />
+                  <ReferenceArea x1={drawdownStart} x2={drawdown.troughDate} fill={LOSS} fillOpacity={0.045} ifOverflow="hidden" />
                 )}
 
                 {mode === 'unit' &&
@@ -377,7 +378,7 @@ export function FundChart({ points, fmt }: { points: PerformancePoint[]; fmt: Fo
           </div>
         </>
       )}
-    </section>
+    </Panel>
   );
 }
 

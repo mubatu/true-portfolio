@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TrendingDown, TrendingUp } from 'lucide-react';
+import { Panel } from '@/components/ui/Panel';
 import { plBg, plColor, type Formatters } from './format';
 import { dailyReturns, unitPrice } from './performance';
 import type { AnalysisTotals, DividendSummary, PerformancePoint } from './types';
@@ -27,9 +28,8 @@ export function FundOverview({
   const sinceStart = last ? (unitPrice(last) - 1) * 100 : null;
 
   return (
-    <section
-      className="rounded-2xl border p-5 md:p-6 mb-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]"
-      style={{ borderColor: 'hsl(var(--border))', backgroundColor: 'hsl(var(--card))' }}
+    <Panel
+      className="p-5 md:p-6 mb-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]"
       aria-label={t('analyze.fund.overview')}
     >
       <div className="flex flex-col justify-center">
@@ -58,7 +58,7 @@ export function FundOverview({
                 <>
                   {' · '}
                   {t('analyze.fund.sinceStart')}{' '}
-                  <span className="font-medium" style={{ color: plColor(sinceStart) }}>
+                  <span className="font-medium whitespace-nowrap" style={{ color: plColor(sinceStart) }}>
                     {fmt.pct(sinceStart)}
                   </span>
                 </>
@@ -98,7 +98,7 @@ export function FundOverview({
           }
         />
       </dl>
-    </section>
+    </Panel>
   );
 }
 

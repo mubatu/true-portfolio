@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueries, useQuery } from '@tanstack/react-query';
-import { Briefcase, Plus } from 'lucide-react';
+import { Briefcase, PiggyBank, Plus, TrendingUp, Wallet, type LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Panel } from '@/components/ui/Panel';
 import { plColor, useFormatters } from '@/components/analysis/format';
 import type { AnalysisResponse } from '@/components/analysis/types';
 import { PortfolioCard } from '@/components/portfolio/PortfolioCard';
@@ -85,20 +86,20 @@ export function MyPortfolios() {
       </div>
 
       {allLoaded && withTrades.length > 1 && (
-        <section
-          className="rounded-2xl border p-5 mb-6 grid gap-4 sm:grid-cols-3"
-          style={{ borderColor: 'hsl(var(--border))', backgroundColor: 'hsl(var(--card))' }}
+        <Panel
+          className="p-5 mb-6 grid gap-5 sm:grid-cols-3 sm:divide-x"
           aria-label={t('myPortfolios.totalsLabel')}
         >
-          <Total label={t('myPortfolios.totalValue')} value={fmt.money(total.value)} />
-          <Total label={t('analyze.totalInvested')} value={fmt.money(total.invested)} />
+          <Total icon={Wallet} label={t('myPortfolios.totalValue')} value={fmt.money(total.value)} />
+          <Total icon={PiggyBank} label={t('analyze.totalInvested')} value={fmt.money(total.invested)} />
           <Total
+            icon={TrendingUp}
             label={t('analyze.totalPl')}
             value={fmt.signedMoney(total.pl)}
             sub={total.invested > 0 ? fmt.pct((total.pl / total.invested) * 100) : undefined}
             tone={total.pl}
           />
-        </section>
+        </Panel>
       )}
 
       {error ? (
@@ -161,14 +162,31 @@ export function MyPortfolios() {
   );
 }
 
-function Total({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: number }) {
+function Total({
+  icon: Icon,
+  label,
+  value,
+  sub,
+  tone,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+  sub?: string;
+  tone?: number;
+}) {
   return (
-    <div>
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-xl font-bold tabular-nums" style={{ color: tone != null ? plColor(tone) : undefined }}>
-        {value}
-        {sub && <span className="text-sm font-semibold ml-2">{sub}</span>}
-      </p>
+    <div className="flex items-center gap-3 sm:pl-5 first:pl-0">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+        <Icon className="h-5 w-5" aria-hidden="true" />
+      </span>
+      <div className="min-w-0">
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="text-xl font-bold tabular-nums tracking-tight" style={{ color: tone != null ? plColor(tone) : undefined }}>
+          {value}
+          {sub && <span className="text-sm font-semibold ml-2">{sub}</span>}
+        </p>
+      </div>
     </div>
   );
 }

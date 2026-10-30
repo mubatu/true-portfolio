@@ -29,9 +29,9 @@ const OPERATIONS: Operation[] = ['buy', 'sell', 'rights_sale'];
 const FUND_OPERATIONS: Operation[] = ['buy', 'sell'];
 
 const OPERATION_COLORS: Record<Operation, { color: string; background: string }> = {
-  buy: { color: 'hsl(142 76% 36%)', background: 'hsl(142 76% 36% / 0.1)' },
-  sell: { color: 'hsl(0 84% 60%)', background: 'hsl(0 84% 60% / 0.1)' },
-  rights_sale: { color: 'hsl(38 92% 40%)', background: 'hsl(38 92% 50% / 0.12)' },
+  buy: { color: 'hsl(var(--gain))', background: 'hsl(var(--gain) / 0.1)' },
+  sell: { color: 'hsl(var(--loss))', background: 'hsl(var(--loss) / 0.1)' },
+  rights_sale: { color: 'hsl(var(--warning))', background: 'hsl(var(--warning) / 0.12)' },
 };
 
 const INPUT_CLASS = 'w-full px-3 py-2 rounded-md border bg-transparent';

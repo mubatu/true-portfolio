@@ -40,8 +40,7 @@ export function PortfolioCard({
 
   return (
     <article
-      className="group relative rounded-2xl border p-5 flex flex-col gap-4 transition-shadow hover:shadow-md focus-within:shadow-md"
-      style={{ borderColor: 'hsl(var(--border))', backgroundColor: 'hsl(var(--card))' }}
+      className="group relative rounded-2xl border bg-card p-5 flex flex-col gap-4 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 hover:border-primary/40 focus-within:shadow-md"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">

@@ -20,7 +20,7 @@ export function Sparkline({
   const y = (v: number) => pad + (height - 2 * pad) * (1 - (v - min) / span);
   const points = values.map((v, i) => `${(i * step).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
   const up = values[values.length - 1] >= values[0];
-  const color = up ? 'hsl(142 76% 36%)' : 'hsl(0 84% 60%)';
+  const color = up ? 'hsl(var(--gain))' : 'hsl(var(--loss))';
 
   return (
     <svg

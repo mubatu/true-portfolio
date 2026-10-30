@@ -1,9 +1,23 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowRight, ArrowLeft, Loader2 } from 'lucide-react';
+import {
+  AlertCircle,
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  KeyRound,
+  Loader2,
+  Lock,
+  LogIn,
+  Mail,
+  ShieldCheck,
+  User,
+  UserPlus,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PasswordRequirements } from '@/components/ui/PasswordRequirements';
+import { TextField } from '@/components/ui/TextField';
 import { validatePassword } from '@/lib/password';
 import { Header } from '@/components/layout';
 import { useAuth } from '@/hooks';
@@ -85,186 +99,146 @@ export function AuthPage() {
     setError('');
   };
 
+  const subtitle =
+    step === 'email' ? t('auth.enterEmail') : step === 'login' ? t('auth.loginSubtitle') : t('auth.registerSubtitle');
+  const title = step === 'email' ? t('auth.welcome') : step === 'login' ? t('auth.welcomeBack') : t('auth.createAccount');
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-background">
       <Header />
-      <main className="flex-1 flex items-center justify-center px-4">
-        <div className="w-full max-w-md">
-          <div className="rounded-lg border p-8" style={{ borderColor: 'hsl(var(--border))' }}>
-            {/* Email Step */}
-            {step === 'email' && (
-              <form onSubmit={handleEmailSubmit}>
-                <h1 className="text-2xl font-bold text-center mb-2">
-                  {t('auth.welcome')}
-                </h1>
-                <p className="text-center mb-6" style={{ color: 'hsl(var(--muted-foreground))' }}>
-                  {t('auth.enterEmail')}
-                </p>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium mb-2">
-                      {t('auth.email')}
-                    </label>
-                    <input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder={t('auth.emailPlaceholder')}
-                      required
-                      className="w-full px-3 py-2 rounded-md border bg-transparent"
-                      style={{ borderColor: 'hsl(var(--input))' }}
-                    />
-                  </div>
+      <main className="flex-1 grid lg:grid-cols-2">
+        {/* Brand panel */}
+        <aside className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-primary p-12 text-primary-foreground">
+          <div
+            className="pointer-events-none absolute inset-0"
+            aria-hidden="true"
+            style={{
+              background:
+                'radial-gradient(60% 50% at 100% 0%, rgb(255 255 255 / 0.18), transparent 70%), radial-gradient(50% 50% at 0% 100%, rgb(0 0 0 / 0.18), transparent 70%)',
+            }}
+          />
+          <span className="relative text-sm font-semibold tracking-wide opacity-80">{t('common.appName')}</span>
+          <div className="relative max-w-md">
+            <h2 className="text-3xl font-bold tracking-tight leading-tight">{t('auth.brand.title')}</h2>
+            <ul className="mt-8 space-y-4">
+              {(['fund', 'compare', 'automatic'] as const).map((key) => (
+                <li key={key} className="flex gap-3">
+                  <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5 opacity-90" aria-hidden="true" />
+                  <span className="opacity-90">{t(`auth.brand.points.${key}`)}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <p className="relative text-sm opacity-75">{t('landing.footer.copyright')}</p>
+        </aside>
 
-                  {error && (
-                    <p className="text-sm" style={{ color: 'hsl(var(--destructive))' }}>
-                      {error}
-                    </p>
-                  )}
-
-                  <Button type="submit" className="w-full gap-2" disabled={isLoading}>
-                    {isLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <>
-                        {t('auth.continue')} <ArrowRight className="h-4 w-4" />
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </form>
+        {/* Form */}
+        <div className="flex items-center justify-center px-4 py-12">
+          <div className="w-full max-w-sm">
+            {step !== 'email' && (
+              <button
+                type="button"
+                onClick={handleBack}
+                className="inline-flex items-center gap-1 text-sm mb-6 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ArrowLeft className="h-4 w-4" /> {t('auth.back')}
+              </button>
             )}
 
-            {/* Login Step */}
-            {step === 'login' && (
-              <form onSubmit={handleLoginSubmit}>
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  className="flex items-center gap-1 text-sm mb-4 hover:underline"
-                  style={{ color: 'hsl(var(--muted-foreground))' }}
-                >
-                  <ArrowLeft className="h-4 w-4" /> {t('auth.back')}
-                </button>
-                
-                <h1 className="text-2xl font-bold text-center mb-2">
-                  {t('auth.welcomeBack')}
-                </h1>
-                <p className="text-sm text-center mb-2 font-medium">{email}</p>
-                <p className="text-center text-sm mb-6" style={{ color: 'hsl(var(--muted-foreground))' }}>
-                  {t('auth.loginSubtitle')}
-                </p>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="password" className="block text-sm font-medium mb-2">
-                      {t('auth.password')}
-                    </label>
-                    <input
-                      id="password"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder={t('auth.passwordPlaceholder')}
-                      required
-                      className="w-full px-3 py-2 rounded-md border bg-transparent"
-                      style={{ borderColor: 'hsl(var(--input))' }}
-                    />
-                  </div>
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-5">
+              {step === 'register' ? <UserPlus className="h-6 w-6" /> : step === 'login' ? <KeyRound className="h-6 w-6" /> : <LogIn className="h-6 w-6" />}
+            </span>
+            <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+            <p className="mt-1.5 text-sm text-muted-foreground">{subtitle}</p>
 
-                  {error && (
-                    <p className="text-sm" style={{ color: 'hsl(var(--destructive))' }}>
-                      {error}
-                    </p>
-                  )}
-
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      t('auth.signIn')
-                    )}
-                  </Button>
-                </div>
-              </form>
+            {step !== 'email' && (
+              <p className="mt-4 inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1 text-sm font-medium">
+                <Mail className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
+                {email}
+              </p>
             )}
 
-            {/* Register Step */}
-            {step === 'register' && (
-              <form onSubmit={handleRegisterSubmit}>
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  className="flex items-center gap-1 text-sm mb-4 hover:underline"
-                  style={{ color: 'hsl(var(--muted-foreground))' }}
-                >
-                  <ArrowLeft className="h-4 w-4" /> {t('auth.back')}
-                </button>
-                
-                <h1 className="text-2xl font-bold text-center mb-2">
-                  {t('auth.createAccount')}
-                </h1>
-                <p className="text-sm text-center mb-2 font-medium">{email}</p>
-                <p className="text-center text-sm mb-6" style={{ color: 'hsl(var(--muted-foreground))' }}>
-                  {t('auth.registerSubtitle')}
-                </p>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="name" className="block text-sm font-medium mb-2">
-                      {t('auth.name')}
-                    </label>
-                    <input
-                      id="name"
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder={t('auth.namePlaceholder')}
-                      required
-                      className="w-full px-3 py-2 rounded-md border bg-transparent"
-                      style={{ borderColor: 'hsl(var(--input))' }}
-                    />
-                  </div>
+            <form
+              onSubmit={step === 'email' ? handleEmailSubmit : step === 'login' ? handleLoginSubmit : handleRegisterSubmit}
+              className="mt-6 space-y-4"
+            >
+              {step === 'email' && (
+                <TextField
+                  id="email"
+                  type="email"
+                  label={t('auth.email')}
+                  icon={Mail}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder={t('auth.emailPlaceholder')}
+                  autoComplete="email"
+                  autoFocus
+                  required
+                />
+              )}
 
-                  <div>
-                    <label htmlFor="register-password" className="block text-sm font-medium mb-2">
-                      {t('auth.password')}
-                    </label>
-                    <input
-                      id="register-password"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder={t('auth.createPasswordPlaceholder')}
-                      required
-                      className="w-full px-3 py-2 rounded-md border bg-transparent"
-                      style={{ borderColor: 'hsl(var(--input))' }}
-                    />
-                    <PasswordRequirements password={password} show={password.length > 0} />
-                  </div>
+              {step === 'register' && (
+                <TextField
+                  id="name"
+                  label={t('auth.name')}
+                  icon={User}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder={t('auth.namePlaceholder')}
+                  autoComplete="name"
+                  autoFocus
+                  required
+                />
+              )}
 
-                  {error && (
-                    <p className="text-sm" style={{ color: 'hsl(var(--destructive))' }}>
-                      {error}
-                    </p>
-                  )}
-
-                  <Button 
-                    type="submit" 
-                    className="w-full" 
-                    disabled={isLoading || !validatePassword(password)}
-                  >
-                    {isLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      t('auth.createAccount')
-                    )}
-                  </Button>
+              {step !== 'email' && (
+                <div>
+                  <TextField
+                    id={step === 'login' ? 'password' : 'register-password'}
+                    type="password"
+                    label={t('auth.password')}
+                    icon={Lock}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder={t(step === 'login' ? 'auth.passwordPlaceholder' : 'auth.createPasswordPlaceholder')}
+                    autoComplete={step === 'login' ? 'current-password' : 'new-password'}
+                    autoFocus={step === 'login'}
+                    required
+                  />
+                  {step === 'register' && <PasswordRequirements password={password} show={password.length > 0} />}
                 </div>
-              </form>
-            )}
+              )}
+
+              {error && (
+                <p className="flex items-start gap-2 rounded-xl border px-3 py-2 text-sm" style={{ borderColor: 'hsl(var(--destructive) / 0.4)', backgroundColor: 'hsl(var(--destructive) / 0.08)', color: 'hsl(var(--destructive))' }} role="alert">
+                  <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" aria-hidden="true" />
+                  {error}
+                </p>
+              )}
+
+              <Button
+                type="submit"
+                className="w-full h-11 rounded-xl gap-2"
+                disabled={isLoading || (step === 'register' && !validatePassword(password))}
+              >
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : step === 'email' ? (
+                  <>
+                    {t('auth.continue')} <ArrowRight className="h-4 w-4" />
+                  </>
+                ) : step === 'login' ? (
+                  t('auth.signIn')
+                ) : (
+                  t('auth.createAccount')
+                )}
+              </Button>
+            </form>
+
+            <p className="mt-8 flex items-center gap-2 text-xs text-muted-foreground">
+              <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
+              {t('auth.secureNote')}
+            </p>
           </div>
         </div>
       </main>

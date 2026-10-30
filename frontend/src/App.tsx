@@ -18,6 +18,8 @@ const PortfolioAnalyze = lazy(() =>
   import('@/pages/private/PortfolioAnalyze').then((m) => ({ default: m.PortfolioAnalyze }))
 );
 const Profile = lazy(() => import('@/pages/private/Profile').then((m) => ({ default: m.Profile })));
+// Dev-only UI preview with synthetic data; compiled out of production builds.
+const DevPreview = import.meta.env.DEV ? lazy(() => import('@/dev/DevPreview')) : null;
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -52,6 +54,8 @@ function App() {
                   <Route path="/portfolio/:slug/analyze" element={<PortfolioAnalyze />} />
                   <Route path="/profile" element={<Profile />} />
                 </Route>
+
+                {DevPreview && <Route path="/dev/*" element={<DevPreview />} />}
 
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>

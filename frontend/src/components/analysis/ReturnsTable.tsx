@@ -1,10 +1,19 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { CalendarRange } from 'lucide-react';
+import { Panel, PanelHeader } from '@/components/ui/Panel';
 import { plColor, type Formatters } from './format';
 import { annualizedVolatility, dailyReturns, periodReturns } from './performance';
 import type { PerformancePoint } from './types';
 
-/** Fund-style return table: portfolio vs. BIST 100 over standard periods. */
+/** The chart's comparison lines, in its colors. */
+const COMPARISON_ROWS = [
+  { key: 'benchmark', field: 'benchmarkPct', color: 'hsl(var(--muted-foreground))' },
+  { key: 'gold', field: 'goldPct', color: 'var(--series-gold)' },
+  { key: 'usd', field: 'usdPct', color: 'var(--series-usd)' },
+] as const;
+
+/** Fund-style return table: portfolio vs. BIST 100, gold and the dollar over standard periods. */
 export function ReturnsTable({ points, fmt }: { points: PerformancePoint[]; fmt: Formatters }) {
   const { t } = useTranslation();
   const rows = useMemo(() => periodReturns(points), [points]);
@@ -34,17 +43,14 @@ export function ReturnsTable({ points, fmt }: { points: PerformancePoint[]; fmt:
     );
 
   return (
-    <section
-      className="rounded-2xl border p-4 md:p-6 mb-6"
-      style={{ borderColor: 'hsl(var(--border))', backgroundColor: 'hsl(var(--card))' }}
-      aria-labelledby="returns-title"
-    >
-      <h2 id="returns-title" className="text-lg font-semibold mb-1">
-        {t('analyze.returns.title')}
-      </h2>
-      <p className="text-sm mb-4" style={{ color: 'hsl(var(--muted-foreground))' }}>
-        {t('analyze.returns.hint')}
-      </p>
+    <Panel className="p-4 md:p-6" aria-labelledby="returns-title">
+      <PanelHeader
+        id="returns-title"
+        icon={CalendarRange}
+        title={t('analyze.returns.title')}
+        description={t('analyze.returns.hint')}
+        className="mb-4"
+      />
 
       <div className="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0">
         <table className="w-full min-w-[560px] text-sm">
@@ -69,16 +75,21 @@ export function ReturnsTable({ points, fmt }: { points: PerformancePoint[]; fmt:
                 </td>
               ))}
             </tr>
-            <tr className="border-t" style={{ borderColor: 'hsl(var(--border))' }}>
-              <th scope="row" className="text-left font-medium py-2.5 pr-4" style={{ color: 'hsl(var(--muted-foreground))' }}>
-                {t('analyze.performance.benchmark')}
-              </th>
-              {rows.map((r) => (
-                <td key={r.range} className="text-right py-2.5 px-2">
-                  {cell(r.benchmarkPct)}
-                </td>
-              ))}
-            </tr>
+            {COMPARISON_ROWS.filter((c) => rows.some((r) => r[c.field] != null)).map((c) => (
+              <tr key={c.key} className="border-t" style={{ borderColor: 'hsl(var(--border))' }}>
+                <th scope="row" className="text-left font-medium py-2.5 pr-4 whitespace-nowrap" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                  <span className="inline-flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: c.color }} aria-hidden="true" />
+                    {t(`analyze.chart.comparisons.${c.key}`)}
+                  </span>
+                </th>
+                {rows.map((r) => (
+                  <td key={r.range} className="text-right py-2.5 px-2">
+                    {cell(r[c.field])}
+                  </td>
+                ))}
+              </tr>
+            ))}
             <tr className="border-t" style={{ borderColor: 'hsl(var(--border))' }}>
               <th scope="row" className="text-left font-medium py-2.5 pr-4" style={{ color: 'hsl(var(--muted-foreground))' }}>
                 {t('analyze.returns.difference')}
@@ -136,6 +147,6 @@ export function ReturnsTable({ points, fmt }: { points: PerformancePoint[]; fmt:
           )}
         </dl>
       )}
-    </section>
+    </Panel>
   );
 }

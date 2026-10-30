@@ -4,10 +4,10 @@ import { getDateLocale, getLocale } from '@/config';
 import { parseIsoDate } from '@/lib/dates';
 
 export const plColor = (value: number) =>
-  value >= 0 ? 'hsl(142 76% 36%)' : 'hsl(0 84% 60%)';
+  value >= 0 ? 'hsl(var(--gain))' : 'hsl(var(--loss))';
 
 export const plBg = (value: number) =>
-  value >= 0 ? 'hsl(142 76% 36% / 0.1)' : 'hsl(0 84% 60% / 0.1)';
+  value >= 0 ? 'hsl(var(--gain) / 0.1)' : 'hsl(var(--loss) / 0.1)';
 
 export type Formatters = ReturnType<typeof useFormatters>;
 

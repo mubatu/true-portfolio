@@ -228,6 +228,19 @@ export interface PeriodReturn {
   /** null when the history does not reach back to the period start. */
   returnPct: number | null;
   benchmarkPct: number | null;
+  goldPct: number | null;
+  usdPct: number | null;
+}
+
+export type ComparisonField = 'benchmark_close' | 'gold_close' | 'usd_close';
+
+/** Price change of a comparison line over a slice, %: from the baseline's
+ * close (else the first known) to the last known close; null without data. */
+export function comparisonChange(slice: RangeSlice, field: ComparisonField): number | null {
+  const base = slice.baseline?.[field] ?? slice.points.find((p) => p[field] != null)?.[field] ?? null;
+  let last: number | null = null;
+  for (let i = slice.points.length - 1; i >= 0 && last == null; i--) last = slice.points[i][field];
+  return base && last != null ? (last / base - 1) * 100 : null;
 }
 
 /**
@@ -242,13 +255,16 @@ export function periodReturns(points: PerformancePoint[]): PeriodReturn[] {
   return RANGE_KEYS.map((range) => {
     const start = rangeStart(range, last);
     if (start !== null && start < first) {
-      return { range, returnPct: null, benchmarkPct: null };
+      return { range, returnPct: null, benchmarkPct: null, goldPct: null, usdPct: null };
     }
-    const stats = periodStats(sliceRange(points, range));
+    const slice = sliceRange(points, range);
+    const stats = periodStats(slice);
     return {
       range,
       returnPct: stats?.returnPct ?? null,
       benchmarkPct: stats?.benchmarkReturnPct ?? null,
+      goldPct: comparisonChange(slice, 'gold_close'),
+      usdPct: comparisonChange(slice, 'usd_close'),
     };
   });
 }

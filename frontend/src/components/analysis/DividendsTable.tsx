@@ -1,12 +1,8 @@
 import { useTranslation } from 'react-i18next';
+import { Coins } from 'lucide-react';
 import { plColor, type Formatters } from './format';
-import {
-  HEAD_BG,
-  HEAD_CELL_CLASS,
-  TABLE_CARD_CLASS,
-  TABLE_CARD_STYLE,
-  TABLE_SCROLL_CLASS,
-} from './tableStyles';
+import { HEAD_BG, HEAD_CELL_CLASS, TABLE_SCROLL_CLASS } from './tableStyles';
+import { Panel, PanelHeader } from '@/components/ui/Panel';
 import type { DividendSummary } from './types';
 
 const MUTED = 'hsl(var(--muted-foreground))';
@@ -34,25 +30,24 @@ export function DividendsTable({
   ];
 
   return (
-    <section className="mb-6" aria-labelledby="dividends-title">
-      <div className="mb-3">
-        <h2 id="dividends-title" className="text-lg font-semibold">
-          {t('analyze.dividends')}
-        </h2>
-        <p className="text-sm" style={{ color: MUTED }}>
-          {t('analyze.dividendsHint')}
-        </p>
-      </div>
+    <Panel className="mb-6 overflow-hidden" aria-labelledby="dividends-title">
+      <PanelHeader
+        id="dividends-title"
+        icon={Coins}
+        title={t('analyze.dividends')}
+        description={t('analyze.dividendsHint')}
+        className="p-4 md:p-6"
+      />
 
       {dividends.receipts.length === 0 ? (
         <div
-          className="rounded-xl border-2 border-dashed p-8 text-center text-sm"
+          className="rounded-xl border-2 border-dashed p-8 mx-4 mb-4 md:mx-6 md:mb-6 text-center text-sm"
           style={{ borderColor: 'hsl(var(--border))', color: MUTED }}
         >
           {t('analyze.noDividends')}
         </div>
       ) : (
-        <div className={TABLE_CARD_CLASS} style={TABLE_CARD_STYLE}>
+        <div className="border-t">
           <div className={TABLE_SCROLL_CLASS}>
             <table className="w-full min-w-[640px] text-sm">
               <thead>
@@ -107,6 +102,6 @@ export function DividendsTable({
           </div>
         </div>
       )}
-    </section>
+    </Panel>
   );
 }

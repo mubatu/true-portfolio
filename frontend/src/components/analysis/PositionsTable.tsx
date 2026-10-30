@@ -1,15 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowDown, ArrowUp } from 'lucide-react';
+import { ArrowDown, ArrowUp, Layers } from 'lucide-react';
 import { Segmented } from '@/components/ui/Segmented';
 import { plColor, type Formatters } from './format';
-import {
-  HEAD_BG,
-  HEAD_CELL_CLASS,
-  TABLE_CARD_CLASS,
-  TABLE_CARD_STYLE,
-  TABLE_SCROLL_CLASS,
-} from './tableStyles';
+import { HEAD_BG, HEAD_CELL_CLASS, TABLE_SCROLL_CLASS } from './tableStyles';
+import { Panel, PanelHeader } from '@/components/ui/Panel';
 import type { Position } from './types';
 
 type SortKey =
@@ -75,16 +70,14 @@ export function PositionsTable({
   const openCount = positions.filter((p) => p.quantity > 0).length;
 
   return (
-    <section className="mb-6" aria-labelledby="positions-title">
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-3">
-        <div>
-          <h2 id="positions-title" className="text-lg font-semibold">
-            {t('analyze.positions.title')}
-          </h2>
-          <p className="text-sm" style={{ color: 'hsl(var(--muted-foreground))' }}>
-            {t('analyze.positions.hint')}
-          </p>
-        </div>
+    <Panel className="mb-6 overflow-hidden" aria-labelledby="positions-title">
+      <PanelHeader
+        id="positions-title"
+        icon={Layers}
+        title={t('analyze.positions.title')}
+        description={t('analyze.positions.hint')}
+        className="p-4 md:p-6"
+        actions={
         <Segmented
           size="sm"
           label={t('analyze.positions.filterLabel')}
@@ -96,17 +89,18 @@ export function PositionsTable({
           value={filter}
           onChange={setFilter}
         />
-      </div>
+        }
+      />
 
       {visible.length === 0 ? (
         <div
-          className="rounded-xl border-2 border-dashed p-8 text-center text-sm"
+          className="rounded-xl border-2 border-dashed p-8 mx-4 mb-4 md:mx-6 md:mb-6 text-center text-sm"
           style={{ borderColor: 'hsl(var(--border))', color: 'hsl(var(--muted-foreground))' }}
         >
           {t('analyze.positions.empty')}
         </div>
       ) : (
-        <div className={TABLE_CARD_CLASS} style={TABLE_CARD_STYLE}>
+        <div className="border-t">
           <div className={TABLE_SCROLL_CLASS}>
             <table className="w-full min-w-[980px] text-sm">
               <thead>
@@ -115,7 +109,7 @@ export function PositionsTable({
                     scope="col"
                     className={`${HEAD_CELL_CLASS} left-0 text-left`}
                     // Corner cell: above both the header row and the sticky column.
-                    style={{ backgroundColor: 'hsl(var(--muted))', zIndex: 30 }}
+                    style={{ ...HEAD_BG, zIndex: 30 }}
                   >
                     <button
                       type="button"
@@ -228,7 +222,7 @@ export function PositionsTable({
           </div>
         </div>
       )}
-    </section>
+    </Panel>
   );
 }
 

@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Pencil, Ticket, Trash2, TrendingDown, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { HEAD_BG, HEAD_CELL_CLASS, TABLE_SCROLL_CLASS } from '@/components/analysis/tableStyles';
 import { toDisplayTicker } from '@/config';
 import type { Transaction } from '@/services/portfolioService';
 import { useTransactionFormatters, type TransactionFormatters } from './format';
@@ -8,16 +9,20 @@ import { useTransactionFormatters, type TransactionFormatters } from './format';
 type Operation = Transaction['operation'];
 
 const OPERATION_STYLES: Record<Operation, { backgroundColor: string; color: string }> = {
-  buy: { backgroundColor: 'hsl(142 76% 36% / 0.1)', color: 'hsl(142 76% 36%)' },
-  sell: { backgroundColor: 'hsl(0 84% 60% / 0.1)', color: 'hsl(0 84% 60%)' },
-  rights_sale: { backgroundColor: 'hsl(38 92% 50% / 0.12)', color: 'hsl(38 92% 40%)' },
+  buy: { backgroundColor: 'hsl(var(--gain) / 0.1)', color: 'hsl(var(--gain))' },
+  sell: { backgroundColor: 'hsl(var(--loss) / 0.1)', color: 'hsl(var(--loss))' },
+  rights_sale: { backgroundColor: 'hsl(var(--warning) / 0.12)', color: 'hsl(var(--warning))' },
 };
 
 const OPERATION_ICONS = { buy: TrendingUp, sell: TrendingDown, rights_sale: Ticket } as const;
 
-const GROUP_START_BORDER_STYLE = { borderLeftColor: 'hsl(var(--border))' };
-const GROUP_END_BORDER_STYLE = { borderRightColor: 'hsl(var(--border))' };
+const MUTED = 'hsl(var(--muted-foreground))';
+const CELL = 'px-3 py-3 text-right tabular-nums whitespace-nowrap';
 
+/**
+ * Every trade, newest first, styled like the analysis tables. Split-adjusted
+ * figures appear under the price only when a split changed them.
+ */
 export function TransactionsTable({
   transactions,
   market,
@@ -33,44 +38,49 @@ export function TransactionsTable({
 }) {
   const { t } = useTranslation();
   const fmt = useTransactionFormatters(market);
+  const head: [string, 'left' | 'right'][] = [
+    [t('portfolio.transactions.date'), 'left'],
+    [t('portfolio.transactions.ticker'), 'left'],
+    [t('portfolio.transactions.operation'), 'left'],
+    [t('portfolio.transactions.quantity'), 'right'],
+    [t('portfolio.transactions.price'), 'right'],
+    [t('portfolio.transactions.total'), 'right'],
+  ];
 
   return (
-    <div className="rounded-lg border overflow-hidden" style={{ borderColor: 'hsl(var(--border))' }}>
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr style={{ backgroundColor: 'hsl(var(--muted) / 0.5)' }}>
-              <Th>{t('portfolio.transactions.ticker')}</Th>
-              <Th>{t('portfolio.transactions.market')}</Th>
-              <Th>{t('portfolio.transactions.operation')}</Th>
-              <QuantityPriceHeader
-                quantity={t('portfolio.transactions.quantity')}
-                price={t('portfolio.transactions.price')}
-              />
-              <QuantityPriceHeader
-                quantity={t('portfolio.transactions.adjustedQuantity')}
-                price={t('portfolio.transactions.adjustedPrice')}
-              />
-              <Th align="right">{t('portfolio.transactions.total')}</Th>
-              <Th>{t('portfolio.transactions.date')}</Th>
-              <th scope="col" className="px-4 py-3 text-sm font-medium w-10"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {transactions.map((transaction) => (
-              <TransactionRow
-                key={transaction.id}
-                transaction={transaction}
-                market={market}
-                fmt={fmt}
-                isDeletePending={isDeletePending}
-                onEdit={onEdit}
-                onDelete={onDelete}
-              />
+    <div className={TABLE_SCROLL_CLASS}>
+      <table className="w-full min-w-[720px] text-sm">
+        <thead>
+          <tr>
+            {head.map(([label, align]) => (
+              <th
+                key={label}
+                scope="col"
+                className={`${HEAD_CELL_CLASS} text-${align}`}
+                style={{ ...HEAD_BG, color: MUTED }}
+              >
+                {label}
+              </th>
             ))}
-          </tbody>
-        </table>
-      </div>
+            <th scope="col" className={HEAD_CELL_CLASS} style={HEAD_BG}>
+              <span className="sr-only">{t('common.edit')}</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {transactions.map((transaction) => (
+            <TransactionRow
+              key={transaction.id}
+              transaction={transaction}
+              market={market}
+              fmt={fmt}
+              isDeletePending={isDeletePending}
+              onEdit={onEdit}
+              onDelete={onDelete}
+            />
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -96,54 +106,55 @@ function TransactionRow({
   const price = Number(transaction.price);
   const adjustedPrice = Number(transaction.adjusted_price ?? transaction.price);
   const commissionRate = Number(transaction.commission_rate ?? 0);
+  const adjusted = Math.abs(adjustedQuantity - quantity) > 1e-6;
   const OperationIcon = OPERATION_ICONS[transaction.operation];
 
   return (
-    <tr className="border-t transition-colors hover:bg-muted/50" style={{ borderColor: 'hsl(var(--border))' }}>
-      <td className="px-4 py-3">
-        <span className="font-semibold">{toDisplayTicker(transaction.ticker, market)}</span>
+    <tr className="group border-t transition-colors hover:bg-muted/40" style={{ borderColor: 'hsl(var(--border))' }}>
+      <td className="px-3 py-3 text-left tabular-nums whitespace-nowrap" style={{ color: MUTED }}>
+        {fmt.date(transaction.date)}
       </td>
-      <td className="px-4 py-3">
+      <th scope="row" className="px-3 py-3 text-left font-semibold whitespace-nowrap">
+        {toDisplayTicker(transaction.ticker, market)}
+      </th>
+      <td className="px-3 py-3 text-left">
         <span
-          className="inline-flex items-center px-2.5 py-1 rounded text-sm font-medium"
-          style={{ backgroundColor: 'hsl(var(--muted))' }}
-        >
-          {market}
-        </span>
-      </td>
-      <td className="px-4 py-3">
-        <span
-          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-medium whitespace-nowrap"
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap"
           style={OPERATION_STYLES[transaction.operation]}
         >
-          <OperationIcon className="h-4 w-4" />
+          <OperationIcon className="h-3.5 w-3.5" aria-hidden="true" />
           {t(`portfolio.transactions.${transaction.operation}`)}
         </span>
       </td>
-      <QuantityPriceCells quantity={fmt.number(quantity)} price={fmt.money(price)} />
-      <QuantityPriceCells quantity={fmt.number(adjustedQuantity)} price={fmt.money(adjustedPrice)} />
-      <td className="text-right px-4 py-3 font-medium tabular-nums">
+      <td className={CELL}>{fmt.number(quantity)}</td>
+      <td className={CELL}>
         <div className="flex flex-col items-end">
-          <span>{fmt.money(quantity * price)}</span>
-          <span className="text-[11px] font-normal tabular-nums" style={{ color: 'hsl(var(--muted-foreground))' }}>
-            {fmt.number(quantity)} × {fmt.money(price)}
-          </span>
-          <span
-            className="text-[11px] font-normal tabular-nums whitespace-nowrap"
-            style={{ color: 'hsl(var(--muted-foreground))' }}
-          >
-            {t('portfolio.transactions.commission', {
-              amount: fmt.money(quantity * price * commissionRate),
-              rate: fmt.rate(commissionRate),
-            })}
-          </span>
+          <span>{fmt.money(price)}</span>
+          {adjusted && (
+            <span className="text-[11px]" style={{ color: MUTED }} title={t('portfolio.transactions.adjustedHint')}>
+              {t('portfolio.transactions.adjustedLine', {
+                quantity: fmt.number(adjustedQuantity),
+                price: fmt.money(adjustedPrice),
+              })}
+            </span>
+          )}
         </div>
       </td>
-      <td className="px-4 py-3 text-sm" style={{ color: 'hsl(var(--muted-foreground))' }}>
-        {fmt.date(transaction.date)}
+      <td className={CELL}>
+        <div className="flex flex-col items-end">
+          <span className="font-semibold">{fmt.money(quantity * price)}</span>
+          {commissionRate > 0 && (
+            <span className="text-[11px]" style={{ color: MUTED }}>
+              {t('portfolio.transactions.commission', {
+                amount: fmt.money(quantity * price * commissionRate),
+                rate: fmt.rate(commissionRate),
+              })}
+            </span>
+          )}
+        </div>
       </td>
-      <td className="px-4 py-3">
-        <div className="flex items-center gap-1">
+      <td className="px-3 py-2 text-right">
+        <div className="flex items-center justify-end gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-within:opacity-100 transition-opacity">
           <Button
             variant="ghost"
             size="icon"
@@ -152,7 +163,7 @@ function TransactionRow({
             aria-label={t('common.edit')}
             onClick={() => onEdit(transaction)}
           >
-            <Pencil className="h-4 w-4" style={{ color: 'hsl(var(--muted-foreground))' }} />
+            <Pencil className="h-4 w-4" style={{ color: MUTED }} />
           </Button>
           <Button
             variant="ghost"
@@ -168,63 +179,5 @@ function TransactionRow({
         </div>
       </td>
     </tr>
-  );
-}
-
-// ── Building blocks ──────────────────────────────────────
-
-function Th({ children, align = 'left' }: { children: React.ReactNode; align?: 'left' | 'right' }) {
-  return (
-    <th scope="col" className={`text-${align} px-4 py-3 text-sm font-medium`}>
-      {children}
-    </th>
-  );
-}
-
-/** "quantity × price" header group with borders on both sides. */
-function QuantityPriceHeader({ quantity, price }: { quantity: string; price: string }) {
-  return (
-    <>
-      <th scope="col" className="text-right py-3 pl-3 pr-2 text-sm font-medium border-l" style={GROUP_START_BORDER_STYLE}>
-        {quantity}
-      </th>
-      <th scope="col" className="w-6 px-0 py-3 text-center">
-        <MultiplySymbol />
-      </th>
-      <th scope="col" className="text-left py-3 pl-2 pr-3 text-sm font-medium border-r" style={GROUP_END_BORDER_STYLE}>
-        {price}
-      </th>
-    </>
-  );
-}
-
-function QuantityPriceCells({ quantity, price }: { quantity: string; price: string }) {
-  return (
-    <>
-      <td className="text-right py-3 pl-3 pr-2 tabular-nums border-l" style={GROUP_START_BORDER_STYLE}>
-        {quantity}
-      </td>
-      <td className="px-0 py-3 text-center">
-        <MultiplySymbol />
-      </td>
-      <td
-        className="text-left py-3 pl-2 pr-3 tabular-nums border-r whitespace-nowrap"
-        style={GROUP_END_BORDER_STYLE}
-      >
-        {price}
-      </td>
-    </>
-  );
-}
-
-function MultiplySymbol() {
-  return (
-    <span
-      className="inline-flex h-5 w-5 items-center justify-center rounded-full text-xs font-semibold"
-      style={{ backgroundColor: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))' }}
-      aria-hidden="true"
-    >
-      ×
-    </span>
   );
 }

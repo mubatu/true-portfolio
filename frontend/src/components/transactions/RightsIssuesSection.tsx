@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
-import { Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Loader2, Pencil, Plus, Ticket, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Panel, PanelHeader } from '@/components/ui/Panel';
 import { Modal } from '@/components/ui/Modal';
 import { toDisplayTicker } from '@/config';
 import {
@@ -81,17 +82,19 @@ export function RightsIssuesSection({
   };
 
   return (
-    <section className="mt-10">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-1">
-        <h2 className="text-xl font-semibold">{t('rightsIssues.title')}</h2>
-        <Button variant="outline" size="sm" className="gap-1.5 self-start" onClick={() => open('new')}>
-          <Plus className="h-4 w-4" />
-          {t('rightsIssues.add')}
-        </Button>
-      </div>
-      <p className="text-sm mb-4" style={{ color: 'hsl(var(--muted-foreground))' }}>
-        {t('rightsIssues.hint')}
-      </p>
+    <Panel className="mt-6 p-4 md:p-6">
+      <PanelHeader
+        icon={Ticket}
+        title={t('rightsIssues.title')}
+        description={t('rightsIssues.hint')}
+        className="mb-4"
+        actions={
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => open('new')}>
+            <Plus className="h-4 w-4" />
+            {t('rightsIssues.add')}
+          </Button>
+        }
+      />
 
       {isLoading ? (
         <div className="flex justify-center py-6">
@@ -248,14 +251,14 @@ export function RightsIssuesSection({
           )}
         </Modal>
       )}
-    </section>
+    </Panel>
   );
 }
 
 function Badge({ tone, children }: { tone: 'info' | 'warning'; children: React.ReactNode }) {
   const colors =
     tone === 'warning'
-      ? { backgroundColor: 'hsl(38 92% 50% / 0.15)', color: 'hsl(38 92% 35%)' }
+      ? { backgroundColor: 'hsl(var(--warning) / 0.15)', color: 'hsl(var(--warning))' }
       : { backgroundColor: 'hsl(var(--primary) / 0.1)', color: 'hsl(var(--primary))' };
   return (
     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium" style={colors}>

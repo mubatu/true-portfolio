@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
+import { PieChart as PieChartIcon } from 'lucide-react';
+import { Panel, PanelHeader } from '@/components/ui/Panel';
 import { useTheme } from '@/hooks/useTheme';
 import type { Formatters } from './format';
 import type { Position } from './types';
@@ -38,12 +40,13 @@ export function AllocationChart({
 
   const slices: Slice[] = useMemo(() => {
     const open = positions.filter((p) => p.quantity > 0 && p.market_value > 0);
-    // Colors follow the stock (alphabetical), never its rank by size.
-    const colorOf = new Map(
-      [...open].sort((a, b) => a.ticker.localeCompare(b.ticker)).map((p, i) => [p.ticker, palette[i % palette.length]])
-    );
     const bySize = [...open].sort((a, b) => b.market_value - a.market_value);
     const shown = bySize.length > MAX_SLICES ? bySize.slice(0, MAX_SLICES - 1) : bySize;
+    // Colors follow the stock (alphabetical among the slices shown), never
+    // its rank by size; at most one slot each, never cycled.
+    const colorOf = new Map(
+      [...shown].sort((a, b) => a.ticker.localeCompare(b.ticker)).map((p, i) => [p.ticker, palette[i]])
+    );
     const rest = bySize.slice(shown.length);
 
     const result: Slice[] = shown.map((p) => ({
@@ -70,14 +73,8 @@ export function AllocationChart({
   if (slices.length === 0 || total <= 0) return null;
 
   return (
-    <section
-      className="rounded-2xl border p-4 md:p-6"
-      style={{ borderColor: 'hsl(var(--border))', backgroundColor: 'hsl(var(--card))' }}
-      aria-labelledby="allocation-title"
-    >
-      <h2 id="allocation-title" className="text-lg font-semibold mb-4">
-        {t('analyze.allocation.title')}
-      </h2>
+    <Panel className="p-4 md:p-6" aria-labelledby="allocation-title">
+      <PanelHeader id="allocation-title" icon={PieChartIcon} title={t('analyze.allocation.title')} className="mb-4" />
       <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row items-center gap-6">
         <div className="relative h-44 w-44 shrink-0">
           <ResponsiveContainer width="100%" height="100%">
@@ -136,6 +133,6 @@ export function AllocationChart({
           ))}
         </ul>
       </div>
-    </section>
+    </Panel>
   );
 }
