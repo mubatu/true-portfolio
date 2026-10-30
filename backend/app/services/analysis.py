@@ -16,8 +16,10 @@ Daily series — one point per market open day, valued at that day's close
   twr_pct         cumulative time-weighted return — performance with the
                   effect of new money removed; use it for drawdowns and
                   period returns.
-  benchmark_close market benchmark (e.g. XU100) close, carried forward;
-                  null until its first known close.
+  benchmark_close market benchmark (e.g. XU100) close,
+  usd_close       USD/TRY,
+  gold_close      gram gold in TRY — comparison lines, each carried
+                  forward; null until its first known close.
 
 TWR uses flows at the start of the day: each day's growth factor is
 ``total_value / (previous total_value + new money)``.
@@ -36,6 +38,9 @@ from app.services.ledger import (
 )
 
 ZERO = Decimal(0)
+# Comparison series a point always carries as ``<key>_close``.
+COMPARISONS = ("benchmark", "usd", "gold")
+GRAMS_PER_TROY_OUNCE = Decimal("31.1034768")
 
 
 def build_analysis(
@@ -44,7 +49,7 @@ def build_analysis(
     dividends: list[DividendEvent],
     open_days: list[date],
     as_of: date,
-    benchmark_closes: dict[date, Decimal] | None = None,
+    comparison_closes: dict[str, dict[date, Decimal]] | None = None,
 ) -> dict:
     """Totals, tables and the daily series as of ``as_of`` (yesterday).
 
@@ -89,7 +94,7 @@ def build_analysis(
         "dividends": _dividends_payload(ledger),
         "totals": totals,
         "performance_series": build_daily_series(
-            transactions, closes, dividends, open_days, as_of, benchmark_closes
+            transactions, closes, dividends, open_days, as_of, comparison_closes
         ),
     }
 
@@ -100,9 +105,12 @@ def build_daily_series(
     dividends: list[DividendEvent],
     open_days: list[date],
     as_of: date,
-    benchmark_closes: dict[date, Decimal] | None = None,
+    comparison_closes: dict[str, dict[date, Decimal]] | None = None,
 ) -> dict:
-    """Daily series from the first buy through ``as_of`` (see module doc)."""
+    """Daily series from the first buy through ``as_of`` (see module doc).
+
+    ``comparison_closes`` maps a key of ``COMPARISONS`` to its closes.
+    """
     first_buy = next((t.date for t in transactions if t.operation == "buy"), None)
     if first_buy is None:
         return {"start_date": None, "end_date": None, "points": []}
@@ -120,19 +128,20 @@ def build_daily_series(
             prices_by_date.setdefault(price_date, []).append((ticker, close))
     open_set = set(open_days)
 
-    benchmark_closes = benchmark_closes or {}
+    comparison_closes = comparison_closes or {}
     ledger = Ledger()
     latest_closes: dict[str, Decimal] = {}
-    benchmark_close: Decimal | None = None
+    comparison: dict[str, Decimal | None] = dict.fromkeys(COMPARISONS)
 
     # Events before the first buy (e.g. stray sells) still move the cash.
     for day in sorted(d for d in events if d < first_buy):
         ledger.apply_day(*events[day])
     for day in sorted(d for d in prices_by_date if d < first_buy):
         latest_closes.update(prices_by_date[day])
-    earlier = [d for d in benchmark_closes if d < first_buy]
-    if earlier:
-        benchmark_close = benchmark_closes[max(earlier)]
+    for key, by_date in comparison_closes.items():
+        earlier = [d for d in by_date if d < first_buy]
+        if earlier:
+            comparison[key] = by_date[max(earlier)]
 
     twr_factor = Decimal(1)
     prev_value = ZERO
@@ -144,7 +153,8 @@ def build_daily_series(
         if day in events:
             ledger.apply_day(*events[day])
         latest_closes.update(prices_by_date.get(day, []))
-        benchmark_close = benchmark_closes.get(day, benchmark_close)
+        for key, by_date in comparison_closes.items():
+            comparison[key] = by_date.get(day, comparison[key])
 
         if day in open_set:
             market_value = ledger.market_value(latest_closes)
@@ -173,9 +183,10 @@ def build_daily_series(
                 "total_pl": _tl(total_pl),
                 "pl_pct": _pct(total_pl, invested, 4),
                 "twr_pct": round(float((twr_factor - 1) * 100), 4),
-                "benchmark_close": (
-                    float(benchmark_close) if benchmark_close is not None else None
-                ),
+                **{
+                    f"{key}_close": float(close) if close is not None else None
+                    for key, close in comparison.items()
+                },
             })
 
         day += timedelta(days=1)
@@ -185,6 +196,24 @@ def build_daily_series(
         "end_date": as_of.isoformat(),
         "points": points,
     }
+
+
+def gram_gold_try(
+    gold_usd_per_ounce: dict[date, Decimal], usd_try: dict[date, Decimal]
+) -> dict[date, Decimal]:
+    """Gram gold in TRY: ounce price in USD × USD/TRY (that day's or the
+    latest earlier rate) ÷ grams per troy ounce."""
+    result: dict[date, Decimal] = {}
+    rate: Decimal | None = None
+    rate_days = sorted(usd_try)
+    i = 0
+    for day in sorted(gold_usd_per_ounce):
+        while i < len(rate_days) and rate_days[i] <= day:
+            rate = usd_try[rate_days[i]]
+            i += 1
+        if rate is not None:
+            result[day] = gold_usd_per_ounce[day] * rate / GRAMS_PER_TROY_OUNCE
+    return result
 
 
 def _position_row(

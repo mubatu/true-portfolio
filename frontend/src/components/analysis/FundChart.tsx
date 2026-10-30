@@ -24,8 +24,10 @@ type Mode = (typeof MODES)[number];
 interface ChartRow {
   date: string;
   value: number;
-  /** invested (value mode) or benchmark rebased to the unit price (unit mode) */
+  /** invested (value mode) */
   secondary: number | null;
+  /** unit mode: comparison lines rebased to the unit price, and their change since the range start, % */
+  comparisons: Partial<Record<ComparisonKey, { value: number; pct: number }>>;
   /** daily unit price change, % */
   daily: number;
   /** unit price change since the range start, % */
@@ -37,38 +39,53 @@ const PRIMARY = 'hsl(var(--primary))';
 const MUTED = 'hsl(var(--muted-foreground))';
 const GAIN = 'hsl(142 76% 36%)';
 const LOSS = 'hsl(0 84% 60%)';
+const GOLD = 'hsl(38 92% 50%)';
+const USD = 'hsl(262 83% 58%)';
+
+/** Lines drawn next to the unit price, all started from the same point. */
+const COMPARISONS = [
+  { key: 'benchmark', field: 'benchmark_close', color: MUTED },
+  { key: 'gold', field: 'gold_close', color: GOLD },
+  { key: 'usd', field: 'usd_close', color: USD },
+] as const;
+type ComparisonKey = (typeof COMPARISONS)[number]['key'];
 
 /**
  * The portfolio drawn like a fund chart: its unit price over time, with
- * BIST 100 on the same footing; plus value and P/L views and the key
+ * BIST 100, gold and the dollar on the same footing; plus value and P/L views and the key
  * numbers of the selected period.
  */
 export function FundChart({ points, fmt }: { points: PerformancePoint[]; fmt: Formatters }) {
   const { t } = useTranslation();
   const [range, setRange] = useState<RangeKey>('ALL');
   const [mode, setMode] = useState<Mode>('unit');
-  const [showBenchmark, setShowBenchmark] = useState(true);
+  const [shown, setShown] = useState<Record<ComparisonKey, boolean>>({ benchmark: true, gold: true, usd: true });
 
   const slice = useMemo(() => sliceRange(points, range), [points, range]);
   const stats = useMemo(() => periodStats(slice), [slice]);
-  const hasBenchmark = slice.points.some((p) => p.benchmark_close != null);
+  const available = COMPARISONS.filter((c) => slice.points.some((p) => p[c.field] != null));
+  const drawn = available.filter((c) => shown[c.key]);
 
   const rows: ChartRow[] = useMemo(() => {
     const startUnit = slice.baseline ? unitPrice(slice.baseline) : 1;
-    const startBench =
-      slice.baseline?.benchmark_close ?? slice.points.find((p) => p.benchmark_close != null)?.benchmark_close ?? null;
+    // Each line starts at the baseline's close, else its first known one.
+    const bases = COMPARISONS.map(
+      (c) => slice.baseline?.[c.field] ?? slice.points.find((p) => p[c.field] != null)?.[c.field] ?? null
+    );
     return slice.points.map((p, i) => {
       const prev = i > 0 ? slice.points[i - 1] : slice.baseline;
       const unit = unitPrice(p);
       return {
         date: p.date,
         value: mode === 'unit' ? unit : mode === 'value' ? p.total_value : p.total_pl,
-        secondary:
-          mode === 'value'
-            ? p.invested
-            : mode === 'unit' && startBench && p.benchmark_close != null
-              ? (p.benchmark_close / startBench) * startUnit
-              : null,
+        secondary: mode === 'value' ? p.invested : null,
+        comparisons: Object.fromEntries(
+          COMPARISONS.flatMap((c, j) => {
+            const base = bases[j];
+            const close = p[c.field];
+            return base && close != null ? [[c.key, { value: (close / base) * startUnit, pct: (close / base - 1) * 100 }]] : [];
+          })
+        ),
         daily: (unit / (prev ? unitPrice(prev) : 1) - 1) * 100,
         sinceStart: (unit / startUnit - 1) * 100,
         point: p,
@@ -132,16 +149,23 @@ export function FundChart({ points, fmt }: { points: PerformancePoint[]; fmt: Fo
               value={mode}
               onChange={setMode}
             />
-            {mode === 'unit' && hasBenchmark && (
-              <label className="inline-flex items-center gap-2 text-sm cursor-pointer select-none" style={{ color: MUTED }}>
-                <input
-                  type="checkbox"
-                  checked={showBenchmark}
-                  onChange={(e) => setShowBenchmark(e.target.checked)}
-                  className="h-4 w-4 accent-primary"
-                />
-                {t('analyze.chart.showBenchmark')}
-              </label>
+            {mode === 'unit' && available.length > 0 && (
+              <fieldset className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm" style={{ color: MUTED }}>
+                <legend className="sr-only">{t('analyze.chart.compareLabel')}</legend>
+                <span aria-hidden="true">{t('analyze.chart.compareLabel')}:</span>
+                {available.map((c) => (
+                  <label key={c.key} className="inline-flex items-center gap-1.5 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={shown[c.key]}
+                      onChange={(e) => setShown((s) => ({ ...s, [c.key]: e.target.checked }))}
+                      className="h-4 w-4"
+                      style={{ accentColor: c.color }}
+                    />
+                    {t(`analyze.chart.comparisons.${c.key}`)}
+                  </label>
+                ))}
+              </fieldset>
             )}
           </div>
 
@@ -149,7 +173,7 @@ export function FundChart({ points, fmt }: { points: PerformancePoint[]; fmt: Fo
             <Legend
               items={[
                 { color: PRIMARY, label: t('analyze.chart.portfolioUnit') },
-                ...(showBenchmark && hasBenchmark ? [{ color: MUTED, label: t('analyze.chart.benchmarkLine'), dashed: true }] : []),
+                ...drawn.map((c) => ({ color: c.color, label: t(`analyze.chart.comparisonLines.${c.key}`), dashed: true })),
               ]}
             />
           )}
@@ -206,18 +230,20 @@ export function FundChart({ points, fmt }: { points: PerformancePoint[]; fmt: Fo
                   <ReferenceArea x1={drawdownStart} x2={drawdown.troughDate} fill={LOSS} fillOpacity={0.07} ifOverflow="hidden" />
                 )}
 
-                {mode === 'unit' && showBenchmark && (
-                  <Line
-                    type="monotone"
-                    dataKey="secondary"
-                    stroke={MUTED}
-                    strokeWidth={1.5}
-                    strokeDasharray="5 4"
-                    dot={false}
-                    connectNulls
-                    isAnimationActive={false}
-                  />
-                )}
+                {mode === 'unit' &&
+                  drawn.map((c) => (
+                    <Line
+                      key={c.key}
+                      type="monotone"
+                      dataKey={(row: ChartRow) => row.comparisons[c.key]?.value ?? null}
+                      stroke={c.color}
+                      strokeWidth={1.5}
+                      strokeDasharray="5 4"
+                      dot={false}
+                      connectNulls
+                      isAnimationActive={false}
+                    />
+                  ))}
                 {mode === 'value' && (
                   <Line
                     type="stepAfter"
@@ -261,6 +287,20 @@ export function FundChart({ points, fmt }: { points: PerformancePoint[]; fmt: Fo
                         <TooltipLine label={t('analyze.fund.unitPrice')} value={fmt.unit(unitPrice(p))} strong />
                         <TooltipLine label={t('analyze.chart.dailyReturnLabel')} value={fmt.pct(row.daily)} color={plColor(row.daily)} />
                         <TooltipLine label={t('analyze.chart.sinceRangeStart')} value={fmt.pct(row.sinceStart)} color={plColor(row.sinceStart)} />
+                        {mode === 'unit' &&
+                          drawn.map((c) => {
+                            const cmp = row.comparisons[c.key];
+                            return (
+                              cmp && (
+                                <TooltipLine
+                                  key={c.key}
+                                  label={t(`analyze.chart.comparisons.${c.key}`)}
+                                  value={fmt.pct(cmp.pct)}
+                                  color={plColor(cmp.pct)}
+                                />
+                              )
+                            );
+                          })}
                         <div className="my-1 border-t" style={{ borderColor: 'hsl(var(--border))' }} />
                         <TooltipLine label={t('analyze.performance.totalValue')} value={fmt.money(p.total_value)} />
                         <TooltipLine label={t('analyze.performance.invested')} value={fmt.money(p.invested)} />

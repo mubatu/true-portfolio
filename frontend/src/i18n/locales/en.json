@@ -80,12 +80,21 @@
         "value": "Value vs. invested",
         "pl": "P/L (₺)"
       },
-      "showBenchmark": "Compare with BIST 100",
+      "compareLabel": "Compare",
+      "comparisons": {
+        "benchmark": "BIST 100",
+        "gold": "Gold",
+        "usd": "Dollar"
+      },
       "portfolioUnit": "Portfolio unit price",
-      "benchmarkLine": "BIST 100 (same start)",
+      "comparisonLines": {
+        "benchmark": "BIST 100 (same start)",
+        "gold": "Gold (same start)",
+        "usd": "Dollar (same start)"
+      },
       "sinceRangeStart": "Since period start",
       "hints": {
-        "unit": "Like a fund chart: the unit price moves with the stocks you held on each day. Green dot = period high, red dot = low; the shaded area is the largest drawdown. BIST 100 is a price index (excludes dividends).",
+        "unit": "Like a fund chart: the unit price moves with the stocks you held on each day. Green dot = period high, red dot = low; the shaded area is the largest drawdown. Dashed lines show the same money in BIST 100, gold and the dollar. BIST 100 is a price index (excludes dividends); gold is derived from the gold future and the dollar rate.",
         "value": "Total value (holdings + cash in the safe) against the money you brought in from outside (dashed).",
         "pl": "Cumulative profit/loss on each day: realized + unrealized + dividends."
       },

@@ -17,6 +17,9 @@ class MarketConfig:
     # Cash-dividend withholding tax as ``(effective_from, rate)`` pairs,
     # sorted by date. The rate in force on a dividend's ex-date applies.
     dividend_withholding: tuple[tuple[date, Decimal], ...] = ()
+    # Yahoo FX quote of the market currency against USD (USD/TRY): drawn as
+    # the "dollar" comparison line and used to price gold in that currency.
+    usd_ticker: str | None = None
     # "yahoo": synced daily; "upload": prices come only from files the user
     # uploads (TEFAS funds — Yahoo has none and TEFAS blocks automated reads).
     price_source: str = "yahoo"
@@ -32,6 +35,7 @@ MARKETS: dict[str, MarketConfig] = {
         country="TR",
         yfinance_suffix=".IS",
         benchmark_ticker="XU100.IS",
+        usd_ticker="USDTRY=X",
         # Stopaj for resident individuals (GVK md. 94/6-b-i):
         #   15% → 10% by Presidential Decree 4936 (22 Dec 2021)
         #   10% → 15% by Presidential Decree 9286 (22 Dec 2024)
@@ -50,6 +54,7 @@ MARKETS: dict[str, MarketConfig] = {
         country="TR",
         yfinance_suffix=".TEFAS",
         benchmark_ticker="XU100.IS",
+        usd_ticker="USDTRY=X",
         price_source="upload",
     ),
 }
@@ -59,6 +64,11 @@ def get_market_config(market_code: str | None) -> MarketConfig | None:
     if not market_code:
         return None
     return MARKETS.get(market_code.upper())
+
+
+# Gold comparison: Yahoo has no TRY gold quote, so gram gold is derived from
+# the front-month COMEX future (USD per troy ounce) and the market's USD rate.
+GOLD_USD_TICKER = "GC=F"
 
 
 def uses_uploaded_prices(ticker: str) -> bool:

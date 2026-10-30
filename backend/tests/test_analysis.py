@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 from decimal import Decimal as D
 
-from app.services.analysis import build_analysis, build_daily_series
+from app.services.analysis import build_analysis, build_daily_series, gram_gold_try
 from app.services.ledger import DividendEvent, LedgerTransaction
 
 D1, D2, D3, D4 = (date(2025, 3, 3) + timedelta(days=n) for n in range(4))
@@ -128,7 +128,7 @@ def test_benchmark_close_is_carried_forward():
         [],
         [D1, D2, D3],
         as_of=D3,
-        benchmark_closes={D1: D("9000"), D3: D("9100")},  # D2 missing
+        comparison_closes={"benchmark": {D1: D("9000"), D3: D("9100")}},  # D2 missing
     )
     assert [p["benchmark_close"] for p in series["points"]] == [9000.0, 9000.0, 9100.0]
 
@@ -138,6 +138,31 @@ def test_benchmark_is_optional():
         [buy(D1, "AAA.IS", "1", "100")], closes("AAA.IS", (D1, 100)), [], [D1], as_of=D1
     )
     assert series["points"][0]["benchmark_close"] is None
+    assert series["points"][0]["usd_close"] is None
+    assert series["points"][0]["gold_close"] is None
+
+
+def test_gold_and_dollar_lines_ride_along():
+    series = build_daily_series(
+        [buy(D2, "AAA.IS", "1", "100")],
+        closes("AAA.IS", (D2, 100), (D3, 101)),
+        [],
+        [D2, D3],
+        as_of=D3,
+        # Known before the first buy: the line starts from that close.
+        comparison_closes={"usd": {D1: D("40"), D3: D("41")}, "gold": {D2: D("5000")}},
+    )
+    assert [p["usd_close"] for p in series["points"]] == [40.0, 41.0]
+    assert [p["gold_close"] for p in series["points"]] == [5000.0, 5000.0]
+
+
+def test_gram_gold_uses_the_latest_known_rate():
+    gold = gram_gold_try(
+        {D1: D("3110.34768"), D2: D("3110.34768"), D3: D("3110.34768")},
+        {D1: D("40"), D3: D("42")},  # no rate on D2
+    )
+    assert gold == {D1: D("4000"), D2: D("4000"), D3: D("4200")}
+    assert gram_gold_try({D1: D("3000")}, {D2: D("40")}) == {}  # no rate yet
 
 
 def test_commission_keeps_value_identity_and_is_reported():

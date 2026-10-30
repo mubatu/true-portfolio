@@ -17,6 +17,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.core.markets import (
+    GOLD_USD_TICKER,
     get_dividend_withholding_rate,
     get_market_benchmark,
     get_market_config,
@@ -60,6 +61,14 @@ def analyze_portfolio(db: Session, portfolio_id: int) -> dict:
     yesterday = date.today() - timedelta(days=1)
     market = _portfolio_market(db, portfolio_id)
     benchmark = get_market_benchmark(market)
+    config = get_market_config(market)
+    usd = config.usd_ticker if config else None
+    # Comparison lines: ticker → key of analysis.COMPARISONS (gold via USD).
+    comparison_tickers = {
+        ticker: key
+        for ticker, key in ((benchmark, "benchmark"), (usd, "usd"), (usd and GOLD_USD_TICKER, "gold"))
+        if ticker
+    }
     transactions = _load_ledger_transactions(db, portfolio_id)
 
     if not transactions:
@@ -70,16 +79,30 @@ def analyze_portfolio(db: Session, portfolio_id: int) -> dict:
             "warnings": [],
         }
 
-    sync = ensure_market_data(db, _market_data_needs(transactions, benchmark, yesterday))
+    sync = ensure_market_data(
+        db, _market_data_needs(transactions, list(comparison_tickers), yesterday)
+    )
     if refresh_portfolio_adjusted_prices(db, portfolio_id)["transactions_updated"]:
         transactions = _load_ledger_transactions(db, portfolio_id)
 
     tickers = sorted({t.ticker for t in transactions})
     first_date = transactions[0].date
-    closes = load_closes(
-        db, tickers + ([benchmark] if benchmark else []), first_date, yesterday
+    closes = load_closes(db, tickers, first_date, yesterday)
+    # From a little earlier, so each line has a close to start from even if
+    # its market was shut on the first trade day.
+    reference = load_closes(
+        db, list(comparison_tickers), first_date - COMPARISON_LOOKBACK, yesterday
     )
-    benchmark_closes = closes.pop(benchmark, {}) if benchmark else {}
+    comparison_closes = {
+        key: reference.get(ticker, {})
+        for ticker, key in comparison_tickers.items()
+        if key != "gold"
+    }
+    if "gold" in comparison_tickers.values():
+        comparison_closes["gold"] = analysis.gram_gold_try(
+            reference.get(GOLD_USD_TICKER, {}), comparison_closes["usd"]
+        )
+    benchmark_closes = comparison_closes.get("benchmark", {})
     actions = load_corporate_actions(db, tickers)
     issues = load_rights_issues(db, tickers)
     closes = {
@@ -111,7 +134,7 @@ def analyze_portfolio(db: Session, portfolio_id: int) -> dict:
         dividends,
         open_days,
         as_of=yesterday,
-        benchmark_closes=benchmark_closes,
+        comparison_closes=comparison_closes,
     )
     rights_issues = _rights_summary(transactions, issues)
     warnings = [
@@ -440,13 +463,18 @@ def refresh_portfolio_adjusted_prices(db: Session, portfolio_id: int) -> dict:
 # Helpers
 # ------------------------------------------------------------------
 
+# How far before the first trade comparison lines are loaded from.
+COMPARISON_LOOKBACK = timedelta(days=10)
+
+
 def _market_data_needs(
     transactions: list[LedgerTransaction],
-    benchmark: str | None,
+    comparison_tickers: list[str],
     yesterday: date,
 ) -> dict[str, tuple[date, date]]:
     """Date window each ticker must cover: open positions through yesterday,
-    fully closed ones only through their last trade."""
+    fully closed ones only through their last trade; comparison lines from
+    a little before the first trade."""
     ledger = replay(transactions, [])
     needs: dict[str, tuple[date, date]] = {}
     for txn in transactions:
@@ -457,8 +485,8 @@ def _market_data_needs(
         if ledger.positions[ticker].quantity > 0:
             needs[ticker] = (start, yesterday)
 
-    if benchmark:
-        needs[benchmark] = (transactions[0].date, yesterday)
+    for ticker in comparison_tickers:
+        needs[ticker] = (transactions[0].date - COMPARISON_LOOKBACK, yesterday)
     return needs
 
 
@@ -471,7 +499,7 @@ def _open_days(
     """Market calendar: benchmark trading days, else any holding's trading
     days, else weekdays."""
     if benchmark_closes:
-        return sorted(benchmark_closes)
+        return sorted(d for d in benchmark_closes if start <= d <= end)
 
     traded = {d for by_date in closes.values() for d in by_date}
     if traded:

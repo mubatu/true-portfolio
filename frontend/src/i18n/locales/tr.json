@@ -80,12 +80,21 @@
         "value": "Değer ve yatırılan",
         "pl": "K/Z (₺)"
       },
-      "showBenchmark": "BIST 100 ile karşılaştır",
+      "compareLabel": "Karşılaştır",
+      "comparisons": {
+        "benchmark": "BIST 100",
+        "gold": "Altın",
+        "usd": "Dolar"
+      },
       "portfolioUnit": "Portföy pay fiyatı",
-      "benchmarkLine": "BIST 100 (aynı başlangıçtan)",
+      "comparisonLines": {
+        "benchmark": "BIST 100 (aynı başlangıçtan)",
+        "gold": "Altın (aynı başlangıçtan)",
+        "usd": "Dolar (aynı başlangıçtan)"
+      },
       "sinceRangeStart": "Dönem başından beri",
       "hints": {
-        "unit": "Bir fon grafiği gibi: pay fiyatı o gün elinde tuttuğun hisselerin performansıyla hareket eder. Yeşil nokta dönemin zirvesi, kırmızı nokta dibi; gölgeli alan en büyük düşüş. BIST 100 fiyat endeksidir (temettü içermez).",
+        "unit": "Bir fon grafiği gibi: pay fiyatı o gün elinde tuttuğun hisselerin performansıyla hareket eder. Yeşil nokta dönemin zirvesi, kırmızı nokta dibi; gölgeli alan en büyük düşüş. Kesikli çizgiler aynı para BIST 100'e, altına ya da dolara yatırılsaydı ne olacağını gösterir. BIST 100 fiyat endeksidir (temettü içermez); altının TL fiyatı ons altın vadelisi ve dolar kurundan hesaplanır.",
         "value": "Toplam değer (hisseler + kasadaki nakit) ile dışarıdan yatırdığın para (kesikli çizgi).",
         "pl": "Her gün itibarıyla birikimli kâr/zarar: gerçekleşen + gerçekleşmemiş + temettü."
       },

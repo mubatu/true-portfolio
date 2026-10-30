@@ -29,6 +29,8 @@ function pt(date: string, twr: number, pl = 0, bench: number | null = null): Per
     pl_pct: (pl / invested) * 100,
     twr_pct: twr,
     benchmark_close: bench,
+    usd_close: null,
+    gold_close: null,
   };
 }
 

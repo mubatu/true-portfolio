@@ -72,6 +72,10 @@ export interface PerformancePoint {
   twr_pct: number;
   /** Market benchmark (XU100) close, carried forward. */
   benchmark_close: number | null;
+  /** USD/TRY, carried forward. */
+  usd_close: number | null;
+  /** Gram gold in TRY (ounce future × USD/TRY), carried forward. */
+  gold_close: number | null;
 }
 
 export interface PerformanceSeries {
