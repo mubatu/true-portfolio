@@ -6,11 +6,12 @@ import { Briefcase, FlaskConical, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AllocationChart } from '@/components/analysis/AllocationChart';
 import { AnalysisSkeleton } from '@/components/analysis/AnalysisSkeleton';
-import { FundChart } from '@/components/analysis/FundChart';
+import { FundChart, type PortfolioLine } from '@/components/analysis/FundChart';
 import { FundOverview } from '@/components/analysis/FundOverview';
 import { Insights } from '@/components/analysis/Insights';
 import { ReturnsTable } from '@/components/analysis/ReturnsTable';
 import { useFormatters } from '@/components/analysis/format';
+import { categoricalColors } from '@/components/analysis/palette';
 import type { RangeKey } from '@/components/analysis/performance';
 import type { AnalysisResponse } from '@/components/analysis/types';
 import { PortfolioBreakdownTable } from '@/components/overview/PortfolioBreakdownTable';
@@ -21,6 +22,7 @@ import {
   portfolioRows,
   rowsAsPositions,
 } from '@/components/overview/combine';
+import { useTheme } from '@/hooks/useTheme';
 import { analyzePortfolio, getPortfolios } from '@/services/portfolioService';
 
 /**
@@ -34,6 +36,7 @@ export function Overview() {
   const { t } = useTranslation();
   const fmt = useFormatters('TRY');
   const [range, setRange] = useState<RangeKey>('ALL');
+  const { theme } = useTheme();
 
   useEffect(() => {
     document.title = `${t('overview.title')} · ${t('common.appName')}`;
@@ -77,6 +80,16 @@ export function Overview() {
     });
     if (items.length === 0 || items.length !== included.length) return null;
     const rows = portfolioRows(items);
+    // The same color for a portfolio in the allocation donut and its chart line.
+    const colorOf = categoricalColors(rows.map((r) => String(r.id)), theme === 'dark' ? 'dark' : 'light');
+    // Largest weight first, the order of the breakdown table.
+    const analysisOf = new Map(items.map((x) => [x.portfolio.id, x.analysis]));
+    const lines: PortfolioLine[] = rows.map((r) => ({
+      key: String(r.id),
+      label: r.name,
+      color: colorOf.get(String(r.id))!,
+      twrByDate: new Map(analysisOf.get(r.id)!.performance_series.points.map((p) => [p.date, p.twr_pct])),
+    }));
     return {
       points: combineSeries(items.map((x) => x.analysis.performance_series.points)),
       totals: combineTotals(items.map((x) => x.analysis.totals)),
@@ -84,8 +97,10 @@ export function Overview() {
       rows,
       positions: rowsAsPositions(rows),
       nameOf: new Map(rows.map((r) => [String(r.id), r.name])),
+      colorOf,
+      lines,
     };
-  }, [included, analyses.data]);
+  }, [included, analyses.data, theme]);
 
   const portfolioName = useCallback((id: string) => overview?.nameOf.get(id) ?? id, [overview]);
   const loading = portfoliosQuery.isLoading || analyses.loading;
@@ -97,27 +112,14 @@ export function Overview() {
         <div className="min-w-0">
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('overview.title')}</h1>
           <p className="text-sm mt-1 text-muted-foreground">{t('overview.subtitle')}</p>
-          {included.length > 0 && (
-            <div className="flex flex-wrap items-center gap-1.5 mt-3 text-xs">
-              {included.map((p) => (
-                <Link
-                  key={p.id}
-                  to={`/portfolio/${p.slug}/analyze`}
-                  className="rounded-md border bg-card px-2 py-0.5 font-medium hover:border-primary/50 transition-colors"
-                >
-                  {p.name}
-                </Link>
-              ))}
-              {experimentalCount > 0 && (
-                <Link
-                  to="/my-portfolios"
-                  className="inline-flex items-center gap-1 px-1.5 py-0.5 text-muted-foreground hover:text-foreground"
-                >
-                  <FlaskConical className="h-3.5 w-3.5" aria-hidden="true" />
-                  {t('overview.experimentalExcluded', { count: experimentalCount })}
-                </Link>
-              )}
-            </div>
+          {included.length > 0 && experimentalCount > 0 && (
+            <Link
+              to="/my-portfolios"
+              className="inline-flex items-center gap-1 mt-2 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <FlaskConical className="h-3.5 w-3.5" aria-hidden="true" />
+              {t('overview.experimentalExcluded', { count: experimentalCount })}
+            </Link>
           )}
         </div>
         {overview && (
@@ -185,7 +187,13 @@ export function Overview() {
             displayTicker={portfolioName}
             kind="portfolio"
           />
-          <FundChart points={overview.points} fmt={fmt} range={range} onRangeChange={setRange} />
+          <FundChart
+            points={overview.points}
+            fmt={fmt}
+            range={range}
+            onRangeChange={setRange}
+            portfolioLines={overview.lines}
+          />
           <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] mb-6 items-start [&>*]:min-w-0">
             <ReturnsTable points={overview.points} fmt={fmt} range={range} />
             <AllocationChart
@@ -194,6 +202,7 @@ export function Overview() {
               fmt={fmt}
               displayTicker={portfolioName}
               title={t('overview.allocation')}
+              colorOf={overview.colorOf}
             />
           </div>
           <PortfolioBreakdownTable rows={overview.rows} totals={overview.totals} fmt={fmt} />

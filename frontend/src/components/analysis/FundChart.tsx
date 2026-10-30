@@ -17,7 +17,7 @@ import { LineChart as LineChartIcon } from 'lucide-react';
 import { Panel, PanelHeader } from '@/components/ui/Panel';
 import { Segmented } from '@/components/ui/Segmented';
 import { plColor, type Formatters } from './format';
-import { RANGE_KEYS, periodStats, sliceRange, unitPrice, type RangeKey } from './performance';
+import { RANGE_KEYS, anchoredLine, periodStats, sliceRange, unitPrice, type RangeKey } from './performance';
 import type { PerformancePoint } from './types';
 
 const MODES = ['unit', 'value', 'pl'] as const;
@@ -30,6 +30,8 @@ interface ChartRow {
   secondary: number | null;
   /** unit mode: comparison lines rebased to the unit price, and their change since the range start, % */
   comparisons: Partial<Record<ComparisonKey, { value: number; pct: number }>>;
+  /** unit mode, Overview: each portfolio's own unit price on the combined line (see anchoredLine) */
+  portfolios: Record<string, { value: number; pct: number } | null>;
   /** daily unit price change, % */
   daily: number;
   /** unit price change since the range start, % */
@@ -52,10 +54,24 @@ const COMPARISONS = [
 ] as const;
 type ComparisonKey = (typeof COMPARISONS)[number]['key'];
 
+/** A single portfolio drawn on the Overview chart; off until ticked. */
+export interface PortfolioLine {
+  key: string;
+  label: string;
+  color: string;
+  /** The portfolio's cumulative time-weighted return, %, by date. */
+  twrByDate: Map<string, number>;
+}
+// Stable default, so the memoized lines are not rebuilt on every render.
+const NO_PORTFOLIO_LINES: PortfolioLine[] = [];
+
 /**
  * The portfolio drawn like a fund chart: its unit price over time, with
  * BIST 100, gold and the dollar on the same footing; plus value and P/L views and the key
  * numbers of the selected period.
+ *
+ * ``portfolioLines`` (Overview): each included portfolio as a solid line
+ * that can be ticked on, from its first day or the range start.
  *
  * ``hideAmounts`` (Explore): unit price only — no value / P/L views, no
  * TL in the tooltip, and only the percentage stats.
@@ -66,6 +82,7 @@ export function FundChart({
   range,
   onRangeChange,
   hideAmounts = false,
+  portfolioLines = NO_PORTFOLIO_LINES,
 }: {
   points: PerformancePoint[];
   fmt: Formatters;
@@ -73,15 +90,22 @@ export function FundChart({
   range: RangeKey;
   onRangeChange: (range: RangeKey) => void;
   hideAmounts?: boolean;
+  portfolioLines?: PortfolioLine[];
 }) {
   const { t } = useTranslation();
   const [mode, setMode] = useState<Mode>('unit');
   const [shown, setShown] = useState<Record<ComparisonKey, boolean>>({ benchmark: true, gold: true, usd: true });
+  const [shownPortfolios, setShownPortfolios] = useState<Record<string, boolean>>({});
 
   const slice = useMemo(() => sliceRange(points, range), [points, range]);
   const stats = useMemo(() => periodStats(slice), [slice]);
   const available = COMPARISONS.filter((c) => slice.points.some((p) => p[c.field] != null));
   const drawn = available.filter((c) => shown[c.key]);
+  const drawnPortfolios = portfolioLines.filter((l) => shownPortfolios[l.key]);
+  const anchored = useMemo(
+    () => new Map(portfolioLines.map((l) => [l.key, anchoredLine(slice, l.twrByDate)])),
+    [portfolioLines, slice]
+  );
 
   const rows: ChartRow[] = useMemo(() => {
     const startUnit = slice.baseline ? unitPrice(slice.baseline) : 1;
@@ -103,12 +127,13 @@ export function FundChart({
             return base && close != null ? [[c.key, { value: (close / base) * startUnit, pct: (close / base - 1) * 100 }]] : [];
           })
         ),
+        portfolios: Object.fromEntries([...anchored].map(([key, line]) => [key, line[i]])),
         daily: (unit / (prev ? unitPrice(prev) : 1) - 1) * 100,
         sinceStart: (unit / startUnit - 1) * 100,
         point: p,
       };
     });
-  }, [slice, mode]);
+  }, [slice, mode, anchored]);
 
   const { maxRow, minRow } = useMemo(() => {
     let maxRow = rows[0];
@@ -186,12 +211,31 @@ export function FundChart({
               </fieldset>
             )}
           </div>
+          {mode === 'unit' && portfolioLines.length > 0 && (
+            <fieldset className="flex flex-wrap items-center justify-end gap-x-4 gap-y-1 text-sm mb-3" style={{ color: MUTED }}>
+              <legend className="sr-only">{t('analyze.chart.portfoliosLabel')}</legend>
+              <span aria-hidden="true">{t('analyze.chart.portfoliosLabel')}:</span>
+              {portfolioLines.map((l) => (
+                <label key={l.key} className="inline-flex items-center gap-1.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={!!shownPortfolios[l.key]}
+                    onChange={(e) => setShownPortfolios((s) => ({ ...s, [l.key]: e.target.checked }))}
+                    className="h-4 w-4"
+                    style={{ accentColor: l.color }}
+                  />
+                  {l.label}
+                </label>
+              ))}
+            </fieldset>
+          )}
 
           {mode === 'unit' && (
             <Legend
               items={[
                 { color: PRIMARY, label: t('analyze.chart.portfolioUnit') },
                 ...drawn.map((c) => ({ color: c.color, label: t(`analyze.chart.comparisonLines.${c.key}`), dashed: true })),
+                ...drawnPortfolios.map((l) => ({ color: l.color, label: l.label })),
               ]}
             />
           )}
@@ -257,6 +301,19 @@ export function FundChart({
                       stroke={c.color}
                       strokeWidth={1.5}
                       strokeDasharray="5 4"
+                      dot={false}
+                      connectNulls
+                      isAnimationActive={false}
+                    />
+                  ))}
+                {mode === 'unit' &&
+                  drawnPortfolios.map((l) => (
+                    <Line
+                      key={l.key}
+                      type="monotone"
+                      dataKey={(row: ChartRow) => row.portfolios[l.key]?.value ?? null}
+                      stroke={l.color}
+                      strokeWidth={1.5}
                       dot={false}
                       connectNulls
                       isAnimationActive={false}
@@ -333,6 +390,21 @@ export function FundChart({
                               )
                             );
                           })}
+                        {mode === 'unit' &&
+                          drawnPortfolios.map((l) => {
+                            const own = row.portfolios[l.key];
+                            return (
+                              own && (
+                                <TooltipLine
+                                  key={l.key}
+                                  dot={l.color}
+                                  label={l.label}
+                                  value={fmt.pct(own.pct)}
+                                  color={plColor(own.pct)}
+                                />
+                              )
+                            );
+                          })}
 
                         {!hideAmounts && (
                           <>
@@ -355,6 +427,7 @@ export function FundChart({
 
           <p className="text-xs mt-2" style={{ color: MUTED }}>
             {t(`analyze.chart.hints.${mode}`)}
+            {mode === 'unit' && drawnPortfolios.length > 0 && <> {t('analyze.chart.portfoliosHint')}</>}
           </p>
 
           <div className={`grid gap-3 sm:grid-cols-2 mt-5 ${hideAmounts ? '' : 'xl:grid-cols-4'}`}>

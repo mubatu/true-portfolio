@@ -5,12 +5,9 @@ import { PieChart as PieChartIcon } from 'lucide-react';
 import { Panel, PanelHeader } from '@/components/ui/Panel';
 import { useTheme } from '@/hooks/useTheme';
 import type { Formatters } from './format';
+import { SERIES_LIGHT, categoricalColors } from './palette';
 import type { Position } from './types';
 
-// Validated categorical palette (dataviz reference, CVD-checked), used in
-// fixed order; light and dark steps are chosen per surface.
-const SERIES_LIGHT = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#6250d6'];
-const SERIES_DARK = ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300', '#9085e9'];
 const CASH = 'hsl(var(--muted-foreground) / 0.45)';
 const OTHER = 'hsl(var(--muted-foreground) / 0.7)';
 const MAX_SLICES = SERIES_LIGHT.length;
@@ -34,6 +31,7 @@ export function AllocationChart({
   displayTicker,
   title,
   hideAmounts = false,
+  colorOf: fixedColors,
 }: {
   positions: Position[];
   cash: number;
@@ -42,10 +40,11 @@ export function AllocationChart({
   /** Defaults to the per-stock "Allocation". */
   title?: string;
   hideAmounts?: boolean;
+  /** Fixed colors by ticker, to match another chart on the page. */
+  colorOf?: Map<string, string>;
 }) {
   const { t } = useTranslation();
   const { theme } = useTheme();
-  const palette = theme === 'dark' ? SERIES_DARK : SERIES_LIGHT;
 
   const slices: Slice[] = useMemo(() => {
     const open = positions.filter((p) => p.quantity > 0 && p.market_value > 0);
@@ -53,9 +52,7 @@ export function AllocationChart({
     const shown = bySize.length > MAX_SLICES ? bySize.slice(0, MAX_SLICES - 1) : bySize;
     // Colors follow the stock (alphabetical among the slices shown), never
     // its rank by size; at most one slot each, never cycled.
-    const colorOf = new Map(
-      [...shown].sort((a, b) => a.ticker.localeCompare(b.ticker)).map((p, i) => [p.ticker, palette[i]])
-    );
+    const colorOf = fixedColors ?? categoricalColors(shown.map((p) => p.ticker), theme === 'dark' ? 'dark' : 'light');
     const rest = bySize.slice(shown.length);
 
     const result: Slice[] = shown.map((p) => ({
@@ -76,7 +73,7 @@ export function AllocationChart({
       result.push({ key: 'cash', label: t('analyze.allocation.cash'), value: cash, color: CASH });
     }
     return result;
-  }, [positions, cash, palette, displayTicker, t]);
+  }, [positions, cash, theme, fixedColors, displayTicker, t]);
 
   const total = slices.reduce((a, s) => a + s.value, 0);
   if (slices.length === 0 || total <= 0) return null;

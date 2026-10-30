@@ -181,7 +181,9 @@
       },
       "noData": "Bu dönem için geçmiş performans verisi yok.",
       "dailyReturnLabel": "Günlük getiri",
-      "dailyShort": "günlük"
+      "dailyShort": "günlük",
+      "portfoliosLabel": "Portföyler",
+      "portfoliosHint": "Portföy çizgileri, her portföyün kendi pay fiyatını ilk alımından (ya da dönemin başından) itibaren gösterir; o günkü toplam pay fiyatından başlar. Sonunda toplamın üstünde kalan portföy, o süre boyunca toplamdan iyi gitmiştir."
     },
     "totalInvested": "Yatırılan Para",
     "portfolioValue": "Hisse Değeri",

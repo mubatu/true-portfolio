@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  anchoredLine,
   annualizedVolatility,
   dailyReturns,
   maxDrawdown,
@@ -212,5 +213,40 @@ describe('same money in a comparison line', () => {
 
   it('is unknown without a price for an inflow', () => {
     expect(sameMoneyIn([day('2026-01-02', 1000, null)], 'benchmark_close')).toBeNull();
+  });
+});
+
+describe('anchoredLine', () => {
+  // Combined unit price: 1.00, 1.10, 1.21, 1.331 (+10% a day).
+  const combined = [pt('2026-01-05', 0), pt('2026-01-06', 10), pt('2026-01-07', 21), pt('2026-01-08', 33.1)];
+
+  it('starts a later portfolio on the combined line, then follows its own return', () => {
+    // Opened on the 7th; +5% the next day.
+    const own = new Map([
+      ['2026-01-07', 0],
+      ['2026-01-08', 5],
+    ]);
+    const line = anchoredLine(sliceRange(combined, 'ALL'), own);
+    expect(line.slice(0, 2)).toEqual([null, null]);
+    expect(line[2]!.value).toBeCloseTo(1.21, 10);
+    expect(line[2]!.pct).toBeCloseTo(0, 10);
+    expect(line[3]!.value).toBeCloseTo(1.21 * 1.05, 10);
+    expect(line[3]!.pct).toBeCloseTo(5, 10);
+  });
+
+  it('starts an older portfolio at the range baseline, like the market lines', () => {
+    const own = new Map([
+      ['2026-01-05', 0],
+      ['2026-01-06', 20],
+      ['2026-01-07', 20],
+      ['2026-01-08', 32],
+    ]);
+    // A range that starts after the portfolio's first day: baseline is the 6th.
+    const slice = { baseline: combined[1], points: combined.slice(2) };
+    const line = anchoredLine(slice, own);
+    // From 1.20 to 1.20, then to 1.32 (+10%), drawn from the combined 1.10.
+    expect(line[0]!.value).toBeCloseTo(1.1, 10);
+    expect(line[1]!.value).toBeCloseTo(1.21, 10);
+    expect(line[1]!.pct).toBeCloseTo(10, 10);
   });
 });

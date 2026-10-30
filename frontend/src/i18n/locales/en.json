@@ -181,7 +181,9 @@
       },
       "noData": "No historical performance data available for this period.",
       "dailyReturnLabel": "Daily return",
-      "dailyShort": "daily"
+      "dailyShort": "daily",
+      "portfoliosLabel": "Portfolios",
+      "portfoliosHint": "Portfolio lines show each portfolio's own unit price from its first buy (or the range start), starting from the combined unit price that day. One ending above the combined line did better than the whole over that time."
     },
     "totalInvested": "Total Invested",
     "portfolioValue": "Portfolio Value",

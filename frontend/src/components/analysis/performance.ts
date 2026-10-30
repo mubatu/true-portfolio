@@ -302,3 +302,37 @@ export function sameMoneyIn(points: PerformancePoint[], field: ComparisonField):
   const value = units * price;
   return { value, invested, pl: value - invested, plPct: (value / invested - 1) * 100 };
 }
+
+/**
+ * One portfolio's unit price drawn next to a combined one (Overview). Its
+ * line starts at the later of the range start and the portfolio's first
+ * day, at the combined unit price there, then moves with the portfolio's
+ * own time-weighted return: "had all the money been in this portfolio
+ * from then on". ``twrByDate`` is that portfolio's cumulative TWR, %.
+ * One entry per slice point; null where the portfolio has no close.
+ */
+export function anchoredLine(
+  slice: RangeSlice,
+  twrByDate: Map<string, number>
+): ({ value: number; pct: number } | null)[] {
+  const own = (date: string) => {
+    const twr = twrByDate.get(date);
+    return twr == null ? null : 1 + twr / 100;
+  };
+  let base: number | null = null;
+  let level = 1;
+  const atBaseline = slice.baseline ? own(slice.baseline.date) : null;
+  if (slice.baseline && atBaseline != null) {
+    base = atBaseline;
+    level = growth(slice.baseline);
+  }
+  return slice.points.map((p) => {
+    const g = own(p.date);
+    if (g == null) return null;
+    if (base == null) {
+      base = g;
+      level = growth(p);
+    }
+    return { value: (level * g) / base, pct: (g / base - 1) * 100 };
+  });
+}
