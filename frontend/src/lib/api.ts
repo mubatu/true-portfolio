@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { supabase } from './supabase';
+import type { AnalysisResponse } from '@/components/analysis/types';
 
 // Create axios instance with base configuration
 export const apiClient = axios.create({
@@ -50,7 +51,7 @@ export const getMe = async () => {
 };
 
 // Analysis (portfolio/transaction CRUD goes straight to Supabase, see services/portfolioService.ts)
-export const analyzePortfolio = async (portfolioId: number) => {
-  const response = await apiClient.get(`/portfolios/${portfolioId}/analyze`);
+export const analyzePortfolio = async (portfolioId: number): Promise<AnalysisResponse> => {
+  const response = await apiClient.get<AnalysisResponse>(`/portfolios/${portfolioId}/analyze`);
   return response.data;
 };

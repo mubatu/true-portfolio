@@ -119,3 +119,22 @@ def test_holding_without_any_close_is_valued_at_cost():
     assert holding["current_value"] == 500.0
     assert result["totals"]["total_pl"] == 0
     assert result["performance_series"]["points"][0]["total_value"] == 500.0
+
+
+def test_benchmark_close_is_carried_forward():
+    series = build_daily_series(
+        [buy(D1, "AAA.IS", "1", "100")],
+        closes("AAA.IS", (D1, 100), (D2, 101), (D3, 102)),
+        [],
+        [D1, D2, D3],
+        as_of=D3,
+        benchmark_closes={D1: D("9000"), D3: D("9100")},  # D2 missing
+    )
+    assert [p["benchmark_close"] for p in series["points"]] == [9000.0, 9000.0, 9100.0]
+
+
+def test_benchmark_is_optional():
+    series = build_daily_series(
+        [buy(D1, "AAA.IS", "1", "100")], closes("AAA.IS", (D1, 100)), [], [D1], as_of=D1
+    )
+    assert series["points"][0]["benchmark_close"] is None

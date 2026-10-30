@@ -16,6 +16,8 @@ Daily series — one point per market open day, valued at that day's close
   twr_pct         cumulative time-weighted return — performance with the
                   effect of new money removed; use it for drawdowns and
                   period returns.
+  benchmark_close market benchmark (e.g. XU100) close, carried forward;
+                  null until its first known close.
 
 TWR uses flows at the start of the day: each day's growth factor is
 ``total_value / (previous total_value + new money)``.
@@ -41,6 +43,7 @@ def build_analysis(
     dividends: list[DividendEvent],
     open_days: list[date],
     as_of: date,
+    benchmark_closes: dict[date, Decimal] | None = None,
 ) -> dict:
     """Totals, tables and the daily series as of ``as_of`` (yesterday).
 
@@ -113,7 +116,7 @@ def build_analysis(
         "dividends": _dividends_payload(ledger),
         "totals": totals,
         "performance_series": build_daily_series(
-            transactions, closes, dividends, open_days, as_of
+            transactions, closes, dividends, open_days, as_of, benchmark_closes
         ),
     }
 
@@ -124,6 +127,7 @@ def build_daily_series(
     dividends: list[DividendEvent],
     open_days: list[date],
     as_of: date,
+    benchmark_closes: dict[date, Decimal] | None = None,
 ) -> dict:
     """Daily series from the first buy through ``as_of`` (see module doc)."""
     first_buy = next((t.date for t in transactions if t.operation == "buy"), None)
@@ -143,14 +147,19 @@ def build_daily_series(
             prices_by_date.setdefault(price_date, []).append((ticker, close))
     open_set = set(open_days)
 
+    benchmark_closes = benchmark_closes or {}
     ledger = Ledger()
     latest_closes: dict[str, Decimal] = {}
+    benchmark_close: Decimal | None = None
 
     # Events before the first buy (e.g. stray sells) still move the cash.
     for day in sorted(d for d in events if d < first_buy):
         ledger.apply_day(*events[day])
     for day in sorted(d for d in prices_by_date if d < first_buy):
         latest_closes.update(prices_by_date[day])
+    earlier = [d for d in benchmark_closes if d < first_buy]
+    if earlier:
+        benchmark_close = benchmark_closes[max(earlier)]
 
     twr_factor = Decimal(1)
     prev_value = ZERO
@@ -162,6 +171,7 @@ def build_daily_series(
         if day in events:
             ledger.apply_day(*events[day])
         latest_closes.update(prices_by_date.get(day, []))
+        benchmark_close = benchmark_closes.get(day, benchmark_close)
 
         if day in open_set:
             market_value = ledger.market_value(latest_closes)
@@ -190,6 +200,9 @@ def build_daily_series(
                 "total_pl": _tl(total_pl),
                 "pl_pct": _pct(total_pl, invested, 4),
                 "twr_pct": round(float((twr_factor - 1) * 100), 4),
+                "benchmark_close": (
+                    float(benchmark_close) if benchmark_close is not None else None
+                ),
             })
 
         day += timedelta(days=1)

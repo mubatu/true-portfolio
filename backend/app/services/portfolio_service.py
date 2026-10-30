@@ -89,6 +89,7 @@ def analyze_portfolio(db: Session, portfolio_id: int) -> dict:
         dividends,
         _open_days(benchmark_closes, closes, first_date, yesterday),
         as_of=yesterday,
+        benchmark_closes=benchmark_closes,
     )
     warnings = [
         {"code": "market_data_unavailable", "ticker": ticker}

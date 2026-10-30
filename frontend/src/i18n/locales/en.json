@@ -78,15 +78,8 @@
     "title": "{{name}} — Analysis",
     "subtitle": "Average cost method · prices exclude today · dividends net of withholding tax",
     "chart": {
-      "title": "Performance Chart (Base 100)",
-      "range": "From {{start}} to {{end}}",
-      "noRange": "No date range available yet.",
       "noData": "No historical performance data available for this period.",
-      "seriesLabel": "Portfolio Index",
-      "plLabel": "P/L",
-      "dailyReturnLabel": "Daily Return",
-      "priceAxis": "Price",
-      "dateAxis": "Date"
+      "dailyReturnLabel": "Daily return"
     },
     "totalInvested": "Total Invested",
     "portfolioValue": "Portfolio Value",
@@ -124,6 +117,63 @@
       "gross": "Gross",
       "net": "Net",
       "sum": "Total"
+    },
+    "performance": {
+      "title": "Performance",
+      "ranges": {
+        "1M": "1M",
+        "3M": "3M",
+        "6M": "6M",
+        "YTD": "YTD",
+        "1Y": "1Y",
+        "ALL": "All"
+      },
+      "modes": {
+        "pl": "P/L (₺)",
+        "plPct": "P/L (%)",
+        "value": "Value vs. Invested",
+        "performance": "Return vs. BIST 100"
+      },
+      "hints": {
+        "pl": "Cumulative profit/loss on each day: realized + unrealized + dividends. Green dot = highest, red dot = lowest in this period.",
+        "plPct": "Cumulative profit/loss as a percentage of the money you had put in by that day. Adding money changes this ratio even if prices don't move.",
+        "value": "Total value (holdings + cash in the safe) against the money you brought in from outside (dashed).",
+        "performance": "Time-weighted return: how your investments performed with the effect of adding money removed, rebased to 0% at the start of the period. BIST 100 is a price index (excludes dividends). Shaded area = largest drawdown."
+      },
+      "return": "Return",
+      "returnHint": "Time-weighted return: performance of your holdings, not affected by when you added money.",
+      "vsBenchmark": "BIST 100: {{value}} ({{diff}} pts)",
+      "plChange": "P/L Change",
+      "plNow": "P/L at end: {{value}} ({{pct}})",
+      "peakPl": "Peak P/L",
+      "onDate": "on {{date}} ({{pct}})",
+      "belowPeak": "Now {{value}} below the peak",
+      "atPeak": "Currently at the peak",
+      "maxDrawdown": "Max Drawdown",
+      "drawdownHint": "Largest fall from a high point to a later low, measured on the time-weighted return.",
+      "drawdownSpan": "{{from}} → {{to}}",
+      "start": "start",
+      "recovered": "Recovered on {{date}}",
+      "notRecovered": "Not recovered yet · now {{value}} from peak",
+      "noDrawdown": "No fall in this period",
+      "portfolio": "Portfolio",
+      "benchmark": "BIST 100",
+      "totalPl": "Total P/L",
+      "totalValue": "Total value",
+      "invested": "Invested"
+    },
+    "monthly": {
+      "title": "Month by Month",
+      "hint": "Values at each month's last trading day. Return is time-weighted (ignores money added); P/L change is in TL.",
+      "month": "Month",
+      "value": "Total Value",
+      "invested": "Invested",
+      "totalPl": "Total P/L",
+      "plChange": "P/L Change",
+      "return": "Return",
+      "benchmark": "BIST 100",
+      "showAll": "Show all {{count}} months",
+      "showLess": "Show fewer"
     }
   },
   "myPortfolios": {
