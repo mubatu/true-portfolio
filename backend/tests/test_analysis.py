@@ -138,3 +138,19 @@ def test_benchmark_is_optional():
         [buy(D1, "AAA.IS", "1", "100")], closes("AAA.IS", (D1, 100)), [], [D1], as_of=D1
     )
     assert series["points"][0]["benchmark_close"] is None
+
+
+def test_commission_keeps_value_identity_and_is_reported():
+    rate = D("0.0002")
+    txns = [
+        LedgerTransaction(D1, "AAA.IS", "buy", D(100), D(50), rate),
+        LedgerTransaction(D3, "AAA.IS", "sell", D(40), D(55), rate),
+    ]
+    result = build_analysis(
+        txns, closes("AAA.IS", (D1, 50), (D2, 52), (D3, 55)), [], [D1, D2, D3], as_of=D3
+    )
+    # Day 1: bought at the close, so the only loss is the 1 TL commission.
+    assert result["performance_series"]["points"][0]["total_pl"] == -1.0
+    for point in result["performance_series"]["points"]:
+        assert round(point["total_value"] - point["invested"], 2) == point["total_pl"]
+    assert result["totals"]["commission_paid"] == round(1 + 40 * 55 * 0.0002, 2)

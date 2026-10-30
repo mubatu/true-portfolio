@@ -152,6 +152,8 @@ export function RightsIssuesSection({
                       operation: 'buy',
                       quantity: issue.rights ?? undefined,
                       price: issue.subscription_price ?? undefined,
+                      // Brokers usually charge nothing for exercising rights.
+                      commission_rate: 0,
                       date: issue.ex_date,
                     })
                   }

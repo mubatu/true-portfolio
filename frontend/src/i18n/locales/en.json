@@ -78,7 +78,7 @@
   "analyze": {
     "backToDashboard": "Back to Dashboard",
     "title": "{{name}} — Analysis",
-    "subtitle": "Average cost method · prices exclude today · dividends net of withholding tax",
+    "subtitle": "Average cost method · prices exclude today · dividends net of withholding tax · commission included",
     "chart": {
       "noData": "No historical performance data available for this period.",
       "dailyReturnLabel": "Daily return"
@@ -177,7 +177,8 @@
       "benchmark": "BIST 100",
       "showAll": "Show all {{count}} months",
       "showLess": "Show fewer"
-    }
+    },
+    "commissionPaid": "Commission paid: {{amount}}"
   },
   "myPortfolios": {
     "title": "My Portfolios",
@@ -229,7 +230,8 @@
       "date": "Date",
       "buy": "Buy",
       "sell": "Sell",
-      "rights_sale": "Rights Sale"
+      "rights_sale": "Rights Sale",
+      "commission": "comm. {{amount}} ({{rate}})"
     },
     "addTransactionModal": {
       "title": "Add Transaction",
@@ -242,6 +244,10 @@
       "rightsQuantityLabel": "Number of Rights",
       "priceLabel": "Price per Share",
       "pricePlaceholder": "Price",
+      "commissionLabel": "Commission rate (%)",
+      "commissionHint": "What your broker charges for this trade; 2 basis points = 0.02.",
+      "commissionAmount": "Commission: ₺{{amount}}",
+      "commissionInvalid": "Enter a rate between 0 and {{max}}%.",
       "rightsPriceLabel": "Sale Price per Right",
       "dateLabel": "Transaction Date"
     },

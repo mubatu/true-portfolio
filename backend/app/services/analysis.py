@@ -106,6 +106,7 @@ def build_analysis(
         "realized_pl": _tl(realized),
         "unrealized_pl": _tl(unrealized),
         "dividend_income": _tl(dividend_income),
+        "commission_paid": _tl(ledger.commission_total),
         "total_pl": _tl(total_pl),
         "total_pl_pct": _pct(total_pl, ledger.pocket, 2),
     }

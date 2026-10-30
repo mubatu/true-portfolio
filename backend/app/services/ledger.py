@@ -14,6 +14,9 @@ Rules:
       rights_sale → proceeds of selling rights (rüçhan) go into the safe
     ``pocket`` is therefore the money that came from outside the portfolio.
   - Sold rights have zero cost: the proceeds are realized P/L of the ticker.
+  - Commission (``commission_rate`` × quantity × price) is part of what a
+    trade really costs or pays: added to the cost basis and the cash paid
+    on buys, deducted from the proceeds of sells and rights sales.
   - A cash dividend is credited on its **ex-date** to the shares held at
     the end of the previous day. Dividends of a day are applied *before*
     that day's trades: shares bought on the ex-date do not receive it,
@@ -38,6 +41,15 @@ class LedgerTransaction:
     operation: Literal["buy", "sell", "rights_sale"]
     quantity: Decimal
     price: Decimal
+    commission_rate: Decimal = Decimal(0)
+
+    @property
+    def gross_amount(self) -> Decimal:
+        return self.quantity * self.price
+
+    @property
+    def commission(self) -> Decimal:
+        return self.gross_amount * self.commission_rate
 
 
 @dataclass(frozen=True)
@@ -71,6 +83,7 @@ class TickerPosition:
     sold_value: Decimal = ZERO
     sold_cost: Decimal = ZERO
     dividend_income: Decimal = ZERO
+    commission_paid: Decimal = ZERO
 
     @property
     def avg_cost(self) -> Decimal:
@@ -88,28 +101,31 @@ class Ledger:
 
     def apply_transaction(self, txn: LedgerTransaction) -> None:
         position = self.positions.setdefault(txn.ticker, TickerPosition())
-        amount = txn.quantity * txn.price
-
-        if txn.operation == "rights_sale":
-            position.realized_pl += amount
-            position.sold_value += amount
-            self.safe += amount
-            return
+        commission = txn.commission
+        position.commission_paid += commission
 
         if txn.operation == "buy":
+            paid = txn.gross_amount + commission
             position.quantity += txn.quantity
-            position.cost_basis += amount
+            position.cost_basis += paid
 
-            from_safe = min(self.safe, amount)
+            from_safe = min(self.safe, paid)
             self.safe -= from_safe
-            self.pocket += amount - from_safe
+            self.pocket += paid - from_safe
+            return
+
+        received = txn.gross_amount - commission
+
+        if txn.operation == "rights_sale":
+            position.realized_pl += received
+            position.sold_value += received
+            self.safe += received
             return
 
         if position.quantity > 0:
-            avg_cost = position.avg_cost
-            sell_cost = txn.quantity * avg_cost
-            position.realized_pl += txn.quantity * (txn.price - avg_cost)
-            position.sold_value += amount
+            sell_cost = txn.quantity * position.avg_cost
+            position.realized_pl += received - sell_cost
+            position.sold_value += received
             position.sold_cost += sell_cost
             position.quantity -= txn.quantity
             position.cost_basis -= sell_cost
@@ -117,7 +133,7 @@ class Ledger:
                 position.quantity = ZERO
                 position.cost_basis = ZERO
 
-        self.safe += amount
+        self.safe += received
 
     def apply_dividend(self, event: DividendEvent) -> DividendReceipt | None:
         position = self.positions.get(event.ticker)
@@ -157,6 +173,10 @@ class Ledger:
     @property
     def realized_total(self) -> Decimal:
         return sum((p.realized_pl for p in self.positions.values()), ZERO)
+
+    @property
+    def commission_total(self) -> Decimal:
+        return sum((p.commission_paid for p in self.positions.values()), ZERO)
 
     @property
     def dividend_total(self) -> Decimal:

@@ -267,6 +267,7 @@ export function PortfolioDetail() {
                   operation: form.transaction.operation,
                   quantity: form.transaction.quantity,
                   price: form.transaction.price,
+                  commission_rate: form.transaction.commission_rate,
                   date: form.transaction.date,
                 }
               : form.prefill

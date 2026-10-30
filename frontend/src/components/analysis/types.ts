@@ -26,6 +26,7 @@ export interface AnalysisTotals {
   realized_pl: number;
   unrealized_pl: number;
   dividend_income: number;
+  commission_paid: number;
   total_pl: number;
   total_pl_pct: number;
 }

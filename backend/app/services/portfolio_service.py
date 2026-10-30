@@ -398,7 +398,8 @@ def _load_ledger_transactions(
                 ticker,
                 operation,
                 COALESCE(adjusted_quantity, quantity),
-                COALESCE(adjusted_price, price)
+                COALESCE(adjusted_price, price),
+                commission_rate
             FROM transactions
             WHERE portfolio_id = :pid
             ORDER BY date, id
@@ -414,8 +415,9 @@ def _load_ledger_transactions(
             operation=_operation(operation),
             quantity=Decimal(str(quantity)),
             price=Decimal(str(price)),
+            commission_rate=Decimal(str(commission_rate)),
         )
-        for txn_date, ticker, operation, quantity, price in rows
+        for txn_date, ticker, operation, quantity, price, commission_rate in rows
     ]
 
 

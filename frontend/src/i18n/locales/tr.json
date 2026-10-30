@@ -78,7 +78,7 @@
   "analyze": {
     "backToDashboard": "Panele Dön",
     "title": "{{name}} — Analiz",
-    "subtitle": "Ortalama maliyet yöntemi · fiyatlar bugünü içermez · temettüler stopaj düşülmüş net tutardır",
+    "subtitle": "Ortalama maliyet yöntemi · fiyatlar bugünü içermez · temettüler stopaj düşülmüş net · komisyon dahil",
     "chart": {
       "noData": "Bu dönem için geçmiş performans verisi yok.",
       "dailyReturnLabel": "Günlük getiri"
@@ -177,7 +177,8 @@
       "benchmark": "BIST 100",
       "showAll": "{{count}} ayın tümünü göster",
       "showLess": "Daha az göster"
-    }
+    },
+    "commissionPaid": "Ödenen komisyon: {{amount}}"
   },
   "myPortfolios": {
     "title": "Portföylerim",
@@ -229,7 +230,8 @@
       "date": "Tarih",
       "buy": "Alış",
       "sell": "Satış",
-      "rights_sale": "Rüçhan Satışı"
+      "rights_sale": "Rüçhan Satışı",
+      "commission": "kom. {{amount}} ({{rate}})"
     },
     "addTransactionModal": {
       "title": "İşlem Ekle",
@@ -242,6 +244,10 @@
       "rightsQuantityLabel": "Hak Adedi",
       "priceLabel": "Hisse Başına Fiyat",
       "pricePlaceholder": "Fiyat",
+      "commissionLabel": "Komisyon oranı (%)",
+      "commissionHint": "Aracı kurumunun bu işlem için aldığı oran; on binde 2 = 0,02.",
+      "commissionAmount": "Komisyon: ₺{{amount}}",
+      "commissionInvalid": "0 ile %{{max}} arasında bir oran gir.",
       "rightsPriceLabel": "Hak Başına Satış Fiyatı",
       "dateLabel": "İşlem Tarihi"
     },

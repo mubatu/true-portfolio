@@ -95,6 +95,7 @@ function TransactionRow({
   const adjustedQuantity = Number(transaction.adjusted_quantity ?? transaction.quantity);
   const price = Number(transaction.price);
   const adjustedPrice = Number(transaction.adjusted_price ?? transaction.price);
+  const commissionRate = Number(transaction.commission_rate ?? 0);
   const OperationIcon = OPERATION_ICONS[transaction.operation];
 
   return (
@@ -126,6 +127,15 @@ function TransactionRow({
           <span>{fmt.money(quantity * price)}</span>
           <span className="text-[11px] font-normal tabular-nums" style={{ color: 'hsl(var(--muted-foreground))' }}>
             {fmt.number(quantity)} × {fmt.money(price)}
+          </span>
+          <span
+            className="text-[11px] font-normal tabular-nums whitespace-nowrap"
+            style={{ color: 'hsl(var(--muted-foreground))' }}
+          >
+            {t('portfolio.transactions.commission', {
+              amount: fmt.money(quantity * price * commissionRate),
+              rate: fmt.rate(commissionRate),
+            })}
           </span>
         </div>
       </td>

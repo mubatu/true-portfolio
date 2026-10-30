@@ -25,9 +25,14 @@ export interface Transaction {
   adjusted_quantity?: number | null;
   price: number;
   adjusted_price?: number | null;
+  /** Fraction of quantity × price, e.g. 0.0002 = on binde 2. */
+  commission_rate: number;
   date: string;
   created_at: string;
 }
+
+/** Default broker commission for new trades: on binde 2 (0.02%). */
+export const DEFAULT_COMMISSION_RATE = 0.0002;
 
 export interface CreatePortfolioInput {
   name: string;
@@ -45,6 +50,7 @@ export interface CreateTransactionInput {
   operation: TransactionOperation;
   quantity: number;
   price: number;
+  commission_rate: number;
   date: string;
 }
 
@@ -54,6 +60,7 @@ export interface UpdateTransactionInput {
   operation: TransactionOperation;
   quantity: number;
   price: number;
+  commission_rate: number;
   date: string;
 }
 
@@ -338,6 +345,7 @@ export async function createTransaction(input: CreateTransactionInput): Promise<
       adjusted_quantity: adjusted.adjustedQuantity,
       price: input.price,
       adjusted_price: adjusted.adjustedPrice,
+      commission_rate: input.commission_rate,
       date: input.date,
     })
     .select()
@@ -426,6 +434,7 @@ export async function updateTransaction(input: UpdateTransactionInput): Promise<
       adjusted_quantity: adjusted.adjustedQuantity,
       price: input.price,
       adjusted_price: adjusted.adjustedPrice,
+      commission_rate: input.commission_rate,
       date: input.date,
     })
     .eq('id', input.id)

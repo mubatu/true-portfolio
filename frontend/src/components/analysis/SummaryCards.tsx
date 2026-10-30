@@ -47,6 +47,7 @@ export function SummaryCards({
         label={t('analyze.totalPl')}
         value={fmt.money(totals.total_pl)}
         sub={fmt.pct(totals.total_pl_pct)}
+        note={t('analyze.commissionPaid', { amount: fmt.money(totals.commission_paid) })}
         color={plTint}
       />
     </div>
@@ -58,12 +59,15 @@ function SummaryCard({
   label,
   value,
   sub,
+  note,
   color,
 }: {
   icon: ReactNode;
   label: string;
   value: string;
   sub?: string;
+  /** Small muted line under ``sub``. */
+  note?: string;
   color?: string;
 }) {
   return (
@@ -88,6 +92,11 @@ function SummaryCard({
       {sub && (
         <span className="text-sm font-medium" style={{ color }}>
           {sub}
+        </span>
+      )}
+      {note && (
+        <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>
+          {note}
         </span>
       )}
     </div>

@@ -153,3 +153,56 @@ def test_ex_date_price_drop_is_offset_by_dividend():
     )
 
     assert before == after == 0
+
+
+# -- commission -----------------------------------------------------------
+
+RATE = D("0.0002")  # on binde 2
+
+
+def test_buy_commission_is_part_of_cost_and_cash_paid():
+    ledger = replay(
+        [LedgerTransaction(date(2025, 1, 2), "AAA.IS", "buy", D(100), D(50), RATE)], []
+    )
+    position = ledger.positions["AAA.IS"]
+    assert position.cost_basis == D("5001")  # 5000 + 1 TL commission
+    assert position.avg_cost == D("50.01")
+    assert ledger.pocket == D("5001")
+    assert ledger.commission_total == D("1")
+
+
+def test_sell_commission_reduces_proceeds_and_realized_pl():
+    ledger = replay(
+        [
+            LedgerTransaction(date(2025, 1, 2), "AAA.IS", "buy", D(100), D(50), RATE),
+            LedgerTransaction(date(2025, 2, 3), "AAA.IS", "sell", D(100), D(60), RATE),
+        ],
+        [],
+    )
+    position = ledger.positions["AAA.IS"]
+    # proceeds 6000 − 1.2 = 5998.8; cost 5001 → realized 997.8
+    assert position.sold_value == D("5998.8")
+    assert position.realized_pl == D("997.8")
+    assert ledger.safe == D("5998.8")
+    assert ledger.commission_total == D("2.2")
+
+
+def test_rights_sale_commission_reduces_proceeds():
+    ledger = replay(
+        [
+            LedgerTransaction(date(2025, 1, 2), "AAA.IS", "buy", D(100), D(50)),
+            LedgerTransaction(date(2025, 3, 3), "AAA.IS", "rights_sale", D(100), D(10), RATE),
+        ],
+        [],
+    )
+    assert ledger.positions["AAA.IS"].realized_pl == D("999.8")
+    assert ledger.safe == D("999.8")
+
+
+def test_zero_commission_matches_previous_behaviour():
+    without = replay([buy(date(2025, 1, 2), "AAA.IS", "10", "100")], [])
+    explicit = replay(
+        [LedgerTransaction(date(2025, 1, 2), "AAA.IS", "buy", D(10), D(100), D(0))], []
+    )
+    assert without.positions == explicit.positions
+    assert without.pocket == explicit.pocket == D(1000)

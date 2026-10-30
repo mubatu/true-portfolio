@@ -4,7 +4,7 @@ import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/Modal';
 import { todayIso } from '@/lib/dates';
-import type { Transaction } from '@/services/portfolioService';
+import { DEFAULT_COMMISSION_RATE, type Transaction } from '@/services/portfolioService';
 
 type Operation = Transaction['operation'];
 
@@ -13,8 +13,16 @@ export interface TransactionFormValues {
   operation: Operation;
   quantity: number;
   price: number;
+  /** Fraction, e.g. 0.0002 for 0.02%. */
+  commission_rate: number;
   date: string;
 }
+
+/** Commission rates above this (10%) are almost certainly a typo. */
+const MAX_COMMISSION_PCT = 10;
+
+/** 0.0002 → "0.02" without float noise like 0.015000000000000001. */
+const rateToPct = (rate: number) => String(Number((rate * 100).toPrecision(10)));
 
 const OPERATIONS: Operation[] = ['buy', 'sell', 'rights_sale'];
 
@@ -46,6 +54,7 @@ export function TransactionFormModal({
     operation?: Operation;
     quantity?: number;
     price?: number;
+    commission_rate?: number;
     date?: string;
   };
   isPending: boolean;
@@ -53,14 +62,22 @@ export function TransactionFormModal({
   onClose: () => void;
   onSubmit: (values: TransactionFormValues) => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [ticker, setTicker] = useState(initial?.ticker ?? '');
   const [operation, setOperation] = useState<Operation>(initial?.operation ?? 'buy');
   const [quantity, setQuantity] = useState(initial?.quantity != null ? String(initial.quantity) : '');
   const [price, setPrice] = useState(initial?.price != null ? String(initial.price) : '');
+  const [commissionPct, setCommissionPct] = useState(
+    rateToPct(initial?.commission_rate ?? DEFAULT_COMMISSION_RATE)
+  );
   const [date, setDate] = useState(initial?.date ?? todayIso());
 
-  const isComplete = Boolean(ticker && quantity && price && date);
+  const commissionValue = Number(commissionPct);
+  const commissionValid =
+    commissionPct.trim() !== '' && commissionValue >= 0 && commissionValue < MAX_COMMISSION_PCT;
+  const isComplete = Boolean(ticker && quantity && price && date && commissionValid);
+  const gross = Number(quantity) * Number(price);
+  const commissionAmount = commissionValid && gross > 0 ? (gross * commissionValue) / 100 : null;
   const isRightsSale = operation === 'rights_sale';
 
   const handleSubmit = (e?: FormEvent) => {
@@ -71,6 +88,7 @@ export function TransactionFormModal({
       operation,
       quantity: parseFloat(quantity),
       price: parseFloat(price),
+      commission_rate: commissionValue / 100,
       date,
     });
   };
@@ -172,6 +190,35 @@ export function TransactionFormModal({
             />
           </Field>
         </div>
+
+        <Field id="txn-commission" label={t('portfolio.addTransactionModal.commissionLabel')}>
+          <input
+            id="txn-commission"
+            type="number"
+            step="any"
+            min="0"
+            max={MAX_COMMISSION_PCT}
+            value={commissionPct}
+            onChange={(e) => setCommissionPct(e.target.value)}
+            className={INPUT_CLASS}
+            style={INPUT_STYLE}
+          />
+          <p
+            className="text-xs mt-1"
+            style={{ color: commissionValid ? 'hsl(var(--muted-foreground))' : 'hsl(var(--destructive))' }}
+          >
+            {!commissionValid
+              ? t('portfolio.addTransactionModal.commissionInvalid', { max: MAX_COMMISSION_PCT })
+              : commissionAmount != null
+                ? t('portfolio.addTransactionModal.commissionAmount', {
+                    amount: commissionAmount.toLocaleString(i18n.language, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    }),
+                  })
+                : t('portfolio.addTransactionModal.commissionHint')}
+          </p>
+        </Field>
 
         <Field id="txn-date" label={t('portfolio.addTransactionModal.dateLabel')}>
           <input
