@@ -373,6 +373,10 @@
     "experimental": {
       "label": "Experimental",
       "description": "A trial or paper portfolio. It keeps its own analysis but is left out of the Overview."
+    },
+    "delete": {
+      "title": "Delete portfolio",
+      "description": "The portfolio and all its trades are deleted for good."
     }
   },
   "explore": {
@@ -421,7 +425,8 @@
     },
     "card": {
       "transactions": "{{count}} transactions",
-      "noTransactions": "No transactions"
+      "noTransactions": "No transactions",
+      "addFirst": "Add your first trade"
     },
     "create": {
       "title": "Create New Portfolio",
@@ -439,7 +444,8 @@
     "experimental": {
       "title": "Experimental portfolios",
       "hint": "Trials and paper portfolios. They keep their own analysis but are left out of the Overview."
-    }
+    },
+    "trendLabel": "Unit price since the start"
   },
   "portfolio": {
     "title": "Portfolio Details",

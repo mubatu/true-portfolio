@@ -6,20 +6,16 @@ import { Briefcase, FlaskConical, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useFormatters } from '@/components/analysis/format';
 import { PortfolioCard } from '@/components/portfolio/PortfolioCard';
-import {
-  CreatePortfolioDialog,
-  DeletePortfolioDialog,
-  PortfolioSettingsDialog,
-} from '@/components/portfolio/PortfolioDialogs';
+import { CreatePortfolioDialog, PortfolioSettingsDialog } from '@/components/portfolio/PortfolioDialogs';
 import { analyzePortfolio, getPortfolios, type Portfolio } from '@/services/portfolioService';
 
-type Dialog = { kind: 'create' } | { kind: 'settings' | 'delete'; portfolio: Portfolio } | null;
+type Dialog = { kind: 'create' } | { kind: 'settings'; portfolio: Portfolio } | null;
 
 /**
- * Every portfolio at a glance, the way into its analysis and transactions,
- * and creating, deleting or changing its settings (name, public / private,
- * experimental). Experimental
- * portfolios sit in their own section and are left out of the Overview.
+ * Every portfolio at a glance, the way into it, and creating one or
+ * changing its settings (name, public / private, experimental, delete).
+ * Experimental portfolios sit in their own section and are left out of
+ * the Overview.
  * Cards load their analysis into the same cache the analysis page uses,
  * so opening a portfolio from here is instant.
  */
@@ -72,7 +68,6 @@ export function MyPortfolios() {
             failed={!!q?.isError}
             onRetry={() => q?.refetch()}
             onSettings={() => setDialog({ kind: 'settings', portfolio: p })}
-            onDelete={() => setDialog({ kind: 'delete', portfolio: p })}
             fmt={fmt}
           />
         );
@@ -150,9 +145,6 @@ export function MyPortfolios() {
       {dialog?.kind === 'create' && <CreatePortfolioDialog onClose={() => setDialog(null)} />}
       {dialog?.kind === 'settings' && (
         <PortfolioSettingsDialog portfolio={dialog.portfolio} onClose={() => setDialog(null)} />
-      )}
-      {dialog?.kind === 'delete' && (
-        <DeletePortfolioDialog portfolio={dialog.portfolio} onClose={() => setDialog(null)} />
       )}
     </div>
   );

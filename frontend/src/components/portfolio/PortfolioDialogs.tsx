@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/Modal';
 import { MARKETS, type Market } from '@/config';
@@ -106,10 +106,23 @@ export function CreatePortfolioDialog({ onClose }: { onClose: () => void }) {
   );
 }
 
-/** Name, visibility and experimental flag of an existing portfolio. */
-export function PortfolioSettingsDialog({ portfolio, onClose }: { portfolio: Portfolio; onClose: () => void }) {
+/**
+ * Name, visibility and experimental flag of an existing portfolio, and
+ * deleting it (behind a confirmation; "Cancel" there comes back here).
+ * ``onDeleted`` runs after a delete, e.g. to leave the deleted portfolio's page.
+ */
+export function PortfolioSettingsDialog({
+  portfolio,
+  onClose,
+  onDeleted,
+}: {
+  portfolio: Portfolio;
+  onClose: () => void;
+  onDeleted?: () => void;
+}) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [name, setName] = useState(portfolio.name);
   const [settings, setSettings] = useState<PortfolioSettings>({
     is_public: !!portfolio.is_public,
@@ -125,6 +138,19 @@ export function PortfolioSettingsDialog({ portfolio, onClose }: { portfolio: Por
       onClose();
     },
   });
+
+  if (confirmingDelete) {
+    return (
+      <DeletePortfolioDialog
+        portfolio={portfolio}
+        onCancel={() => setConfirmingDelete(false)}
+        onDeleted={() => {
+          onClose();
+          onDeleted?.();
+        }}
+      />
+    );
+  }
 
   const unchanged =
     name.trim() === portfolio.name &&
@@ -176,11 +202,37 @@ export function PortfolioSettingsDialog({ portfolio, onClose }: { portfolio: Por
         )}
         <button type="submit" hidden />
       </form>
+
+      <div className="mt-6 border-t pt-4 flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-sm font-medium">{t('portfolioSettings.delete.title')}</p>
+          <p className="text-xs mt-0.5 text-muted-foreground">{t('portfolioSettings.delete.description')}</p>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="shrink-0 gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
+          onClick={() => setConfirmingDelete(true)}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+          {t('common.delete')}
+        </Button>
+      </div>
     </Modal>
   );
 }
 
-export function DeletePortfolioDialog({ portfolio, onClose }: { portfolio: Portfolio; onClose: () => void }) {
+/** Asks before deleting a portfolio; reached from its settings. */
+function DeletePortfolioDialog({
+  portfolio,
+  onCancel,
+  onDeleted,
+}: {
+  portfolio: Portfolio;
+  onCancel: () => void;
+  onDeleted: () => void;
+}) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
@@ -188,19 +240,21 @@ export function DeletePortfolioDialog({ portfolio, onClose }: { portfolio: Portf
     mutationFn: deletePortfolio,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['portfolios'] });
+      queryClient.invalidateQueries({ queryKey: ['explore'] });
       queryClient.removeQueries({ queryKey: ['portfolio-analysis', portfolio.id] });
-      onClose();
+      queryClient.removeQueries({ queryKey: ['portfolio', portfolio.slug] });
+      onDeleted();
     },
   });
 
   return (
     <Modal
       isOpen
-      onClose={onClose}
+      onClose={onCancel}
       title={t('portfolio.deleteConfirm.title')}
       footer={
         <>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onCancel}>
             {t('common.cancel')}
           </Button>
           <Button variant="destructive" onClick={() => mutation.mutate(portfolio.id)} disabled={mutation.isPending}>

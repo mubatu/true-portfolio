@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, LineChart, ListOrdered, Settings2 } from 'lucide-react';
+import { ChevronLeft, LineChart, ListOrdered, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { Portfolio } from '@/services/portfolioService';
 import { PortfolioSettingsDialog } from './PortfolioDialogs';
@@ -25,6 +25,7 @@ export function PortfolioHeader({
   hasTrades?: boolean;
 }) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const base = portfolio ? `/portfolio/${portfolio.slug}` : '';
 
@@ -87,13 +88,17 @@ export function PortfolioHeader({
               aria-label={t('portfolioSettings.title')}
               title={t('portfolioSettings.title')}
             >
-              <Settings2 className="h-4 w-4" />
+              <Settings className="h-4 w-4" />
             </Button>
           </div>
         )}
       </div>
       {settingsOpen && portfolio && (
-        <PortfolioSettingsDialog portfolio={portfolio} onClose={() => setSettingsOpen(false)} />
+        <PortfolioSettingsDialog
+          portfolio={portfolio}
+          onClose={() => setSettingsOpen(false)}
+          onDeleted={() => navigate('/my-portfolios', { replace: true })}
+        />
       )}
     </header>
   );
