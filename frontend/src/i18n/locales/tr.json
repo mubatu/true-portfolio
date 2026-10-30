@@ -179,7 +179,8 @@
         "pl": "Her gün itibarıyla birikimli kâr/zarar: gerçekleşen + gerçekleşmemiş + temettü."
       },
       "noData": "Bu dönem için geçmiş performans verisi yok.",
-      "dailyReturnLabel": "Günlük getiri"
+      "dailyReturnLabel": "Günlük getiri",
+      "dailyShort": "günlük"
     },
     "totalInvested": "Yatırılan Para",
     "portfolioValue": "Hisse Değeri",

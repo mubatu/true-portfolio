@@ -179,7 +179,8 @@
         "pl": "Cumulative profit/loss on each day: realized + unrealized + dividends."
       },
       "noData": "No historical performance data available for this period.",
-      "dailyReturnLabel": "Daily return"
+      "dailyReturnLabel": "Daily return",
+      "dailyShort": "daily"
     },
     "totalInvested": "Total Invested",
     "portfolioValue": "Portfolio Value",

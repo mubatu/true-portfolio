@@ -291,13 +291,26 @@ export function FundChart({
                     const p = row.point;
                     return (
                       <div
-                        className="rounded-xl border px-3 py-2 text-sm shadow-lg space-y-0.5 min-w-[220px]"
-                        style={{ borderColor: 'hsl(var(--border))', backgroundColor: 'hsl(var(--popover))' }}
+                        className="rounded-lg border px-2.5 py-2 text-xs shadow-lg min-w-[184px] backdrop-blur-sm"
+                        style={{ borderColor: 'hsl(var(--border))', backgroundColor: 'hsl(var(--popover) / 0.92)' }}
                       >
-                        <p className="font-medium mb-1">{fmt.date(p.date)}</p>
-                        <TooltipLine label={t('analyze.fund.unitPrice')} value={fmt.unit(unitPrice(p))} strong />
-                        <TooltipLine label={t('analyze.chart.dailyReturnLabel')} value={fmt.pct(row.daily)} color={plColor(row.daily)} />
-                        <TooltipLine label={t('analyze.chart.sinceRangeStart')} value={fmt.pct(row.sinceStart)} color={plColor(row.sinceStart)} />
+                        <p className="text-[11px] font-medium" style={{ color: MUTED }}>
+                          {fmt.date(p.date)}
+                        </p>
+                        <p className="flex items-baseline justify-between gap-3 mt-0.5">
+                          <span className="text-sm font-semibold tabular-nums">{fmt.unit(unitPrice(p))}</span>
+                          <span className="tabular-nums font-medium" style={{ color: plColor(row.daily) }}>
+                            {fmt.pct(row.daily)}
+                            <span className="ml-1 font-normal" style={{ color: MUTED }}>
+                              {t('analyze.chart.dailyShort')}
+                            </span>
+                          </span>
+                        </p>
+
+                        <p className="mt-2 mb-0.5 text-[10px] font-medium uppercase tracking-wide" style={{ color: MUTED }}>
+                          {t('analyze.chart.sinceRangeStart')}
+                        </p>
+                        <TooltipLine dot={PRIMARY} label={t('analyze.performance.portfolio')} value={fmt.pct(row.sinceStart)} color={plColor(row.sinceStart)} strong />
                         {mode === 'unit' &&
                           drawn.map((c) => {
                             const cmp = row.comparisons[c.key];
@@ -305,6 +318,7 @@ export function FundChart({
                               cmp && (
                                 <TooltipLine
                                   key={c.key}
+                                  dot={c.color}
                                   label={t(`analyze.chart.comparisons.${c.key}`)}
                                   value={fmt.pct(cmp.pct)}
                                   color={plColor(cmp.pct)}
@@ -312,14 +326,14 @@ export function FundChart({
                               )
                             );
                           })}
-                        <div className="my-1 border-t" style={{ borderColor: 'hsl(var(--border))' }} />
+
+                        <div className="my-1.5 border-t" style={{ borderColor: 'hsl(var(--border))' }} />
                         <TooltipLine label={t('analyze.performance.totalValue')} value={fmt.money(p.total_value)} />
                         <TooltipLine label={t('analyze.performance.invested')} value={fmt.money(p.invested)} />
-                        <TooltipLine
-                          label={t('analyze.performance.totalPl')}
-                          value={`${fmt.signedMoney(p.total_pl)} (${fmt.pct(p.pl_pct)})`}
-                          color={plColor(p.total_pl)}
-                        />
+                        <TooltipLine label={t('analyze.performance.totalPl')} value={fmt.signedMoney(p.total_pl)} color={plColor(p.total_pl)} strong />
+                        <p className="text-right tabular-nums text-[11px]" style={{ color: plColor(p.total_pl) }}>
+                          {fmt.pct(p.pl_pct)}
+                        </p>
                       </div>
                     );
                   }}
@@ -450,15 +464,21 @@ function TooltipLine({
   value,
   color,
   strong,
+  dot,
 }: {
   label: string;
   value: string;
   color?: string;
   strong?: boolean;
+  /** Series color: a marker tying the row to its line on the chart. */
+  dot?: string;
 }) {
   return (
-    <p className="flex justify-between gap-4">
-      <span style={{ color: MUTED }}>{label}</span>
+    <p className="flex items-center justify-between gap-4 leading-5">
+      <span className="inline-flex items-center gap-1.5" style={{ color: dot ? 'hsl(var(--foreground))' : MUTED }}>
+        {dot && <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: dot }} aria-hidden="true" />}
+        {label}
+      </span>
       <span className={`tabular-nums ${strong ? 'font-semibold' : 'font-medium'}`} style={{ color }}>
         {value}
       </span>
