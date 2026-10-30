@@ -13,7 +13,8 @@ Tables (see supabase/migrations/):
 
 Sync rule: a ticker is refreshed when its stored window does not reach
 back to the earliest date someone needs, or forward to the latest date
-someone needs (yesterday for open positions). A refresh always rewrites
+someone needs (the last settled day for open positions: today once the
+market has closed, else yesterday). A refresh always rewrites
 the *whole* stored window in one transaction, so every stored price and
 corporate action of a ticker shares one basis — also after a new split,
 which makes Yahoo restate the entire raw-close history.
@@ -70,8 +71,13 @@ def ensure_market_data(
     db: Session,
     needs: dict[str, tuple[date, date]],
     today: date | None = None,
+    settled: date | None = None,
 ) -> SyncResult:
     """Make sure every ticker's ``(need_from, need_through)`` is stored.
+
+    ``settled`` is the last day whose closes are final (default yesterday;
+    today once the market has closed). A ticker synced before today
+    settled is synced once more to pick up today's close.
 
     Stale tickers are downloaded in a single batched Yahoo request.
     Tickers Yahoo returns nothing for keep their stored data and are
@@ -79,13 +85,13 @@ def ensure_market_data(
     """
     needs = {t: window for t, window in needs.items() if not uses_uploaded_prices(t)}
     today = today or date.today()
-    yesterday = today - timedelta(days=1)
+    settled = settled or today - timedelta(days=1)
     windows = load_sync_windows(db, list(needs))
 
     stale: dict[str, date] = {}
     for ticker, (need_from, need_through) in needs.items():
-        need_from = min(need_from, yesterday)
-        need_through = min(need_through, yesterday)
+        need_from = min(need_from, settled)
+        need_through = min(need_through, settled)
         window = windows.get(ticker)
 
         if window is None:
@@ -100,7 +106,7 @@ def ensure_market_data(
         return SyncResult(synced=[], failed=[])
 
     # ``today`` is included so a split taking effect today is not missed;
-    # today's (unfinished) close is dropped when storing.
+    # closes after ``settled`` (today's, while unfinished) are dropped.
     histories = yahoo.download_histories(sorted(stale), min(stale.values()), today)
 
     synced: list[str] = []
@@ -108,7 +114,7 @@ def ensure_market_data(
     for ticker, start in sorted(stale.items()):
         history = histories.get(ticker)
         if history is None or not _store_history(
-            db, ticker, history, start, yesterday, today
+            db, ticker, history, start, settled, today
         ):
             failed.append(ticker)
         else:

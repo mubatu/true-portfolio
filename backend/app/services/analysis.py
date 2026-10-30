@@ -51,11 +51,12 @@ def build_analysis(
     as_of: date,
     comparison_closes: dict[str, dict[date, Decimal]] | None = None,
 ) -> dict:
-    """Totals, tables and the daily series as of ``as_of`` (yesterday).
+    """Totals, tables and the daily series as of ``as_of`` (the last
+    settled day: today once the market has closed, else yesterday).
 
     ``dividends`` must already be limited to ex-dates ≤ ``as_of``: a
-    dividend going ex today is not credited because today's price drop
-    is not in the valuation either.
+    dividend going ex on an unsettled day is not credited because that
+    day's price drop is not in the valuation either.
     """
     ledger = replay(transactions, dividends)
     latest_closes = {

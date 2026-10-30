@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime, time, timedelta
 from decimal import Decimal
+from zoneinfo import ZoneInfo
 
 
 @dataclass(frozen=True)
@@ -23,6 +24,10 @@ class MarketConfig:
     # "yahoo": synced daily; "upload": prices come only from files the user
     # uploads (TEFAS funds — Yahoo has none and TEFAS blocks automated reads).
     price_source: str = "yahoo"
+    # A weekday's closes count from this local time on (BIST closes at
+    # 18:00; the margin covers the closing auction and Yahoo's delay).
+    timezone: str = "Europe/Istanbul"
+    settles_at: time = time(19, 0)
 
 
 # Central backend market registry.
@@ -69,6 +74,17 @@ def get_market_config(market_code: str | None) -> MarketConfig | None:
 # Gold comparison: Yahoo has no TRY gold quote, so gram gold is derived from
 # the front-month COMEX future (USD per troy ounce) and the market's USD rate.
 GOLD_USD_TICKER = "GC=F"
+
+
+def last_settled_day(market_code: str | None, now: datetime | None = None) -> date:
+    """Last day whose closes are final: today once the market has settled
+    on a weekday, otherwise yesterday (in the market's time zone)."""
+    config = get_market_config(market_code) or MARKETS["BIST"]
+    tz = ZoneInfo(config.timezone)
+    local = now.astimezone(tz) if now else datetime.now(tz)
+    if local.weekday() < 5 and local.time() >= config.settles_at:
+        return local.date()
+    return local.date() - timedelta(days=1)
 
 
 def uses_uploaded_prices(ticker: str) -> bool:

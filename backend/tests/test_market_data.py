@@ -1,10 +1,11 @@
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 from decimal import Decimal as D
 
 import pandas as pd
 import pytest
 
-from app.core.markets import get_dividend_withholding_rate
+from app.core.markets import get_dividend_withholding_rate, last_settled_day
 from app.services import market_data, yahoo
 from app.services.market_data import SyncWindow, split_factor_between_dates
 
@@ -192,3 +193,40 @@ def test_fund_tickers_are_never_sent_to_yahoo(sync_env):
     assert sync_env["downloads"] == [(("AAA.IS",), date(2025, 3, 1), TODAY)]
     assert result.synced == ["AAA.IS"]
     assert result.failed == []
+
+
+# -- settled day ----------------------------------------------------------
+
+def test_today_counts_once_the_market_has_settled():
+    istanbul = ZoneInfo("Europe/Istanbul")
+    friday = date(2026, 10, 30)
+    before = datetime(2026, 10, 30, 18, 59, tzinfo=istanbul)
+    after = datetime(2026, 10, 30, 19, 0, tzinfo=istanbul)
+    assert last_settled_day("BIST", before) == friday - timedelta(days=1)
+    assert last_settled_day("BIST", after) == friday
+    # Server clock in UTC: 16:30 UTC is 19:30 in Istanbul.
+    assert last_settled_day("BIST", datetime(2026, 10, 30, 16, 30, tzinfo=timezone.utc)) == friday
+
+
+def test_weekends_settle_on_the_day_before():
+    istanbul = ZoneInfo("Europe/Istanbul")
+    saturday_evening = datetime(2026, 10, 31, 21, 0, tzinfo=istanbul)
+    assert last_settled_day("TEFAS", saturday_evening) == date(2026, 10, 30)
+
+
+def test_synced_before_close_is_synced_again_for_todays_close(sync_env):
+    sync_env["available"] = {"AAA.IS"}
+    sync_env["windows"]["AAA.IS"] = SyncWindow(date(2025, 1, 2), YESTERDAY)  # synced this morning
+
+    result = market_data.ensure_market_data(
+        None, {"AAA.IS": (date(2025, 3, 1), TODAY)}, today=TODAY, settled=TODAY
+    )
+
+    assert result.synced == ["AAA.IS"]
+    assert sync_env["stored"]["AAA.IS"] == (date(2025, 1, 2), TODAY)
+
+
+def test_unsettled_today_is_not_requested(sync_env):
+    sync_env["windows"]["AAA.IS"] = SyncWindow(date(2025, 1, 2), YESTERDAY)
+    market_data.ensure_market_data(None, {"AAA.IS": (date(2025, 3, 1), TODAY)}, today=TODAY)
+    assert sync_env["downloads"] == []

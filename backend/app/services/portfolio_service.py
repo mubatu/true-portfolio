@@ -21,6 +21,7 @@ from app.core.markets import (
     get_dividend_withholding_rate,
     get_market_benchmark,
     get_market_config,
+    last_settled_day,
     uses_uploaded_prices,
 )
 from app.services import analysis, tefas
@@ -58,8 +59,9 @@ class CorporateActionsUnavailable(Exception):
 
 def analyze_portfolio(db: Session, portfolio_id: int) -> dict:
     """Sync market data if stale, then compute the full analysis."""
-    yesterday = date.today() - timedelta(days=1)
     market = _portfolio_market(db, portfolio_id)
+    # Today once the market has closed, else yesterday.
+    as_of = last_settled_day(market)
     benchmark = get_market_benchmark(market)
     config = get_market_config(market)
     usd = config.usd_ticker if config else None
@@ -75,23 +77,23 @@ def analyze_portfolio(db: Session, portfolio_id: int) -> dict:
         return {
             "portfolio_id": portfolio_id,
             "market_data": {"synced": [], "failed": []},
-            **analysis.build_analysis([], {}, [], [], yesterday),
+            **analysis.build_analysis([], {}, [], [], as_of),
             "warnings": [],
         }
 
     sync = ensure_market_data(
-        db, _market_data_needs(transactions, list(comparison_tickers), yesterday)
+        db, _market_data_needs(transactions, list(comparison_tickers), as_of), settled=as_of
     )
     if refresh_portfolio_adjusted_prices(db, portfolio_id)["transactions_updated"]:
         transactions = _load_ledger_transactions(db, portfolio_id)
 
     tickers = sorted({t.ticker for t in transactions})
     first_date = transactions[0].date
-    closes = load_closes(db, tickers, first_date, yesterday)
+    closes = load_closes(db, tickers, first_date, as_of)
     # From a little earlier, so each line has a close to start from even if
     # its market was shut on the first trade day.
     reference = load_closes(
-        db, list(comparison_tickers), first_date - COMPARISON_LOOKBACK, yesterday
+        db, list(comparison_tickers), first_date - COMPARISON_LOOKBACK, as_of
     )
     comparison_closes = {
         key: reference.get(ticker, {})
@@ -122,18 +124,18 @@ def analyze_portfolio(db: Session, portfolio_id: int) -> dict:
             )
             for ticker in tickers
             for ex_date, gross in actions[ticker].dividends
-            if ex_date <= yesterday
+            if ex_date <= as_of
         ),
         key=lambda e: (e.ex_date, e.ticker),
     )
 
-    open_days = _open_days(benchmark_closes, closes, first_date, yesterday)
+    open_days = _open_days(benchmark_closes, closes, first_date, as_of)
     result = analysis.build_analysis(
         transactions,
         closes,
         dividends,
         open_days,
-        as_of=yesterday,
+        as_of=as_of,
         comparison_closes=comparison_closes,
     )
     _sales_in_closing_basis(result["positions"], actions, date.today())
@@ -492,9 +494,10 @@ def _sales_in_closing_basis(
 def _market_data_needs(
     transactions: list[LedgerTransaction],
     comparison_tickers: list[str],
-    yesterday: date,
+    through: date,
 ) -> dict[str, tuple[date, date]]:
-    """Date window each ticker must cover: open positions through yesterday,
+    """Date window each ticker must cover: open positions through ``through``
+    (the last settled day),
     fully closed ones only through their last trade; comparison lines from
     a little before the first trade."""
     ledger = replay(transactions, [])
@@ -505,10 +508,10 @@ def _market_data_needs(
 
     for ticker, (start, end) in needs.items():
         if ledger.positions[ticker].quantity > 0:
-            needs[ticker] = (start, yesterday)
+            needs[ticker] = (start, through)
 
     for ticker in comparison_tickers:
-        needs[ticker] = (transactions[0].date - COMPARISON_LOOKBACK, yesterday)
+        needs[ticker] = (transactions[0].date - COMPARISON_LOOKBACK, through)
     return needs
 
 
