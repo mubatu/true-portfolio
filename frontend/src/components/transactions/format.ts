@@ -19,7 +19,7 @@ export function useTransactionFormatters(market: string): TransactionFormatters 
   return useMemo(() => {
     const numberLocale = getLocale(i18n.language);
     const number = new Intl.NumberFormat(numberLocale);
-    const money = new Intl.NumberFormat(numberLocale, { style: 'currency', currency });
+    const money = new Intl.NumberFormat(numberLocale, { style: 'currency', currency, currencyDisplay: 'narrowSymbol' });
     const rate = new Intl.NumberFormat(numberLocale, { style: 'percent', maximumFractionDigits: 4 });
     const date = new Intl.DateTimeFormat(getDateLocale(i18n.language), {
       month: 'short',

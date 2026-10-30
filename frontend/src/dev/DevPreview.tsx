@@ -29,7 +29,7 @@ function seededClient() {
     client.setQueryData(['transactions', p.slug], MOCK_TRANSACTIONS[p.slug] ?? []);
     client.setQueryData(['rights-issues', p.id], []);
     client.setQueryData(['fund-prices', p.id], [
-      { ticker: 'IPB.TEFAS', first_date: '2021-11-01', last_date: '2026-10-30', days: 1258 },
+      { ticker: 'TTE.TEFAS', first_date: '2021-11-01', last_date: '2026-10-30', days: 1258 },
     ]);
     if (MOCK_ANALYSES[p.id]) client.setQueryData(['portfolio-analysis', p.id], MOCK_ANALYSES[p.id]);
   }
@@ -37,7 +37,7 @@ function seededClient() {
 }
 
 const AUTH: AuthContextType = {
-  user: { id: 'dev', email: 'onizleme@example.com', user_metadata: { full_name: 'Önizleme Kullanıcısı' }, created_at: '2026-01-30T10:00:00Z' } as unknown as User,
+  user: { id: 'dev', email: 'demo@example.com', user_metadata: { full_name: 'Demo User' }, created_at: '2026-01-30T10:00:00Z' } as unknown as User,
   session: null,
   isAuthenticated: true,
   isLoading: false,
@@ -48,7 +48,7 @@ const AUTH: AuthContextType = {
 
 /**
  * Dev-only preview of the signed-in pages with synthetic data, mounted at
- * /dev/* (e.g. /dev/overview, /dev/my-portfolios, /dev/portfolio/buber-fon/analyze).
+ * /dev/* (e.g. /dev/overview, /dev/my-portfolios, /dev/portfolio/long-term/analyze).
  * In-page links point at the real routes; open preview pages by URL.
  */
 export default function DevPreview() {

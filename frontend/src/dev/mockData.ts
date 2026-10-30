@@ -178,65 +178,63 @@ function dividend(ex_date: string, ticker: string, quantity: number, gross: numb
   return { ex_date, ticker, quantity, gross_per_share: gross, withholding_rate: 0.15, gross_amount, net_amount: gross_amount * 0.85 };
 }
 
-const mainPoints = series(7, '2024-10-30', { 0: 320_000, 70: 170_000, 140: 60_000, 200: 120_000, 270: 260_000, 330: 50_000, 400: 210_000, 460: 90_000 }, 0.0006, 0.016);
+const mainPoints = series(7, '2024-10-30', { 0: 320_000, 70: 170_000, 140: 60_000, 200: 120_000, 270: 260_000, 330: 50_000, 400: 210_000, 460: 90_000 }, 0.0012, 0.014);
 const mainRows = positions(
   [
-    ['ISMEN.IS', 4042, 35.39, 25.12, 0, 0],
-    ['ULUFA.IS', 57747, 1.73, 1.52, 0, 0],
-    ['PLTUR.IS', 5416, 18.49, 13.52, 0, 0],
-    ['EUPWR.IS', 1614, 27.64, 41.0, 0, 0],
-    ['CLEBI.IS', 49, 1703.52, 1180.0, 0, 412.5],
-    ['SAHOL.IS', 630, 80.17, 83.25, 0, 843.55],
-    ['OFSYM.IS', 1205, 53.65, 42.52, 0, 431.0],
-    ['YEOTK.IS', 2204, 16.73, 22.7, 0, 0],
-    ['YYLGD.IS', 7130, 9.16, 6.48, 0, 0],
-    ['DESA.IS', 5500, 9.21, 7.84, 0, 392.86],
-    ['ASTOR.IS', 215, 92.12, 176.5, 0, 400.43],
-    ['KONTR.IS', 1612, 21.06, 1.67, 0, 21.08],
+    ['THYAO.IS', 900, 268.4, 301.25, 4_820, 0],
+    ['TUPRS.IS', 1300, 162.3, 171.4, 0, 6_420],
+    ['ASELS.IS', 1500, 112.6, 138.9, 0, 0],
+    ['AKBNK.IS', 2500, 57.3, 63.1, 3_600, 1_150],
+    ['MGROS.IS', 300, 498.0, 471.5, 0, 0],
+    ['BIMAS.IS', 240, 455.0, 512.5, 2_150, 1_860],
+    ['TCELL.IS', 1200, 88.2, 96.4, 0, 1_420],
+    ['KCHOL.IS', 700, 178.9, 165.2, 0, 2_380],
+    ['FROTO.IS', 110, 940.0, 1012.0, 0, 3_150],
+    ['SISE.IS', 2600, 44.8, 39.6, 0, 980],
+    ['EREGL.IS', 3100, 27.4, 25.85, 1_240, 0],
   ],
   [
-    ['AKFIS.IS', 894, 22.9, 87.23, '2026-07-21', 0],
-    ['ARDYZ.IS', 901, 31.35, 89.88, '2026-08-17', 0],
-    ['MEGMT.IS', 924, 29.73, 55.53, '2026-01-05', 0],
-    ['VBTYZ.IS', 1000, 18.09, 37.03, '2026-08-24', 0],
-    ['SOKM.IS', 376, 39.79, 38.39, '2025-03-12', 0],
+    ['PGSUS.IS', 220, 812.0, 948.0, '2026-08-12', 0],
+    ['ENKAI.IS', 900, 61.2, 74.8, '2026-03-04', 0],
+    ['TOASO.IS', 160, 231.0, 266.4, '2026-05-20', 540],
+    ['DOAS.IS', 180, 214.0, 199.5, '2025-07-09', 0],
+    ['SASA.IS', 4000, 4.95, 4.1, '2025-11-18', 0],
   ]
 );
 const mainDividends = [
-  dividend('2026-10-15', 'ASTOR.IS', 215, 2.191),
-  dividend('2026-09-30', 'KIMMR.IS', 1520, 0.208),
-  dividend('2026-09-30', 'DESA.IS', 5500, 0.084),
-  dividend('2026-09-23', 'OFSYM.IS', 1205, 0.421),
-  dividend('2026-04-03', 'SAHOL.IS', 630, 1.575),
-  dividend('2026-04-03', 'AFYON.IS', 770, 1.5),
-  dividend('2025-12-24', 'OBAMS.IS', 84, 0.035),
-  dividend('2025-12-10', 'MTRYO.IS', 1000, 0.061),
-  dividend('2025-07-08', 'KONTR.IS', 806, 0.031),
+  dividend('2026-10-08', 'TUPRS.IS', 1300, 5.81),
+  dividend('2026-09-17', 'FROTO.IS', 110, 33.5),
+  dividend('2026-07-02', 'TCELL.IS', 1200, 1.39),
+  dividend('2026-06-11', 'KCHOL.IS', 700, 4.0),
+  dividend('2026-05-20', 'TOASO.IS', 160, 3.97),
+  dividend('2026-04-22', 'BIMAS.IS', 240, 9.12),
+  dividend('2026-04-01', 'AKBNK.IS', 2500, 0.54),
+  dividend('2025-12-03', 'SISE.IS', 2600, 0.44),
 ];
 
 const fundPoints = series(11, '2024-10-28', { 0: 200_000, 3: 201_000 }, 0.0005, 0.004);
-const fundRows = positions([['IPB.TEFAS', 719_849, 0.557, 0.6852, 0, 0]], []);
+const fundRows = positions([['TTE.TEFAS', 52_000, 7.42, 8.96, 0, 0]], []);
 
-const kpcPoints = series(31, '2025-03-03', { 0: 280_000 }, 0.0006, 0.003);
-const kpcRows = positions([['KPC.TEFAS', 95_000, 2.95, 3.32, 0, 0]], []);
+const goldPoints = series(31, '2025-03-03', { 0: 280_000 }, 0.0006, 0.003);
+const goldRows = positions([['GMA.TEFAS', 30_000, 9.35, 11.2, 0, 0]], []);
 
 // Marked experimental: shown on My Portfolios, left out of the Overview.
 const trialPoints = series(23, '2025-06-02', { 0: 50_000, 40: 25_000 }, -0.0003, 0.02);
 const trialRows = positions([['THYAO.IS', 200, 310, 285, 0, 0], ['ASELS.IS', 150, 120, 131, 0, 0]], []);
 
 export const MOCK_PORTFOLIOS: Portfolio[] = [
-  { id: 9, user_id: 'dev', name: 'Buber Fon', market: 'BIST', slug: 'buber-fon', created_at: '2026-10-30T10:00:00Z', transaction_count: 115, is_public: true },
-  { id: 11, user_id: 'dev', name: 'IPB İstanbul Portföy', market: 'TEFAS', slug: 'ipb', created_at: '2026-10-30T12:00:00Z', transaction_count: 2 },
-  { id: 14, user_id: 'dev', name: 'KPC Kuveyt Türk Portföy', market: 'TEFAS', slug: 'kpc', created_at: '2026-10-30T12:30:00Z', transaction_count: 1 },
-  { id: 12, user_id: 'dev', name: 'Yeni Portföy', market: 'BIST', slug: 'yeni', created_at: '2026-10-30T13:00:00Z', transaction_count: 0 },
-  { id: 13, user_id: 'dev', name: 'Deneme Stratejisi', market: 'BIST', slug: 'deneme', created_at: '2026-10-30T14:00:00Z', transaction_count: 6, is_experimental: true, is_public: true },
+  { id: 9, user_id: 'dev', name: 'Long-Term Portfolio', market: 'BIST', slug: 'long-term', created_at: '2026-10-30T10:00:00Z', transaction_count: 64, is_public: true },
+  { id: 11, user_id: 'dev', name: 'Equity Fund', market: 'TEFAS', slug: 'equity-fund', created_at: '2026-10-30T12:00:00Z', transaction_count: 2 },
+  { id: 14, user_id: 'dev', name: 'Gold Fund', market: 'TEFAS', slug: 'gold-fund', created_at: '2026-10-30T12:30:00Z', transaction_count: 1 },
+  { id: 12, user_id: 'dev', name: 'New Portfolio', market: 'BIST', slug: 'new', created_at: '2026-10-30T13:00:00Z', transaction_count: 0 },
+  { id: 13, user_id: 'dev', name: 'Momentum Experiment', market: 'BIST', slug: 'momentum', created_at: '2026-10-30T14:00:00Z', transaction_count: 6, is_experimental: true, is_public: true },
 ];
 
 export const MOCK_ANALYSES: Record<number, AnalysisResponse> = {
   9: analysis(9, mainPoints, mainRows, mainDividends),
   11: analysis(11, fundPoints, fundRows, []),
   13: analysis(13, trialPoints, trialRows, []),
-  14: analysis(14, kpcPoints, kpcRows, []),
+  14: analysis(14, goldPoints, goldRows, []),
 };
 
 // Explore: what the backend's /api/explore would send (percentages only).
@@ -267,12 +265,12 @@ function publicDetail(p: Portfolio, a: AnalysisResponse, owner: PublicOwner): Pu
 
 const otherOwnerPoints = series(41, '2025-12-01', { 0: 100_000 }, 0.0012, 0.012);
 const otherOwnerRows = positions([['ASELS.IS', 400, 95, 131, 0, 0], ['TUPRS.IS', 300, 150, 171, 0, 0], ['BIMAS.IS', 60, 480, 512, 0, 0]], []);
-const otherOwner: Portfolio = { id: 99, user_id: 'someone', name: 'Savunma ve Enerji Sepeti', market: 'BIST', slug: 'savunma', created_at: '2025-12-01T10:00:00Z', is_public: true };
+const otherOwner: Portfolio = { id: 99, user_id: 'someone', name: 'Defense & Energy Basket', market: 'BIST', slug: 'defense-energy', created_at: '2025-12-01T10:00:00Z', is_public: true };
 
 export const MOCK_PUBLIC: PublicPortfolioDetail[] = [
   publicDetail(otherOwner, analysis(99, otherOwnerPoints, otherOwnerRows, []), { display_name: 'Elif K.', initials: 'EK' }),
   ...[9, 13].map((id) =>
-    publicDetail(MOCK_PORTFOLIOS.find((p) => p.id === id)!, MOCK_ANALYSES[id], { display_name: 'Önizleme K.', initials: 'ÖK' })
+    publicDetail(MOCK_PORTFOLIOS.find((p) => p.id === id)!, MOCK_ANALYSES[id], { display_name: 'Demo U.', initials: 'DU' })
   ),
 ].sort((a, b) => (b.return_pct ?? 0) - (a.return_pct ?? 0));
 
@@ -289,25 +287,25 @@ const txn = (id: number, ticker: string, operation: Transaction['operation'], qu
 });
 
 export const MOCK_TRANSACTIONS: Record<string, Transaction[]> = {
-  'buber-fon': [
-    txn(1, 'FRMPL.IS', 'buy', 1000, 24.06, '2026-10-06'),
-    txn(2, 'CWENE.IS', 'buy', 860, 18.66, '2026-10-02'),
-    txn(3, 'YYLGD.IS', 'buy', 2800, 7.35, '2026-09-22'),
-    txn(4, 'PLTUR.IS', 'buy', 840, 15.44, '2026-09-15'),
-    txn(5, 'BRLSM.IS', 'sell', 1000, 25.74, '2026-08-28'),
-    txn(6, 'VBTYZ.IS', 'sell', 1000, 37.04, '2026-08-24'),
-    txn(7, 'ENKAI.IS', 'buy', 450, 83.6, '2026-08-24'),
-    txn(8, 'ARDYZ.IS', 'sell', 901, 89.9, '2026-08-17'),
-    txn(9, 'AKFIS.IS', 'sell', 894, 87.25, '2026-07-21'),
-    txn(10, 'ULUFA.IS', 'buy', 20000, 1.8, '2026-07-03'),
-    txn(11, 'MARTI.IS', 'buy', 7500, 1, '2026-02-26'),
-    txn(12, 'KONTR.IS', 'buy', 806, 1, '2025-12-09'),
-    txn(13, 'SAHOL.IS', 'buy', 630, 80.15, '2025-10-30'),
-    txn(14, 'CLEBI.IS', 'buy', 30, 1702, '2025-08-19'),
+  'long-term': [
+    txn(1, 'TCELL.IS', 'buy', 400, 95.1, '2026-10-07'),
+    txn(2, 'ASELS.IS', 'buy', 500, 131.2, '2026-09-29'),
+    txn(3, 'MGROS.IS', 'buy', 300, 498, '2026-09-18'),
+    txn(4, 'PGSUS.IS', 'sell', 220, 948, '2026-08-12'),
+    txn(5, 'THYAO.IS', 'sell', 200, 312.5, '2026-07-30'),
+    txn(6, 'AKBNK.IS', 'buy', 1000, 59.4, '2026-07-14'),
+    txn(7, 'TOASO.IS', 'sell', 160, 266.4, '2026-05-20'),
+    txn(8, 'FROTO.IS', 'buy', 110, 940, '2026-04-28'),
+    txn(9, 'EREGL.IS', 'sell', 900, 28.8, '2026-03-25'),
+    txn(10, 'ENKAI.IS', 'sell', 900, 74.8, '2026-03-04'),
+    txn(11, 'KCHOL.IS', 'buy', 700, 178.9, '2026-01-15'),
+    txn(12, 'SASA.IS', 'sell', 4000, 4.1, '2025-11-18'),
+    txn(13, 'TUPRS.IS', 'buy', 1300, 162.3, '2025-10-21'),
+    txn(14, 'BIMAS.IS', 'buy', 240, 455, '2025-09-02'),
   ],
-  ipb: [
-    txn(20, 'IPB.TEFAS', 'buy', 359_147, 0.559659, '2024-10-31', 11),
-    txn(21, 'IPB.TEFAS', 'buy', 360_702, 0.554474, '2024-10-28', 11),
+  'equity-fund': [
+    txn(20, 'TTE.TEFAS', 'buy', 26_000, 7.46, '2024-11-04', 11),
+    txn(21, 'TTE.TEFAS', 'buy', 26_000, 7.38, '2024-10-28', 11),
   ],
-  yeni: [],
+  new: [],
 };

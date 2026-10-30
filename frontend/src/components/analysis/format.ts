@@ -18,13 +18,16 @@ export function useFormatters(currencyCode: string) {
   const dateLocale = getDateLocale(i18n.language);
 
   return useMemo(() => {
+    // Symbols (₺) in every language: "TRY 1,250.00" is wider and crowds the tables.
     const currency = new Intl.NumberFormat(numberLocale, {
       style: 'currency',
       currency: currencyCode,
+      currencyDisplay: 'narrowSymbol',
     });
     const compactCurrency = new Intl.NumberFormat(numberLocale, {
       style: 'currency',
       currency: currencyCode,
+      currencyDisplay: 'narrowSymbol',
       notation: 'compact',
       maximumFractionDigits: 1,
     });
@@ -36,6 +39,7 @@ export function useFormatters(currencyCode: string) {
     const signedMoney = new Intl.NumberFormat(numberLocale, {
       style: 'currency',
       currency: currencyCode,
+      currencyDisplay: 'narrowSymbol',
       signDisplay: 'exceptZero',
     });
     const rate = new Intl.NumberFormat(numberLocale, {

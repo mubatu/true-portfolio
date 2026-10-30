@@ -425,7 +425,8 @@
       "description": "Create your first portfolio, add your trades, and follow its performance here like a fund."
     },
     "card": {
-      "transactions": "{{count}} transactions",
+      "transactions_one": "{{count}} transaction",
+      "transactions_other": "{{count}} transactions",
       "noTransactions": "No transactions",
       "addFirst": "Add your first trade"
     },
