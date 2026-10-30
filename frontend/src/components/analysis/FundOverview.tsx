@@ -15,9 +15,10 @@ import type { AnalysisTotals, DividendSummary, PerformancePoint } from './types'
  *   invested + realized P/L + net dividends + unrealized P/L
  *   = current total value, in the invested column below;
  *   and the three P/L parts = total P/L, spanning their columns below.
- * Dividends drop out while there are none. On a narrow panel the boxes
- * stack, signs on their top edges; the total P/L's = shows only side by
- * side, where it sits under the parts it sums.
+ * A P/L part that is zero (no dividends, nothing sold yet, nothing held)
+ * drops out; unrealized P/L stays when all three are zero, so the sum still
+ * reads. On a narrow panel the boxes stack, signs on their top edges; the
+ * total P/L's = shows only side by side, where it sits under the parts it sums.
  */
 export function FundOverview({
   points,
@@ -33,7 +34,30 @@ export function FundOverview({
   const { t } = useTranslation();
   const last = points[points.length - 1];
   const sinceStart = last ? (unitPrice(last) - 1) * 100 : null;
-  const hasDividends = totals.dividend_income !== 0;
+  const parts = (
+    [
+      {
+        key: 'realized',
+        label: t('analyze.realizedPl'),
+        value: totals.realized_pl,
+        sub: t('analyze.realizedPlSub'),
+      },
+      {
+        key: 'dividends',
+        label: t('analyze.dividendIncome'),
+        value: totals.dividend_income,
+        sub: t('analyze.dividendIncomeSub', { gross: fmt.money(dividends.total_gross) }),
+      },
+      {
+        key: 'unrealized',
+        label: t('analyze.unrealizedPl'),
+        value: totals.unrealized_pl,
+        sub: t('analyze.unrealizedPlSub'),
+      },
+    ] as const
+  ).filter((part, _, all) =>
+    all.every((p) => isZero(p.value)) ? part.key === 'unrealized' : !isZero(part.value)
+  );
 
   return (
     <Panel
@@ -80,9 +104,7 @@ export function FundOverview({
           className={cn(
             'grid grid-cols-1 gap-px rounded-xl border',
             // The money column (invested, value) wider; the P/L parts even.
-            hasDividends
-              ? '@xl:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))]'
-              : '@xl:grid-cols-[minmax(0,1.5fr)_repeat(2,minmax(0,1fr))]'
+            GRID_COLUMNS[parts.length]
           )}
           style={{ backgroundColor: 'hsl(var(--border))' }}
         >
@@ -91,30 +113,17 @@ export function FundOverview({
             value={fmt.money(totals.total_invested)}
             className="rounded-t-[11px] @xl:rounded-tr-none"
           />
-          <Metric
-            label={t('analyze.realizedPl')}
-            value={fmt.signedMoney(totals.realized_pl)}
-            sub={t('analyze.realizedPlSub')}
-            tone={totals.realized_pl}
-            sign={{ icon: Plus, layout: '@xl' }}
-          />
-          {hasDividends && (
+          {parts.map((part, i) => (
             <Metric
-              label={t('analyze.dividendIncome')}
-              value={fmt.signedMoney(totals.dividend_income)}
-              sub={t('analyze.dividendIncomeSub', { gross: fmt.money(dividends.total_gross) })}
-              tone={totals.dividend_income}
+              key={part.key}
+              label={part.label}
+              value={fmt.signedMoney(part.value)}
+              sub={part.sub}
+              tone={part.value}
               sign={{ icon: Plus, layout: '@xl' }}
+              className={i === parts.length - 1 ? '@xl:rounded-tr-[11px]' : undefined}
             />
-          )}
-          <Metric
-            label={t('analyze.unrealizedPl')}
-            value={fmt.signedMoney(totals.unrealized_pl)}
-            sub={t('analyze.unrealizedPlSub')}
-            tone={totals.unrealized_pl}
-            sign={{ icon: Plus, layout: '@xl' }}
-            className="@xl:rounded-tr-[11px]"
-          />
+          ))}
           <Metric
             label={t('analyze.fund.currentValue')}
             value={fmt.money(totals.portfolio_value + totals.in_the_safe)}
@@ -139,7 +148,7 @@ export function FundOverview({
             result
             className={cn(
               'rounded-b-[11px] @xl:rounded-bl-none @xl:items-center @xl:text-center',
-              hasDividends ? '@xl:col-span-3' : '@xl:col-span-2'
+              TOTAL_SPAN[parts.length]
             )}
           />
         </dl>
@@ -151,6 +160,21 @@ export function FundOverview({
     </Panel>
   );
 }
+
+/** Below a kuruş: shown as zero, so the box is left out. */
+const isZero = (value: number) => Math.abs(value) < 0.005;
+
+// By the number of P/L parts shown; spelled out so Tailwind sees each class.
+const GRID_COLUMNS: Record<number, string> = {
+  1: '@xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]',
+  2: '@xl:grid-cols-[minmax(0,1.5fr)_repeat(2,minmax(0,1fr))]',
+  3: '@xl:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))]',
+};
+const TOTAL_SPAN: Record<number, string> = {
+  1: '@xl:col-span-1',
+  2: '@xl:col-span-2',
+  3: '@xl:col-span-3',
+};
 
 /**
  * A sign on a box's edge: ``@xl`` sits on the left edge once the grid lays
