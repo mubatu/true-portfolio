@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "PortfolioTracker",
+    "appName": "True Portfolio",
     "signIn": "Sign In",
     "signOut": "Sign Out",
     "myPortfolios": "My Portfolios",
@@ -95,7 +95,7 @@
       "subtitle": "Set up in minutes; create your first portfolio right away."
     },
     "footer": {
-      "copyright": "© 2026 PortfolioTracker. All rights reserved."
+      "copyright": "© 2026 True Portfolio. All rights reserved."
     },
     "showcase": {
       "title": "Top on Explore",

@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -26,6 +26,7 @@ import { Segmented } from '@/components/ui/Segmented';
 import { TextField } from '@/components/ui/TextField';
 import { LOCALES } from '@/config';
 import { useAuth } from '@/hooks/useAuth';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useTheme } from '@/hooks/useTheme';
 import { authErrorKey } from '@/lib/authErrors';
 import { validatePassword } from '@/lib/password';
@@ -38,9 +39,7 @@ export function Profile() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    document.title = `${t('profile.title')} · ${t('common.appName')}`;
-  }, [t]);
+  useDocumentTitle(t('profile.title'));
 
   const { data: portfolios = [] } = useQuery({ queryKey: ['portfolios'], queryFn: getPortfolios });
   const transactions = portfolios.reduce((sum, p) => sum + (p.transaction_count ?? 0), 0);
@@ -73,7 +72,7 @@ export function Profile() {
       <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)] items-start">
         {/* Identity */}
         <Panel className="overflow-hidden lg:sticky lg:top-24">
-          <div className="h-20 bg-gradient-to-br from-primary to-[hsl(262_83%_62%)]" aria-hidden="true" />
+          <div className="h-20 bg-gradient-to-br from-[hsl(var(--logo-from))] to-[hsl(var(--logo-to))]" aria-hidden="true" />
           <div className="px-6 pb-6 -mt-10">
             <span className="flex h-20 w-20 items-center justify-center rounded-2xl border-4 border-card bg-primary text-2xl font-bold text-primary-foreground shadow-md">
               {initials}

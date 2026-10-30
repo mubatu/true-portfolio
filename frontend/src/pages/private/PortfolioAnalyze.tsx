@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQuery } from '@tanstack/react-query';
 import { AlertTriangle, Plus, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -43,9 +44,7 @@ export function PortfolioAnalyze() {
   const fmt = useFormatters(getMarketCurrency(market));
   const displayTicker = (ticker: string) => toDisplayTicker(ticker, market);
 
-  useEffect(() => {
-    if (portfolio?.name) document.title = `${portfolio.name} · ${t('portfolio.tabs.analysis')} · ${t('common.appName')}`;
-  }, [portfolio?.name, t]);
+  useDocumentTitle(portfolio?.name && `${portfolio.name} · ${t('portfolio.tabs.analysis')}`);
 
   const error = portfolioQuery.error ?? analysisQuery.error;
   const loading = portfolioQuery.isLoading || analysisQuery.isLoading;

@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
@@ -7,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useFormatters } from '@/components/analysis/format';
 import { ExploreCard } from '@/components/explore/ExploreParts';
 import { useAuth } from '@/hooks/useAuth';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { getPublicPortfolios } from '@/lib/api';
 
 /**
@@ -18,9 +18,7 @@ export function Explore() {
   const fmt = useFormatters('TRY');
   const { isAuthenticated } = useAuth();
 
-  useEffect(() => {
-    document.title = `${t('explore.title')} · ${t('common.appName')}`;
-  }, [t]);
+  useDocumentTitle(t('explore.title'));
 
   const { data: portfolios, isLoading, error, refetch } = useQuery({
     queryKey: ['explore'],

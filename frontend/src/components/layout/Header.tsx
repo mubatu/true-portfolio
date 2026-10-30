@@ -1,7 +1,8 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { TrendingUp, Moon, Sun, LogOut, User, ChevronDown, Briefcase, Languages, LayoutDashboard, Compass, type LucideIcon } from 'lucide-react';
+import { Moon, Sun, LogOut, User, ChevronDown, Briefcase, Languages, LayoutDashboard, Compass, type LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Logo } from './Logo';
 import { LOCALES } from '@/config';
 import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/hooks/useAuth';
@@ -69,10 +70,7 @@ export function Header() {
           to={isAuthenticated ? '/explore' : '/'}
           className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
         >
-          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-primary text-primary-foreground shadow-sm">
-            <TrendingUp className="h-5 w-5" />
-          </div>
-          <span className="text-lg font-semibold tracking-tight hidden sm:inline">{t('common.appName')}</span>
+          <Logo nameClassName="hidden sm:inline" />
         </Link>
 
         {/* Navigation (signed out: Explore only) */}

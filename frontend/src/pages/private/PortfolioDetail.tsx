@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ListOrdered, Plus, Loader2, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -119,9 +120,7 @@ export function PortfolioDetail() {
   const isLoading = portfolioLoading || transactionsLoading;
   const error = portfolioError || transactionsError;
 
-  useEffect(() => {
-    if (portfolio?.name) document.title = `${portfolio.name} · ${t('portfolio.tabs.transactions')} · ${t('common.appName')}`;
-  }, [portfolio?.name, t]);
+  useDocumentTitle(portfolio?.name && `${portfolio.name} · ${t('portfolio.tabs.transactions')}`);
 
   if (!isLoading && !portfolio && !error) {
     return (

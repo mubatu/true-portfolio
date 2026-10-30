@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
@@ -20,6 +20,7 @@ import { allocationAsPositions, toPerformancePoints } from '@/components/explore
 import { ExperimentalBadge } from '@/components/portfolio/PortfolioFlags';
 import { toDisplayTicker } from '@/config';
 import { useAuth } from '@/hooks/useAuth';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { getPublicPortfolio } from '@/lib/api';
 import { getPortfolios } from '@/services/portfolioService';
 
@@ -50,9 +51,7 @@ export function ExplorePortfolio() {
   const positions = useMemo(() => (data ? allocationAsPositions(data.allocation) : []), [data]);
   const displayTicker = (ticker: string) => toDisplayTicker(ticker, data?.market ?? 'BIST');
 
-  useEffect(() => {
-    if (data?.name) document.title = `${data.name} · ${t('explore.title')} · ${t('common.appName')}`;
-  }, [data?.name, t]);
+  useDocumentTitle(data?.name && `${data.name} · ${t('explore.title')}`);
 
   const notFound = isAxiosError(error) && error.response?.status === 404;
   const last = points[points.length - 1];

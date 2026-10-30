@@ -20,7 +20,8 @@ import { PasswordRequirements } from '@/components/ui/PasswordRequirements';
 import { TextField } from '@/components/ui/TextField';
 import { validatePassword } from '@/lib/password';
 import { Header } from '@/components/layout';
-import { useAuth } from '@/hooks';
+import { Logo } from '@/components/layout/Logo';
+import { useAuth, useDocumentTitle } from '@/hooks';
 import { checkEmailExists } from '@/lib/api';
 import { authErrorKey } from '@/lib/authErrors';
 
@@ -31,6 +32,7 @@ export function AuthPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { signIn, signUp } = useAuth();
+  useDocumentTitle(t('common.signIn'));
   // Back to the private page that sent the user here, else Explore.
   const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname;
   const home = from && from !== '/auth' ? from : '/explore';
@@ -120,7 +122,7 @@ export function AuthPage() {
                 'radial-gradient(60% 50% at 100% 0%, rgb(255 255 255 / 0.18), transparent 70%), radial-gradient(50% 50% at 0% 100%, rgb(0 0 0 / 0.18), transparent 70%)',
             }}
           />
-          <span className="relative text-sm font-semibold tracking-wide opacity-80">{t('common.appName')}</span>
+          <Logo inverted className="relative" />
           <div className="relative max-w-md">
             <h2 className="text-3xl font-bold tracking-tight leading-tight">{t('auth.brand.title')}</h2>
             <ul className="mt-8 space-y-4">

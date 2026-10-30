@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
@@ -25,6 +24,7 @@ import { ExploreRow } from '@/components/explore/ExploreParts';
 import { Header } from '@/components/layout';
 import { Logo } from '@/components/layout/Logo';
 import { useAuth } from '@/hooks/useAuth';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { getPublicPortfolios } from '@/lib/api';
 
 const FEATURES: { key: string; icon: LucideIcon }[] = [
@@ -47,9 +47,7 @@ export function LandingPage() {
   const { isAuthenticated } = useAuth();
   const start = isAuthenticated ? '/my-portfolios' : '/auth';
 
-  useEffect(() => {
-    document.title = t('common.appName');
-  }, [t]);
+  useDocumentTitle();
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -74,7 +72,7 @@ export function LandingPage() {
               </span>
               <h1 className="mt-5 text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.05]">
                 {t('landing.hero.title')}{' '}
-                <span className="bg-gradient-to-r from-primary to-[hsl(262_83%_62%)] bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-[hsl(var(--logo-from))] to-[hsl(var(--logo-to))] bg-clip-text text-transparent">
                   {t('landing.hero.titleHighlight')}
                 </span>
               </h1>
@@ -170,7 +168,7 @@ export function LandingPage() {
               <Link to={start}>
                 <button
                   type="button"
-                  className="inline-flex h-11 items-center gap-2 rounded-full bg-white px-6 text-sm font-semibold text-[hsl(221_83%_45%)] shadow-sm transition-transform hover:scale-[1.02]"
+                  className="inline-flex h-11 items-center gap-2 rounded-full bg-white px-6 text-sm font-semibold text-[hsl(216_80%_42%)] shadow-sm transition-transform hover:scale-[1.02]"
                 >
                   {isAuthenticated ? t('common.myPortfolios') : t('common.getStarted')}
                   <ArrowRight className="h-4 w-4" />

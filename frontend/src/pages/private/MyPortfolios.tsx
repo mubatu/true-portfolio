@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { Briefcase, FlaskConical, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -27,9 +28,7 @@ export function MyPortfolios() {
   const fmt = useFormatters('TRY');
   const [dialog, setDialog] = useState<Dialog>(null);
 
-  useEffect(() => {
-    document.title = `${t('myPortfolios.title')} · ${t('common.appName')}`;
-  }, [t]);
+  useDocumentTitle(t('myPortfolios.title'));
 
   const { data: portfolios = [], isLoading, error, refetch } = useQuery({
     queryKey: ['portfolios'],

@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "PortfolioTracker",
+    "appName": "True Portfolio",
     "signIn": "Giriş Yap",
     "signOut": "Çıkış Yap",
     "myPortfolios": "Portföylerim",
@@ -95,7 +95,7 @@
       "subtitle": "Birkaç dakikada kurulur; ilk portföyünü hemen oluştur."
     },
     "footer": {
-      "copyright": "© 2026 PortfolioTracker. Tüm hakları saklıdır."
+      "copyright": "© 2026 True Portfolio. Tüm hakları saklıdır."
     },
     "showcase": {
       "title": "Keşfet'te öne çıkanlar",

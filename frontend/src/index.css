@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+/* Onest's digits, spaced tighter (scripts/build_figures_font.py). Only
+   0-9 come from here; every other character falls through to Onest. */
+@font-face {
+  font-family: 'True Portfolio Figures';
+  src: url('./assets/fonts/true-portfolio-figures.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range: U+0030-0039;
+}
+
 /* Expose the theme tokens below as Tailwind colors (bg-primary,
    text-muted-foreground, hover:bg-accent, bg-primary/10, ...). Without this
    mapping Tailwind v4 silently ignores those classes. */
@@ -26,7 +36,7 @@
   --color-gain: hsl(var(--gain));
   --color-loss: hsl(var(--loss));
   --color-warning: hsl(var(--warning));
-  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'True Portfolio Figures', 'Onest', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 
 :root {
@@ -37,7 +47,8 @@
   --card-foreground: 222 47% 11%;
   --popover: 0 0% 100%;
   --popover-foreground: 222 47% 11%;
-  --primary: 221.2 83.2% 53.3%;
+  /* Brand blue #1f6ee6 (the logo). */
+  --primary: 216 80% 51%;
   --primary-foreground: 210 40% 98%;
   --secondary: 220 14% 95%;
   --secondary-foreground: 222 47% 11%;
@@ -49,7 +60,7 @@
   --destructive-foreground: 210 40% 98%;
   --border: 220 13% 90%;
   --input: 220 13% 88%;
-  --ring: 221.2 83.2% 53.3%;
+  --ring: 216 80% 51%;
   --radius: 0.75rem;
   /* Money semantics: gain / loss / warning (text-safe on cards). */
   --gain: 142 71% 32%;
@@ -58,6 +69,9 @@
   /* Comparison lines (dataviz reference palette, CVD-validated). */
   --series-gold: #eda100;
   --series-usd: #6250d6;
+  /* Logo gradient, #1f6ee6 to #1d5ab8. */
+  --logo-from: 216 80% 51%;
+  --logo-to: 216 73% 42%;
 }
 
 .dark {
@@ -67,7 +81,8 @@
   --card-foreground: 210 40% 98%;
   --popover: 224 27% 11%;
   --popover-foreground: 210 40% 98%;
-  --primary: 217.2 91.2% 59.8%;
+  /* The brand blue, lifted to read on dark surfaces. */
+  --primary: 216 86% 62%;
   --primary-foreground: 222.2 47.4% 11.2%;
   --secondary: 223 22% 15%;
   --secondary-foreground: 210 40% 98%;
@@ -79,12 +94,14 @@
   --destructive-foreground: 210 40% 98%;
   --border: 223 20% 17%;
   --input: 223 20% 21%;
-  --ring: 224.3 76.3% 48%;
+  --ring: 216 80% 56%;
   --gain: 142 62% 50%;
   --loss: 0 86% 67%;
   --warning: 38 92% 56%;
   --series-gold: #c98500;
   --series-usd: #9085e9;
+  --logo-from: 215 85% 62%;
+  --logo-to: 216 73% 53%;
 }
 
 /* In the base layer, so border-<color> utilities can override it. */
@@ -101,7 +118,6 @@ body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
   font-family: var(--font-sans);
-  font-feature-settings: 'cv11', 'ss01';
   -webkit-font-smoothing: antialiased;
 }
 

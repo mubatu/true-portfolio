@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { Briefcase, FlaskConical, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -38,9 +39,7 @@ export function Overview() {
   const [range, setRange] = useState<RangeKey>('ALL');
   const { theme } = useTheme();
 
-  useEffect(() => {
-    document.title = `${t('overview.title')} · ${t('common.appName')}`;
-  }, [t]);
+  useDocumentTitle(t('overview.title'));
 
   const portfoliosQuery = useQuery({ queryKey: ['portfolios'], queryFn: getPortfolios });
   const portfolios = portfoliosQuery.data;

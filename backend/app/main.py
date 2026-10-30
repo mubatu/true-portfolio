@@ -6,8 +6,8 @@ from app.api import api_router
 settings = get_settings()
 
 app = FastAPI(
-    title="Portfolio Tracker API",
-    description="Backend API for the Portfolio Tracker application",
+    title="True Portfolio API",
+    description="Backend API for the True Portfolio application",
     version="1.0.0",
 )
 
