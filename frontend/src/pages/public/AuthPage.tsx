@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowRight, ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { PasswordRequirements, validatePassword } from '@/components/ui/PasswordRequirements';
+import { PasswordRequirements } from '@/components/ui/PasswordRequirements';
+import { validatePassword } from '@/lib/password';
 import { Header } from '@/components/layout';
 import { useAuth } from '@/hooks';
 import { checkEmailExists } from '@/lib/api';
@@ -30,7 +31,7 @@ export function AuthPage() {
     try {
       const { exists } = await checkEmailExists(email);
       setStep(exists ? 'login' : 'register');
-    } catch (err) {
+    } catch {
       setError(t('auth.errors.emailCheck'));
     } finally {
       setIsLoading(false);
@@ -70,7 +71,7 @@ export function AuthPage() {
       } else {
         navigate('/dashboard');
       }
-    } catch (err) {
+    } catch {
       setError(t('auth.errors.registrationFailed'));
     } finally {
       setIsLoading(false);

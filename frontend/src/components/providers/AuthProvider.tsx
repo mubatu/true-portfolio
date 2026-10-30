@@ -1,30 +1,7 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  type ReactNode,
-} from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
-import { Header } from '@/components/layout';
+import { useEffect, useState, type ReactNode } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
-
-interface AuthContextType {
-  user: User | null;
-  session: Session | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (
-    email: string,
-    password: string,
-    fullName: string
-  ) => Promise<{ error: Error | null }>;
-  signOut: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextType | null>(null);
+import { supabase } from '@/lib/supabase';
+import { AuthContext } from '@/hooks/authContext';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -90,43 +67,5 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     >
       {children}
     </AuthContext.Provider>
-  );
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-}
-
-interface ProtectedLayoutProps {
-  children: ReactNode;
-}
-
-export function ProtectedLayout({ children }: ProtectedLayoutProps) {
-  const { isAuthenticated, isLoading } = useAuth();
-  const location = useLocation();
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/auth" state={{ from: location }} replace />;
-  }
-
-  return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <Header />
-      <main className="flex-1">
-        {children}
-      </main>
-    </div>
   );
 }

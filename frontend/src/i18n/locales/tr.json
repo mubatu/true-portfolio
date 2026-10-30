@@ -206,6 +206,7 @@
   },
   "portfolio": {
     "title": "Portföy Detayı",
+    "notFound": "Portföy bulunamadı.",
     "viewing": "Görüntülenen portföy: {{id}}",
     "back": "Portföylerime Dön",
     "marketTag": "Piyasa: {{market}}",

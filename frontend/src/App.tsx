@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider, ProtectedLayout, ThemeProvider } from '@/hooks';
+import { AuthProvider, ThemeProvider } from '@/components/providers';
+import { ProtectedLayout } from '@/components/layout';
 import { LandingPage, AuthPage } from '@/pages/public';
 import { Dashboard, MyPortfolios, PortfolioAnalyze, PortfolioDetail, Profile } from '@/pages/private';
 import '@/i18n';

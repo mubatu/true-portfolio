@@ -142,9 +142,11 @@ export function Header() {
                 <div className="absolute right-0 mt-2 w-56 rounded-lg border bg-popover shadow-lg py-1 animate-in fade-in-0 zoom-in-95">
                   {/* User info */}
                   <div className="px-3 py-2 border-b">
-                    <p className="text-sm font-medium truncate">
-                      {user?.user_metadata?.full_name || 'User'}
-                    </p>
+                    {user?.user_metadata?.full_name && (
+                      <p className="text-sm font-medium truncate">
+                        {user.user_metadata.full_name}
+                      </p>
+                    )}
                     <p className="text-xs text-muted-foreground truncate">
                       {user?.email}
                     </p>
@@ -159,6 +161,14 @@ export function Header() {
                     >
                       <LayoutDashboard className="h-4 w-4" />
                       {t('common.dashboard')}
+                    </Link>
+                    <Link
+                      to="/my-portfolios"
+                      onClick={() => setDropdownOpen(false)}
+                      className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent transition-colors"
+                    >
+                      <Briefcase className="h-4 w-4" />
+                      {t('common.myPortfolios')}
                     </Link>
                   </div>
 

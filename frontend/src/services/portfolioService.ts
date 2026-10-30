@@ -77,7 +77,8 @@ export async function getPortfolios(): Promise<Portfolio[]> {
   }
 
   // Transform the data to include transaction_count
-  return (portfolios || []).map((p: any) => ({
+  type PortfolioRow = Portfolio & { transactions?: { count: number }[] };
+  return ((portfolios || []) as PortfolioRow[]).map((p) => ({
     ...p,
     transaction_count: p.transactions?.[0]?.count || 0,
   }));

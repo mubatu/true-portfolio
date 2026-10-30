@@ -206,6 +206,7 @@
   },
   "portfolio": {
     "title": "Portfolio Details",
+    "notFound": "Portfolio not found.",
     "viewing": "Viewing portfolio: {{id}}",
     "back": "Back to Portfolios",
     "marketTag": "Market: {{market}}",
