@@ -7,6 +7,7 @@ import { plColor, type Formatters } from '@/components/analysis/format';
 import { unitPrice } from '@/components/analysis/performance';
 import type { AnalysisResponse } from '@/components/analysis/types';
 import type { Portfolio } from '@/services/portfolioService';
+import { ShareButton } from '@/components/explore/ShareButton';
 import { PortfolioBadges } from './PortfolioFlags';
 import { Sparkline } from './Sparkline';
 
@@ -70,6 +71,13 @@ export function PortfolioCard({
 
         <div className="relative z-10 flex items-center gap-1 shrink-0">
           <DailyChange points={points} fmt={fmt} size="sm" className="mr-1" />
+          {portfolio.is_public && hasTrades && (
+            <ShareButton
+              slug={portfolio.slug}
+              name={portfolio.name}
+              className="sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity"
+            />
+          )}
           <Button
             variant="ghost"
             size="icon"

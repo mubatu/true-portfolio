@@ -96,6 +96,12 @@
     },
     "footer": {
       "copyright": "© 2026 PortfolioTracker. All rights reserved."
+    },
+    "showcase": {
+      "title": "Top on Explore",
+      "seeAll": "See all",
+      "more_one": "{{count}} more portfolio on Explore",
+      "more_other": "{{count}} more portfolios on Explore"
     }
   },
   "auth": {
@@ -401,7 +407,14 @@
     "holdings_one": "{{count}} holding",
     "holdings_other": "{{count}} holdings",
     "returnsHint": "Unit price change over the period picked on the chart; adding or withdrawing money does not move it. Below: BIST 100, gold and the dollar over the same period.",
-    "openMine": "Your portfolio: full analysis"
+    "openMine": "Your portfolio: full analysis",
+    "share": {
+      "label": "Share link",
+      "short": "Share",
+      "copied": "Link copied",
+      "failed": "Could not copy",
+      "text": "Take a look at how {{name}} has performed"
+    }
   },
   "myPortfolios": {
     "title": "My Portfolios",

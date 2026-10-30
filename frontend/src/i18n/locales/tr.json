@@ -96,6 +96,11 @@
     },
     "footer": {
       "copyright": "© 2026 PortfolioTracker. Tüm hakları saklıdır."
+    },
+    "showcase": {
+      "title": "Keşfet'te öne çıkanlar",
+      "seeAll": "Tümünü gör",
+      "more": "Keşfet'te {{count}} portföy daha var"
     }
   },
   "auth": {
@@ -397,7 +402,14 @@
     "allocation": "Güncel Dağılım",
     "holdings": "{{count}} varlık",
     "returnsHint": "Grafikte seçili dönemde pay fiyatındaki değişim; para ekleyip çıkarmaktan etkilenmez. Altında aynı dönemde BIST 100, altın ve dolar.",
-    "openMine": "Senin portföyün: tam analiz"
+    "openMine": "Senin portföyün: tam analiz",
+    "share": {
+      "label": "Bağlantıyı paylaş",
+      "short": "Paylaş",
+      "copied": "Bağlantı kopyalandı",
+      "failed": "Kopyalanamadı",
+      "text": "{{name}} portföyünün performansına göz at"
+    }
   },
   "myPortfolios": {
     "title": "Portföylerim",

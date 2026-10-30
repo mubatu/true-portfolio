@@ -14,6 +14,7 @@ import { ReturnsTable } from '@/components/analysis/ReturnsTable';
 import { plColor, useFormatters } from '@/components/analysis/format';
 import { unitPrice, type RangeKey } from '@/components/analysis/performance';
 import { OwnerChip } from '@/components/explore/ExploreParts';
+import { ShareButton } from '@/components/explore/ShareButton';
 import { useHorizon } from '@/components/explore/useHorizon';
 import { allocationAsPositions, toPerformancePoints } from '@/components/explore/publicData';
 import { ExperimentalBadge } from '@/components/portfolio/PortfolioFlags';
@@ -43,7 +44,7 @@ export function ExplorePortfolio() {
   });
   // The owner's own portfolios (signed in only), to offer the full analysis.
   const own = useQuery({ queryKey: ['portfolios'], queryFn: getPortfolios, enabled: isAuthenticated });
-  const isMine = !!own.data?.some((p) => p.slug === slug);
+  const isMine = isAuthenticated && !!own.data?.some((p) => p.slug === slug);
 
   const points = useMemo(() => toPerformancePoints(data?.points ?? []), [data]);
   const positions = useMemo(() => (data ? allocationAsPositions(data.allocation) : []), [data]);
@@ -105,14 +106,17 @@ export function ExplorePortfolio() {
                 <span className="text-sm text-muted-foreground">{horizonOf(data.start_date, data.end_date)}</span>
               </div>
             </div>
-            {isMine && (
-              <Link to={`/portfolio/${slug}/analyze`} className="shrink-0">
-                <Button variant="outline" className="gap-1.5">
-                  {t('explore.openMine')}
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-            )}
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              <ShareButton slug={data.slug} name={data.name} variant="labelled" />
+              {isMine && (
+                <Link to={`/portfolio/${slug}/analyze`}>
+                  <Button variant="outline" className="gap-1.5">
+                    {t('explore.openMine')}
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+              )}
+            </div>
           </header>
 
           {last && (

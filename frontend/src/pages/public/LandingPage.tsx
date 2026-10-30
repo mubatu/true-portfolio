@@ -1,11 +1,13 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
 import {
   ArrowRight,
   CheckCircle2,
   Compass,
   Coins,
+  EyeOff,
   Landmark,
   Layers,
   LineChart,
@@ -18,9 +20,12 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useFormatters } from '@/components/analysis/format';
+import { ExploreRow } from '@/components/explore/ExploreParts';
 import { Header } from '@/components/layout';
 import { Logo } from '@/components/layout/Logo';
 import { useAuth } from '@/hooks/useAuth';
+import { getPublicPortfolios } from '@/lib/api';
 
 const FEATURES: { key: string; icon: LucideIcon }[] = [
   { key: 'fund', icon: LineChart },
@@ -103,7 +108,7 @@ export function LandingPage() {
               </ul>
             </div>
 
-            <HeroPreview />
+            <ExploreShowcase />
           </div>
         </section>
 
@@ -182,6 +187,68 @@ export function LandingPage() {
           <p className="text-sm text-muted-foreground">{t('landing.footer.copyright')}</p>
         </div>
       </footer>
+    </div>
+  );
+}
+
+/** How many public portfolios the hero shows. */
+const SHOWCASE_SIZE = 3;
+
+/**
+ * The hero's right side: the best public portfolios from Explore, live.
+ * Until there are any (or when they cannot be loaded) the made-up preview
+ * stands in, so the hero is never empty.
+ */
+function ExploreShowcase() {
+  const { t } = useTranslation();
+  const fmt = useFormatters('TRY');
+  // The same query as the Explore page: opening it after this is instant.
+  const { data, isLoading } = useQuery({ queryKey: ['explore'], queryFn: getPublicPortfolios });
+  const top = data?.slice(0, SHOWCASE_SIZE) ?? [];
+
+  if (!isLoading && top.length === 0) return <HeroPreview />;
+
+  return (
+    <div className="relative">
+      <div className="absolute -inset-4 rounded-[2rem] bg-primary/10 blur-2xl" aria-hidden="true" />
+      <section
+        className="relative rounded-3xl border bg-card/80 backdrop-blur-sm p-4 md:p-5 shadow-xl"
+        aria-labelledby="showcase-title"
+      >
+        <div className="flex items-start justify-between gap-3 px-1">
+          <div className="min-w-0">
+            <h2 id="showcase-title" className="font-semibold flex items-center gap-2">
+              <Compass className="h-4 w-4 text-primary" aria-hidden="true" />
+              {t('landing.showcase.title')}
+            </h2>
+            <p className="mt-1 text-xs text-muted-foreground inline-flex items-center gap-1.5">
+              <EyeOff className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              {t('explore.amountsHidden')}
+            </p>
+          </div>
+          <Link
+            to="/explore"
+            className="shrink-0 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+          >
+            {t('landing.showcase.seeAll')}
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+
+        <div className="mt-4 flex flex-col gap-3" aria-busy={isLoading}>
+          {isLoading
+            ? Array.from({ length: SHOWCASE_SIZE }, (_, i) => (
+                <div key={i} className="h-[82px] rounded-2xl border bg-muted/40 animate-pulse" />
+              ))
+            : top.map((p) => <ExploreRow key={p.slug} portfolio={p} fmt={fmt} />)}
+        </div>
+
+        {data && data.length > SHOWCASE_SIZE && (
+          <p className="mt-3 px-1 text-xs text-muted-foreground">
+            {t('landing.showcase.more', { count: data.length - SHOWCASE_SIZE })}
+          </p>
+        )}
+      </section>
     </div>
   );
 }

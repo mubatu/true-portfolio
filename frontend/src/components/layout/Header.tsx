@@ -66,7 +66,7 @@ export function Header() {
       <div className="container mx-auto flex h-16 items-center justify-between px-4 max-w-7xl">
         {/* Logo */}
         <Link
-          to={isAuthenticated ? '/my-portfolios' : '/'}
+          to={isAuthenticated ? '/explore' : '/'}
           className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
         >
           <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-primary text-primary-foreground shadow-sm">

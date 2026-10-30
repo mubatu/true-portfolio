@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   AlertCircle,
@@ -29,7 +29,11 @@ type AuthStep = 'email' | 'login' | 'register';
 export function AuthPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { signIn, signUp } = useAuth();
+  // Back to the private page that sent the user here, else Explore.
+  const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname;
+  const home = from && from !== '/auth' ? from : '/explore';
   
   const [step, setStep] = useState<AuthStep>('email');
   const [email, setEmail] = useState('');
@@ -63,7 +67,7 @@ export function AuthPage() {
       if (authError) {
         setError(t(authErrorKey(authError, 'auth.errors.invalidCredentials')));
       } else {
-        navigate('/my-portfolios');
+        navigate(home, { replace: true });
       }
     } catch (err) {
       setError(t(authErrorKey(err, 'auth.errors.invalidCredentials')));
@@ -82,7 +86,7 @@ export function AuthPage() {
       if (authError) {
         setError(t(authErrorKey(authError, 'auth.errors.registrationFailed')));
       } else {
-        navigate('/my-portfolios');
+        navigate(home, { replace: true });
       }
     } catch {
       setError(t('auth.errors.registrationFailed'));

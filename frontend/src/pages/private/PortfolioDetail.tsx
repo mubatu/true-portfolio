@@ -138,6 +138,7 @@ export function PortfolioDetail() {
     <div className="container mx-auto px-4 py-6 md:py-8 max-w-7xl">
       <PortfolioHeader
         portfolio={portfolio}
+        hasTrades={transactions.length > 0}
         actions={
           portfolio && (
             <Button onClick={() => openForm(addForm)} className="gap-2">

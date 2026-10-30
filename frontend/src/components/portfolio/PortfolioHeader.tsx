@@ -5,6 +5,7 @@ import { ChevronLeft, LineChart, ListOrdered, Settings2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { Portfolio } from '@/services/portfolioService';
 import { PortfolioSettingsDialog } from './PortfolioDialogs';
+import { ShareButton } from '@/components/explore/ShareButton';
 import { PortfolioBadges } from './PortfolioFlags';
 
 /**
@@ -16,9 +17,12 @@ import { PortfolioBadges } from './PortfolioFlags';
 export function PortfolioHeader({
   portfolio,
   actions,
+  hasTrades = false,
 }: {
   portfolio: Portfolio | null | undefined;
   actions?: ReactNode;
+  /** Explore lists a public portfolio once it has trades; only then is there a link to share. */
+  hasTrades?: boolean;
 }) {
   const { t } = useTranslation();
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -72,6 +76,9 @@ export function PortfolioHeader({
               </NavLink>
             </nav>
             {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}
+            {portfolio.is_public && hasTrades && (
+              <ShareButton slug={portfolio.slug} name={portfolio.name} variant="outline" />
+            )}
             <Button
               variant="outline"
               size="icon"
