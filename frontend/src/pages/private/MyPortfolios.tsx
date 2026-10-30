@@ -45,6 +45,18 @@ export function MyPortfolios() {
   const analysisById = new Map(withTrades.map((p, i) => [p.id, analyses[i]]));
 
   const loaded = analyses.map((q) => q.data).filter((d): d is AnalysisResponse => !!d);
+  // Largest first; portfolios without a value yet (loading, no trades) keep
+  // their order at the end. Array.sort is stable.
+  const valueOf = (p: Portfolio) => {
+    const a = analysisById.get(p.id)?.data;
+    return a ? a.totals.portfolio_value + a.totals.in_the_safe : null;
+  };
+  const sorted = [...portfolios].sort((a, b) => {
+    const va = valueOf(a);
+    const vb = valueOf(b);
+    if (va == null || vb == null) return (va == null ? 1 : 0) - (vb == null ? 1 : 0);
+    return vb - va;
+  });
   const allLoaded = withTrades.length > 0 && loaded.length === withTrades.length;
   const total = loaded.reduce(
     (acc, a) => ({
@@ -119,7 +131,7 @@ export function MyPortfolios() {
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {portfolios.map((p) => {
+          {sorted.map((p) => {
             const q = analysisById.get(p.id);
             return (
               <PortfolioCard
