@@ -323,6 +323,11 @@
       "concentration": "Concentration",
       "topHoldings": "in the largest {{count}} of {{total}} holdings",
       "noOpen": "No open holdings."
+    },
+    "daily": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "hint": "Unit price change at the {{date}} close vs. the previous trading day"
     }
   },
   "overview": {
@@ -373,7 +378,6 @@
       "namePlaceholder": "Enter portfolio name"
     },
     "noTrades": "No trades yet. Add your first buy to see the analysis.",
-    "dailyChange": "Change on the last trading day",
     "sparklineLabel": "Unit price over the last 90 trading days",
     "experimental": {
       "title": "Experimental portfolios",

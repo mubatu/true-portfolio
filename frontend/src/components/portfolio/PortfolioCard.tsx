@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowRight, FlaskConical, ListOrdered, Pencil, Trash2, TrendingDown, TrendingUp } from 'lucide-react';
+import { ArrowRight, FlaskConical, ListOrdered, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { plBg, plColor, type Formatters } from '@/components/analysis/format';
-import { dailyReturns, unitPrice } from '@/components/analysis/performance';
+import { DailyChange } from '@/components/analysis/DailyChange';
+import { plColor, type Formatters } from '@/components/analysis/format';
+import { unitPrice } from '@/components/analysis/performance';
 import type { AnalysisResponse } from '@/components/analysis/types';
 import type { Portfolio } from '@/services/portfolioService';
 import { Sparkline } from './Sparkline';
@@ -38,7 +39,6 @@ export function PortfolioCard({
   const base = `/portfolio/${portfolio.slug}`;
   const hasTrades = (portfolio.transaction_count ?? 0) > 0;
   const points = analysis?.performance_series.points ?? [];
-  const daily = points.length >= 2 ? dailyReturns(points.slice(-2))[1] : null;
   const recent = points.slice(-90).map(unitPrice);
   const experimental = !!portfolio.is_experimental;
   const experimentalLabel = t(experimental ? 'myPortfolios.experimental.unmark' : 'myPortfolios.experimental.mark');
@@ -75,16 +75,7 @@ export function PortfolioCard({
         </div>
 
         <div className="relative z-10 flex items-center gap-1 shrink-0">
-          {daily != null && (
-            <span
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold tabular-nums mr-1"
-              style={{ backgroundColor: plBg(daily), color: plColor(daily) }}
-              title={t('myPortfolios.dailyChange')}
-            >
-              {daily >= 0 ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
-              {fmt.pct(daily)}
-            </span>
-          )}
+          <DailyChange points={points} fmt={fmt} size="sm" className="mr-1" />
           <Button
             variant="ghost"
             size="icon"

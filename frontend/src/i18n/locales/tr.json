@@ -323,6 +323,11 @@
       "concentration": "Yoğunlaşma",
       "topHoldings": "{{total}} hissenin en büyük {{count}} tanesinde",
       "noOpen": "Elde hisse yok."
+    },
+    "daily": {
+      "today": "Bugün",
+      "yesterday": "Dün",
+      "hint": "{{date}} kapanışında pay fiyatının bir önceki işlem gününe göre değişimi"
     }
   },
   "overview": {
@@ -373,7 +378,6 @@
       "namePlaceholder": "Portföy adını gir"
     },
     "noTrades": "Henüz işlem yok. Analizi görmek için ilk alışını ekle.",
-    "dailyChange": "Son işlem günündeki değişim",
     "sparklineLabel": "Son 90 işlem günündeki pay fiyatı",
     "experimental": {
       "title": "Deneysel portföyler",

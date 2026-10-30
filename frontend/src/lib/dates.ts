@@ -8,9 +8,17 @@ export const parseIsoDate = (isoDate: string) => {
   return new Date(year, month - 1, day);
 };
 
-/** Today's calendar date in the user's time zone, as yyyy-mm-dd. */
-export const todayIso = () => {
-  const now = new Date();
+const toIso = (d: Date) => {
   const pad = (n: number) => String(n).padStart(2, '0');
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+
+/** Today's calendar date in the user's time zone, as yyyy-mm-dd. */
+export const todayIso = () => toIso(new Date());
+
+/** An ISO calendar date shifted by whole days. */
+export const addDaysIso = (isoDate: string, days: number) => {
+  const d = parseIsoDate(isoDate);
+  d.setDate(d.getDate() + days);
+  return toIso(d);
 };

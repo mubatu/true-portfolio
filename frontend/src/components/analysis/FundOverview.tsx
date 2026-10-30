@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { TrendingDown, TrendingUp } from 'lucide-react';
 import { Panel } from '@/components/ui/Panel';
-import { plBg, plColor, type Formatters } from './format';
-import { dailyReturns, unitPrice } from './performance';
+import { DailyChange } from './DailyChange';
+import { plColor, type Formatters } from './format';
+import { unitPrice } from './performance';
 import type { AnalysisTotals, DividendSummary, PerformancePoint } from './types';
 
 /**
@@ -24,7 +24,6 @@ export function FundOverview({
 }) {
   const { t } = useTranslation();
   const last = points[points.length - 1];
-  const daily = points.length >= 2 ? dailyReturns(points.slice(-2))[1] : null;
   const sinceStart = last ? (unitPrice(last) - 1) * 100 : null;
 
   return (
@@ -42,15 +41,7 @@ export function FundOverview({
               <span className="text-4xl md:text-5xl font-bold tabular-nums tracking-tight">
                 {fmt.unit(unitPrice(last))}
               </span>
-              {daily != null && (
-                <span
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-sm font-semibold tabular-nums"
-                  style={{ backgroundColor: plBg(daily), color: plColor(daily) }}
-                >
-                  {daily >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-                  {fmt.pct(daily)}
-                </span>
-              )}
+              <DailyChange points={points} fmt={fmt} />
             </div>
             <p className="text-sm mt-2" style={{ color: 'hsl(var(--muted-foreground))' }}>
               {t('analyze.fund.asOf', { date: fmt.date(last.date) })}
