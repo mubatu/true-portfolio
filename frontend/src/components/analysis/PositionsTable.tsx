@@ -3,6 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import { Segmented } from '@/components/ui/Segmented';
 import { plColor, type Formatters } from './format';
+import {
+  HEAD_BG,
+  HEAD_CELL_CLASS,
+  TABLE_CARD_CLASS,
+  TABLE_CARD_STYLE,
+  TABLE_SCROLL_CLASS,
+} from './tableStyles';
 import type { Position } from './types';
 
 type SortKey =
@@ -99,12 +106,17 @@ export function PositionsTable({
           {t('analyze.positions.empty')}
         </div>
       ) : (
-        <div className="rounded-2xl border overflow-hidden" style={{ borderColor: 'hsl(var(--border))', ...STICKY_BG }}>
-          <div className="overflow-x-auto">
+        <div className={TABLE_CARD_CLASS} style={TABLE_CARD_STYLE}>
+          <div className={TABLE_SCROLL_CLASS}>
             <table className="w-full min-w-[980px] text-sm">
-              <thead style={{ backgroundColor: 'hsl(var(--muted) / 0.5)' }}>
+              <thead>
                 <tr>
-                  <th scope="col" className="sticky left-0 z-10 px-3 py-3 text-left text-xs font-medium" style={{ backgroundColor: 'hsl(var(--muted))' }}>
+                  <th
+                    scope="col"
+                    className={`${HEAD_CELL_CLASS} left-0 text-left`}
+                    // Corner cell: above both the header row and the sticky column.
+                    style={{ backgroundColor: 'hsl(var(--muted))', zIndex: 30 }}
+                  >
                     <button
                       type="button"
                       onClick={() => toggleSort('ticker')}
@@ -115,10 +127,10 @@ export function PositionsTable({
                       {sort?.key === 'ticker' && (sort.desc ? <ArrowDown className="h-3 w-3" /> : <ArrowUp className="h-3 w-3" />)}
                     </button>
                   </th>
-                  <th scope="col" className="px-3 py-3 text-right text-xs font-medium" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                  <th scope="col" className={`${HEAD_CELL_CLASS} text-right`} style={{ ...HEAD_BG, color: 'hsl(var(--muted-foreground))' }}>
                     {t('analyze.table.qty')}
                   </th>
-                  <th scope="col" className="px-3 py-3 text-right text-xs font-medium whitespace-nowrap" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                  <th scope="col" className={`${HEAD_CELL_CLASS} text-right`} style={{ ...HEAD_BG, color: 'hsl(var(--muted-foreground))' }}>
                     {t('analyze.table.avgCost')} / {t('analyze.table.price')}
                   </th>
                   <SortHeader sort={sort} onSort={toggleSort} k="market_value" label={t('analyze.table.value')} />
@@ -226,7 +238,8 @@ function SortHeader({
     <th
       scope="col"
       aria-sort={active ? (sort.desc ? 'descending' : 'ascending') : 'none'}
-      className="px-3 py-3 text-xs font-medium whitespace-nowrap text-right"
+      className={`${HEAD_CELL_CLASS} text-right`}
+      style={HEAD_BG}
     >
       <button
         type="button"
