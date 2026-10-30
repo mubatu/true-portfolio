@@ -332,16 +332,16 @@
     }
   },
   "overview": {
-    "title": "Özet",
+    "title": "Genel Bakış",
     "subtitle": "Tüm portföylerin tek bir fon gibi: toplam büyüklük, kâr/zarar ve getiri. Deneysel portföyler dahil değil.",
     "experimentalExcluded": "{{count}} deneysel portföy hariç",
     "loadError": "Şu portföylerin analizi yüklenemedi: {{names}}",
     "allocation": "Portföy Dağılımı",
     "footnote": "Pay fiyatı ve getiriler, portföylerin günlük toplam değerinden para girişlerinin etkisi arındırılarak hesaplanır.",
     "empty": {
-      "title": "Özetlenecek portföy yok",
-      "description": "Özet, işlemi olan portföylerinin toplamını gösterir. Bir portföy oluşturup ilk alışını ekle.",
-      "allExperimental": "İşlemi olan portföylerinin hepsi deneysel olarak işaretli. Özet'e dahil etmek istediklerinin işaretini Portföylerim'den kaldırabilirsin."
+      "title": "Gösterilecek portföy yok",
+      "description": "Genel Bakış, işlemi olan portföylerinin toplamını gösterir. Bir portföy oluşturup ilk alışını ekle.",
+      "allExperimental": "İşlemi olan portföylerinin hepsi deneysel olarak işaretli. Genel Bakış'a dahil etmek istediklerinin işaretini Portföylerim'den kaldırabilirsin."
     },
     "table": {
       "title": "Portföy Bazında Kâr / Zarar",
@@ -369,7 +369,7 @@
     },
     "experimental": {
       "label": "Deneysel",
-      "description": "Deneme ya da sanal portföy. Kendi analizi durur ama Özet'e dahil edilmez."
+      "description": "Deneme ya da sanal portföy. Kendi analizi durur ama Genel Bakış'a dahil edilmez."
     }
   },
   "explore": {
@@ -424,7 +424,7 @@
     "sparklineLabel": "Son 90 işlem günündeki pay fiyatı",
     "experimental": {
       "title": "Deneysel portföyler",
-      "hint": "Denemeler ve sanal portföyler. Kendi analizleri durur ama Özet'e dahil edilmezler."
+      "hint": "Denemeler ve sanal portföyler. Kendi analizleri durur ama Genel Bakış'a dahil edilmezler."
     }
   },
   "portfolio": {
