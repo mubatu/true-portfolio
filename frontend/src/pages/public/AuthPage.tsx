@@ -22,6 +22,7 @@ import { validatePassword } from '@/lib/password';
 import { Header } from '@/components/layout';
 import { useAuth } from '@/hooks';
 import { checkEmailExists } from '@/lib/api';
+import { authErrorKey } from '@/lib/authErrors';
 
 type AuthStep = 'email' | 'login' | 'register';
 
@@ -60,14 +61,12 @@ export function AuthPage() {
     try {
       const { error: authError } = await signIn(email, password);
       if (authError) {
-        console.error('Login error:', authError);
-        setError(authError.message || t('auth.errors.invalidCredentials'));
+        setError(t(authErrorKey(authError, 'auth.errors.invalidCredentials')));
       } else {
         navigate('/my-portfolios');
       }
     } catch (err) {
-      console.error('Login exception:', err);
-      setError(t('auth.errors.invalidCredentials'));
+      setError(t(authErrorKey(err, 'auth.errors.invalidCredentials')));
     } finally {
       setIsLoading(false);
     }
@@ -81,7 +80,7 @@ export function AuthPage() {
     try {
       const { error: authError } = await signUp(email, password, name);
       if (authError) {
-        setError(authError.message || t('auth.errors.registrationFailed'));
+        setError(t(authErrorKey(authError, 'auth.errors.registrationFailed')));
       } else {
         navigate('/my-portfolios');
       }

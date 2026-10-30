@@ -117,7 +117,21 @@
     "errors": {
       "emailCheck": "E-posta doğrulanamadı. Lütfen tekrar dene.",
       "invalidCredentials": "E-posta veya şifre hatalı.",
-      "registrationFailed": "Kayıt başarısız oldu. Lütfen tekrar dene."
+      "registrationFailed": "Kayıt başarısız oldu. Lütfen tekrar dene.",
+      "invalid_credentials": "E-posta veya şifre hatalı.",
+      "email_not_confirmed": "E-posta adresin henüz doğrulanmamış. Gelen kutundaki bağlantıya tıkla.",
+      "user_already_exists": "Bu e-posta adresiyle zaten bir hesap var.",
+      "email_exists": "Bu e-posta adresiyle zaten bir hesap var.",
+      "weak_password": "Şifre yeterince güçlü değil.",
+      "same_password": "Yeni şifre eskisiyle aynı olamaz.",
+      "email_address_invalid": "Geçerli bir e-posta adresi gir.",
+      "signup_disabled": "Şu anda yeni kayıt alınmıyor.",
+      "over_request_rate_limit": "Çok fazla deneme yapıldı. Birkaç dakika sonra tekrar dene.",
+      "over_email_send_rate_limit": "Çok fazla e-posta gönderildi. Birkaç dakika sonra tekrar dene.",
+      "reauthentication_needed": "Bu işlem için yeniden giriş yapman gerekiyor.",
+      "session_expired": "Oturumun sona erdi. Tekrar giriş yap.",
+      "session_not_found": "Oturumun sona erdi. Tekrar giriş yap.",
+      "network": "Sunucuya ulaşılamadı. İnternet bağlantını kontrol et."
     },
     "brand": {
       "title": "Yatırımlarının geçmişini netleştir.",

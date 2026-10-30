@@ -33,7 +33,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email,
       password,
     });
-    return { error: error ? new Error(error.message) : null };
+    // Supabase's AuthError keeps its ``code`` for a translated message.
+    return { error };
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
@@ -46,7 +47,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
       },
     });
-    return { error: error ? new Error(error.message) : null };
+    // Supabase's AuthError keeps its ``code`` for a translated message.
+    return { error };
   };
 
   const signOut = async () => {

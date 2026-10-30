@@ -117,7 +117,21 @@
     "errors": {
       "emailCheck": "Unable to verify email. Please try again.",
       "invalidCredentials": "Invalid email or password.",
-      "registrationFailed": "Registration failed. Please try again."
+      "registrationFailed": "Registration failed. Please try again.",
+      "invalid_credentials": "Wrong email or password.",
+      "email_not_confirmed": "Your email address isn't confirmed yet. Click the link in your inbox.",
+      "user_already_exists": "An account with this email already exists.",
+      "email_exists": "An account with this email already exists.",
+      "weak_password": "The password isn't strong enough.",
+      "same_password": "The new password must differ from the old one.",
+      "email_address_invalid": "Enter a valid email address.",
+      "signup_disabled": "Sign-ups are closed right now.",
+      "over_request_rate_limit": "Too many attempts. Try again in a few minutes.",
+      "over_email_send_rate_limit": "Too many emails sent. Try again in a few minutes.",
+      "reauthentication_needed": "Please sign in again to do this.",
+      "session_expired": "Your session has expired. Please sign in again.",
+      "session_not_found": "Your session has expired. Please sign in again.",
+      "network": "Couldn't reach the server. Check your internet connection."
     },
     "brand": {
       "title": "Make sense of your investing history.",

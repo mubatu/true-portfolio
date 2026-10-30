@@ -27,6 +27,7 @@ import { TextField } from '@/components/ui/TextField';
 import { LOCALES } from '@/config';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
+import { authErrorKey } from '@/lib/authErrors';
 import { validatePassword } from '@/lib/password';
 import { supabase } from '@/lib/supabase';
 import { getPortfolios } from '@/services/portfolioService';
@@ -142,7 +143,7 @@ function ErrorText({ error }: { error: unknown }) {
   if (!error) return null;
   return (
     <p className="text-sm" style={{ color: 'hsl(var(--destructive))' }} role="alert">
-      {error instanceof Error && error.message ? error.message : t('common.error')}
+      {t(authErrorKey(error, 'common.error'))}
     </p>
   );
 }
