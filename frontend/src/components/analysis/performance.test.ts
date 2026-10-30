@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import {
+  annualizedVolatility,
+  dailyReturns,
   maxDrawdown,
-  monthlyBreakdown,
+  periodReturns,
   periodStats,
   rangeStart,
   rebasedPerformance,
   shiftMonths,
   sliceRange,
+  unitPrice,
 } from './performance';
 import type { PerformancePoint } from './types';
 
@@ -149,25 +152,34 @@ describe('rebasedPerformance', () => {
   });
 });
 
-describe('monthlyBreakdown', () => {
-  it('values each month at its last day, newest first', () => {
-    const rows = monthlyBreakdown([
-      pt('2026-01-02', 0, 0, 100),
-      pt('2026-01-30', 10, 100, 105),
-      pt('2026-02-02', 12, 120, 104),
-      pt('2026-02-27', 21, 250, 110.25),
-    ]);
+describe('fund view', () => {
+  it('prices the portfolio like a fund starting at 1.0000', () => {
+    expect(unitPrice(pt('2026-01-02', 0))).toBe(1);
+    expect(unitPrice(pt('2026-01-05', 25))).toBe(1.25);
+  });
 
-    expect(rows.map((r) => r.month)).toEqual(['2026-02', '2026-01']);
+  it('computes daily unit price changes', () => {
+    const r = dailyReturns([pt('2026-01-02', 10), pt('2026-01-05', 21)]);
+    expect(r[0]).toBeCloseTo(10, 10);
+    expect(r[1]).toBeCloseTo(10, 10); // 1.21 / 1.10
+  });
 
-    const [feb, jan] = rows;
-    expect(jan.returnPct).toBeCloseTo(10, 10); // since inception
-    expect(jan.plChange).toBe(100);
-    expect(jan.benchmarkReturnPct).toBeCloseTo(5, 10); // first close → month end
+  it('leaves periods longer than the history empty', () => {
+    const points = [
+      pt('2026-07-01', 0, 0, 100),
+      pt('2026-09-28', 10, 0, 110),
+      pt('2026-10-28', 21, 0, 121),
+    ];
+    const byRange = Object.fromEntries(periodReturns(points).map((r) => [r.range, r]));
+    expect(byRange['1M'].returnPct).toBeCloseTo(10, 10);
+    expect(byRange['1M'].benchmarkPct).toBeCloseTo(10, 10);
+    expect(byRange['1Y'].returnPct).toBeNull();
+    expect(byRange.ALL.returnPct).toBeCloseTo(21, 10);
+  });
 
-    expect(feb.returnPct).toBeCloseTo(10, 10); // 1.21 / 1.10
-    expect(feb.plChange).toBe(150);
-    expect(feb.totalPl).toBe(250);
-    expect(feb.benchmarkReturnPct).toBeCloseTo(5, 10); // 110.25 / 105
+  it('needs enough days for volatility', () => {
+    expect(annualizedVolatility([pt('2026-01-02', 0)])).toBeNull();
+    const flat = Array.from({ length: 30 }, (_, i) => pt(`2026-01-${String(i + 1).padStart(2, '0')}`, 0));
+    expect(annualizedVolatility(flat)).toBe(0);
   });
 });

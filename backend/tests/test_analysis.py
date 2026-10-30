@@ -105,7 +105,7 @@ def test_only_open_days_are_plotted_but_weekend_trades_count():
 
 def test_empty_portfolio():
     result = build_analysis([], {}, [], [], as_of=D4)
-    assert result["current_holdings"] == []
+    assert result["positions"] == []
     assert result["totals"]["total_pl"] == 0
     assert result["performance_series"]["points"] == []
 
@@ -114,9 +114,9 @@ def test_holding_without_any_close_is_valued_at_cost():
     result = build_analysis(
         [buy(D1, "NEW.IS", "10", "50")], {}, [], [D1], as_of=D1
     )
-    (holding,) = result["current_holdings"]
-    assert holding["current_price"] is None
-    assert holding["current_value"] == 500.0
+    (holding,) = result["positions"]
+    assert holding["price"] is None
+    assert holding["market_value"] == 500.0
     assert result["totals"]["total_pl"] == 0
     assert result["performance_series"]["points"][0]["total_value"] == 500.0
 
@@ -154,3 +154,36 @@ def test_commission_keeps_value_identity_and_is_reported():
     for point in result["performance_series"]["points"]:
         assert round(point["total_value"] - point["invested"], 2) == point["total_pl"]
     assert result["totals"]["commission_paid"] == round(1 + 40 * 55 * 0.0002, 2)
+
+
+def test_positions_split_realized_unrealized_and_add_up_to_totals():
+    txns = [
+        buy(D1, "AAA.IS", "10", "100"),
+        sell(D3, "AAA.IS", "4", "115"),
+        buy(D1, "BBB.IS", "5", "40"),
+        sell(D2, "BBB.IS", "5", "44"),  # fully closed
+    ]
+    prices = {
+        **closes("AAA.IS", (D1, 100), (D2, 108), (D3, 116), (D4, 120)),
+        **closes("BBB.IS", (D1, 40), (D2, 44)),
+    }
+    divs = [DividendEvent(D2, "AAA.IS", D("2"), D("0"))]
+    result = build_analysis(txns, prices, divs, [D1, D2, D3, D4], as_of=D4)
+    rows = {p["ticker"]: p for p in result["positions"]}
+
+    aaa = rows["AAA.IS"]
+    assert aaa["quantity"] == 6
+    assert aaa["unrealized_pl"] == 6 * (120 - 100)
+    assert aaa["realized_pl"] == 4 * (115 - 100)
+    assert aaa["dividend_income"] == 20
+    assert aaa["total_pl"] == 120 + 60 + 20
+    assert aaa["total_pl_pct"] == 20.0  # 200 / 1000 invested
+    assert aaa["weight_pct"] == 100.0
+
+    bbb = rows["BBB.IS"]
+    assert bbb["quantity"] == 0 and bbb["market_value"] == 0
+    assert bbb["realized_pl"] == 20 and bbb["unrealized_pl"] == 0
+
+    # Open positions come first.
+    assert [p["ticker"] for p in result["positions"]] == ["AAA.IS", "BBB.IS"]
+    assert round(sum(p["total_pl"] for p in result["positions"]), 2) == result["totals"]["total_pl"]

@@ -49,7 +49,7 @@ export function AuthPage() {
         console.error('Login error:', authError);
         setError(authError.message || t('auth.errors.invalidCredentials'));
       } else {
-        navigate('/dashboard');
+        navigate('/my-portfolios');
       }
     } catch (err) {
       console.error('Login exception:', err);
@@ -69,7 +69,7 @@ export function AuthPage() {
       if (authError) {
         setError(authError.message || t('auth.errors.registrationFailed'));
       } else {
-        navigate('/dashboard');
+        navigate('/my-portfolios');
       }
     } catch {
       setError(t('auth.errors.registrationFailed'));

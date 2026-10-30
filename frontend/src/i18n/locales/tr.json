@@ -3,7 +3,6 @@
     "appName": "PortfolioTracker",
     "signIn": "Giriş Yap",
     "signOut": "Çıkış Yap",
-    "dashboard": "Panel",
     "myPortfolios": "Portföylerim",
     "getStarted": "Hemen Başla",
     "learnMore": "Daha Fazla Bilgi",
@@ -16,7 +15,8 @@
     "error": "Bir hata oluştu",
     "noData": "Veri yok",
     "toggleTheme": "Temayı değiştir",
-    "language": "Dil"
+    "language": "Dil",
+    "retry": "Tekrar dene"
   },
   "landing": {
     "hero": {
@@ -65,21 +65,30 @@
       "registrationFailed": "Kayıt başarısız oldu. Lütfen tekrar dene."
     }
   },
-  "dashboard": {
-    "title": "Panel",
-    "subtitle": "Performansını analiz etmek için bir portföy seç",
-    "selectPortfolio": "Portföy Seç",
-    "dropdownPlaceholder": "Bir portföy seç…",
-    "analyze": "Analiz Et",
-    "txns": "işlem",
-    "noPortfolios": "Henüz bir portföyün yok. Başlamak için bir tane oluştur.",
-    "goToPortfolios": "Portföylerime Git"
-  },
   "analyze": {
-    "backToDashboard": "Panele Dön",
-    "title": "{{name}} — Analiz",
     "subtitle": "Ortalama maliyet yöntemi · fiyatlar bugünü içermez · temettüler stopaj düşülmüş net · komisyon dahil",
     "chart": {
+      "titles": {
+        "unit": "Pay Fiyatı",
+        "value": "Toplam Değer",
+        "pl": "Kâr / Zarar"
+      },
+      "rangeLabel": "Dönem",
+      "modeLabel": "Grafik",
+      "modes": {
+        "unit": "Pay fiyatı",
+        "value": "Değer ve yatırılan",
+        "pl": "K/Z (₺)"
+      },
+      "showBenchmark": "BIST 100 ile karşılaştır",
+      "portfolioUnit": "Portföy pay fiyatı",
+      "benchmarkLine": "BIST 100 (aynı başlangıçtan)",
+      "sinceRangeStart": "Dönem başından beri",
+      "hints": {
+        "unit": "Bir fon grafiği gibi: pay fiyatı o gün elinde tuttuğun hisselerin performansıyla hareket eder. Yeşil nokta dönemin zirvesi, kırmızı nokta dibi; gölgeli alan en büyük düşüş. BIST 100 fiyat endeksidir (temettü içermez).",
+        "value": "Toplam değer (hisseler + kasadaki nakit) ile dışarıdan yatırdığın para (kesikli çizgi).",
+        "pl": "Her gün itibarıyla birikimli kâr/zarar: gerçekleşen + gerçekleşmemiş + temettü."
+      },
       "noData": "Bu dönem için geçmiş performans verisi yok.",
       "dailyReturnLabel": "Günlük getiri"
     },
@@ -89,10 +98,6 @@
     "totalPl": "Toplam K/Z",
     "dividendIncome": "Temettü Geliri",
     "dividendIncomeSub": "Brüt {{gross}}",
-    "currentHoldings": "Eldeki Hisseler",
-    "closedPositions": "Gerçekleşen Satışlar",
-    "noCurrentHoldings": "Şu anda elde hisse yok.",
-    "noClosedPositions": "Henüz satış yapılmamış.",
     "dividends": "Alınan Temettüler",
     "dividendsHint": "Hak kullanım tarihinde, bir önceki gün elde tutulan hisseler için stopaj düşülmüş net tutar olarak kasaya eklenir.",
     "noDividends": "Henüz temettü alınmamış.",
@@ -122,7 +127,6 @@
       "sum": "Toplam"
     },
     "performance": {
-      "title": "Performans",
       "ranges": {
         "1M": "1A",
         "3M": "3A",
@@ -130,18 +134,6 @@
         "YTD": "YB",
         "1Y": "1Y",
         "ALL": "Tümü"
-      },
-      "modes": {
-        "pl": "K/Z (₺)",
-        "plPct": "K/Z (%)",
-        "value": "Değer ve Yatırılan",
-        "performance": "Getiri ve BIST 100"
-      },
-      "hints": {
-        "pl": "Her gün itibarıyla birikimli kâr/zarar: gerçekleşen + gerçekleşmemiş + temettü. Yeşil nokta dönemin en yüksek, kırmızı nokta en düşük değeri.",
-        "plPct": "Birikimli kâr/zararın, o güne kadar yatırdığın paraya oranı. Fiyatlar değişmese bile para eklediğinde bu oran değişir.",
-        "value": "Toplam değer (hisseler + kasadaki nakit) ile dışarıdan yatırdığın para (kesikli çizgi).",
-        "performance": "Zaman ağırlıklı getiri: para ekleme etkisinden arındırılmış performans; dönem başında %0'dan başlar. BIST 100 fiyat endeksidir (temettü içermez). Gölgeli alan en büyük düşüştür."
       },
       "return": "Getiri",
       "returnHint": "Zaman ağırlıklı getiri: ne zaman para eklediğinden etkilenmeyen, yatırımlarının kendi performansı.",
@@ -165,34 +157,72 @@
       "totalValue": "Toplam değer",
       "invested": "Yatırılan"
     },
-    "monthly": {
-      "title": "Aylık Döküm",
-      "hint": "Değerler her ayın son işlem günü itibarıyladır. Getiri zaman ağırlıklıdır (eklenen parayı yok sayar); K/Z değişimi TL cinsindendir.",
-      "month": "Ay",
-      "value": "Toplam Değer",
-      "invested": "Yatırılan",
-      "totalPl": "Toplam K/Z",
-      "plChange": "K/Z Değişimi",
-      "return": "Getiri",
-      "benchmark": "BIST 100",
-      "showAll": "{{count}} ayın tümünü göster",
-      "showLess": "Daha az göster"
+    "commissionPaid": "Ödenen komisyon: {{amount}}",
+    "refresh": "Yenile",
+    "loading": "Piyasa verileri güncelleniyor; günün ilk açılışında bu birkaç saniye sürebilir…",
+    "loadError": "Analiz yüklenemedi.",
+    "empty": {
+      "title": "Henüz analiz edilecek işlem yok",
+      "description": "Portföyün fon gibi grafiğini, getirilerini ve hisse bazında kâr/zararını görmek için ilk alış işlemini ekle."
     },
-    "commissionPaid": "Ödenen komisyon: {{amount}}"
+    "fund": {
+      "overview": "Portföy özeti",
+      "unitPrice": "Pay fiyatı",
+      "asOf": "{{date}} kapanışı",
+      "sinceStart": "başlangıçtan beri",
+      "unitPriceHint": "Portföyün bir yatırım fonu gibi fiyatlanır: 1,0000'dan başlar ve sadece performansla değişir. Para eklemek ya da çıkarmak pay fiyatını etkilemez.",
+      "size": "Toplam değer"
+    },
+    "returns": {
+      "title": "Getiriler",
+      "hint": "Pay fiyatındaki değişim; para ekleme ve çıkarmalardan etkilenmez, bu yüzden fonlarla ve endeksle doğrudan karşılaştırılabilir.",
+      "periods": {
+        "1M": "1 Ay",
+        "3M": "3 Ay",
+        "6M": "6 Ay",
+        "YTD": "Yılbaşından",
+        "1Y": "1 Yıl",
+        "ALL": "Başlangıçtan"
+      },
+      "difference": "Fark",
+      "points": "{{value}} puan",
+      "volatility": "Yıllık oynaklık",
+      "volatilityHint": "Günlük getirilerin standart sapmasının yıllık karşılığı; ne kadar yüksekse portföy o kadar dalgalı.",
+      "bestDay": "En iyi gün",
+      "worstDay": "En kötü gün"
+    },
+    "positions": {
+      "title": "Hisse Bazında Kâr / Zarar",
+      "hint": "Gerçekleşmemiş: eldeki hisselerin bugünkü kârı. Gerçekleşen: satışlarla (rüçhan satışları dahil) kesinleşen kâr. Komisyonlar dahildir.",
+      "filterLabel": "Hisseler",
+      "filters": {
+        "all": "Tümü ({{count}})",
+        "open": "Elde ({{count}})",
+        "closed": "Kapanan ({{count}})"
+      },
+      "empty": "Bu filtrede hisse yok.",
+      "weight": "Ağırlık",
+      "dividends": "Temettü",
+      "totalPct": "Getiri",
+      "closed": "Kapandı"
+    },
+    "allocation": {
+      "title": "Dağılım",
+      "cash": "Kasadaki nakit",
+      "other": "Diğer ({{count}})"
+    }
   },
   "myPortfolios": {
     "title": "Portföylerim",
-    "subtitle": "Yatırım portföylerini yönet",
+    "subtitle": "Tüm portföylerinin performansı tek bakışta. Analizine ve işlemlerine buradan ulaş.",
     "createNew": "Yeni Portföy",
     "empty": {
-      "title": "Henüz portföy yok",
-      "description": "Yatırımlarını takip etmeye başlamak için ilk portföyünü oluştur."
+      "title": "Henüz portföyün yok",
+      "description": "İlk portföyünü oluştur, işlemlerini ekle; performansını burada bir fon gibi takip et."
     },
     "card": {
       "transactions": "{{count}} işlem",
-      "noTransactions": "İşlem yok",
-      "market": "Piyasa: {{market}}",
-      "created": "Oluşturulma: {{date}}"
+      "noTransactions": "İşlem yok"
     },
     "create": {
       "title": "Yeni Portföy Oluştur",
@@ -204,7 +234,12 @@
       "title": "Portföyü Yeniden Adlandır",
       "nameLabel": "Portföy Adı",
       "namePlaceholder": "Portföy adını gir"
-    }
+    },
+    "totalsLabel": "Tüm portföylerin toplamı",
+    "totalValue": "Toplam varlık",
+    "noTrades": "Henüz işlem yok. Analizi görmek için ilk alışını ekle.",
+    "dailyChange": "Son işlem günündeki değişim",
+    "sparklineLabel": "Son 90 işlem günündeki pay fiyatı"
   },
   "portfolio": {
     "title": "Portföy Detayı",
@@ -263,6 +298,11 @@
       "title": "Portföyü Sil",
       "message": "\"{{name}}\" portföyünü silmek istediğine emin misin? Bu işlem geri alınamaz ve tüm işlemler kalıcı olarak silinir.",
       "confirm": "Portföyü Sil"
+    },
+    "tabs": {
+      "label": "Portföy görünümleri",
+      "analysis": "Analiz",
+      "transactions": "İşlemler"
     }
   },
   "profile": {

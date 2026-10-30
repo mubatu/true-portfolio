@@ -1,92 +1,156 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { AlertTriangle, ArrowLeft, Loader2 } from 'lucide-react';
+import { AlertTriangle, Plus, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { analyzePortfolio, getPortfolioBySlug } from '@/services/portfolioService';
 import { getMarketCurrency, toDisplayTicker } from '@/config';
+import { AllocationChart } from '@/components/analysis/AllocationChart';
+import { DividendsTable } from '@/components/analysis/DividendsTable';
+import { FundChart } from '@/components/analysis/FundChart';
+import { FundOverview } from '@/components/analysis/FundOverview';
+import { PositionsTable } from '@/components/analysis/PositionsTable';
+import { ReturnsTable } from '@/components/analysis/ReturnsTable';
 import { useFormatters } from '@/components/analysis/format';
-import { MonthlyTable } from '@/components/analysis/MonthlyTable';
-import { PerformanceSection } from '@/components/analysis/PerformanceSection';
-import {
-  ClosedPositionsTable,
-  DividendsTable,
-  HoldingsTable,
-} from '@/components/analysis/PositionTables';
-import { SummaryCards } from '@/components/analysis/SummaryCards';
 import type { AnalysisWarning } from '@/components/analysis/types';
+import { PortfolioHeader } from '@/components/portfolio/PortfolioHeader';
 
 export function PortfolioAnalyze() {
   const { slug } = useParams<{ slug: string }>();
   const { t } = useTranslation();
-  const navigate = useNavigate();
 
-  const { data: portfolio, isLoading: isPortfolioLoading } = useQuery({
+  const portfolioQuery = useQuery({
     queryKey: ['portfolio', slug],
     queryFn: () => getPortfolioBySlug(slug!),
     enabled: !!slug,
   });
+  const portfolio = portfolioQuery.data;
 
-  const {
-    data: analysis,
-    isLoading: isAnalysisLoading,
-    error,
-  } = useQuery({
+  const analysisQuery = useQuery({
     queryKey: ['portfolio-analysis', portfolio?.id],
     queryFn: () => analyzePortfolio(portfolio!.id),
     enabled: !!portfolio?.id,
   });
+  const analysis = analysisQuery.data;
 
-  const isLoading = isPortfolioLoading || isAnalysisLoading;
   const market = portfolio?.market ?? 'BIST';
   const fmt = useFormatters(getMarketCurrency(market));
   const displayTicker = (ticker: string) => toDisplayTicker(ticker, market);
 
+  useEffect(() => {
+    if (portfolio?.name) document.title = `${portfolio.name} · ${t('portfolio.tabs.analysis')} · ${t('common.appName')}`;
+  }, [portfolio?.name, t]);
+
+  const error = portfolioQuery.error ?? analysisQuery.error;
+  const loading = portfolioQuery.isLoading || analysisQuery.isLoading;
+  const points = analysis?.performance_series.points ?? [];
+  const hasTrades = (analysis?.positions.length ?? 0) > 0;
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Button variant="ghost" size="sm" className="gap-1 mb-6" onClick={() => navigate('/dashboard')}>
-        <ArrowLeft className="h-4 w-4" />
-        {t('analyze.backToDashboard')}
-      </Button>
+    <div className="container mx-auto px-4 py-6 md:py-8 max-w-7xl">
+      <PortfolioHeader
+        portfolio={portfolio}
+        actions={
+          analysis && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={() => analysisQuery.refetch()}
+              disabled={analysisQuery.isFetching}
+              aria-label={t('analyze.refresh')}
+            >
+              <RefreshCw className={`h-4 w-4 ${analysisQuery.isFetching ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">{t('analyze.refresh')}</span>
+            </Button>
+          )
+        }
+      />
 
-      <h1 className="text-3xl font-bold mb-2">
-        {portfolio?.name ? t('analyze.title', { name: portfolio.name }) : t('common.dashboard')}
-      </h1>
-      <p className="text-sm mb-8" style={{ color: 'hsl(var(--muted-foreground))' }}>
-        {t('analyze.subtitle')}
-      </p>
+      {loading && <AnalysisSkeleton />}
 
-      {isLoading && (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      )}
-
-      {error && (
+      {error && !loading && (
         <div
-          className="rounded-lg border p-4 text-center"
-          style={{
-            borderColor: 'hsl(var(--destructive))',
-            backgroundColor: 'hsl(var(--destructive) / 0.1)',
-          }}
+          className="rounded-xl border p-6 text-center"
+          style={{ borderColor: 'hsl(var(--destructive) / 0.5)', backgroundColor: 'hsl(var(--destructive) / 0.06)' }}
+          role="alert"
         >
-          <p style={{ color: 'hsl(var(--destructive))' }}>
-            {t('common.error')}: {(error as Error).message}
+          <p className="font-medium mb-1" style={{ color: 'hsl(var(--destructive))' }}>
+            {t('analyze.loadError')}
           </p>
+          <p className="text-sm mb-4" style={{ color: 'hsl(var(--muted-foreground))' }}>
+            {(error as Error).message}
+          </p>
+          <Button variant="outline" size="sm" onClick={() => (portfolio ? analysisQuery.refetch() : portfolioQuery.refetch())}>
+            {t('common.retry')}
+          </Button>
         </div>
       )}
 
-      {!isLoading && analysis && (
+      {analysis && !loading && !hasTrades && (
+        <div className="rounded-2xl border-2 border-dashed p-10 text-center" style={{ borderColor: 'hsl(var(--border))' }}>
+          <h2 className="text-lg font-semibold mb-1">{t('analyze.empty.title')}</h2>
+          <p className="text-sm mb-5 max-w-md mx-auto" style={{ color: 'hsl(var(--muted-foreground))' }}>
+            {t('analyze.empty.description')}
+          </p>
+          <Link to={`/portfolio/${slug}`}>
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              {t('portfolio.addTransaction')}
+            </Button>
+          </Link>
+        </div>
+      )}
+
+      {analysis && !loading && hasTrades && (
         <>
           <Warnings warnings={analysis.warnings} displayTicker={displayTicker} />
-          <SummaryCards totals={analysis.totals} dividends={analysis.dividends} fmt={fmt} />
-          <PerformanceSection points={analysis.performance_series.points} fmt={fmt} />
-          <MonthlyTable points={analysis.performance_series.points} fmt={fmt} />
-          <HoldingsTable holdings={analysis.current_holdings} fmt={fmt} displayTicker={displayTicker} />
-          <ClosedPositionsTable positions={analysis.closed_positions} fmt={fmt} displayTicker={displayTicker} />
+          <FundOverview points={points} totals={analysis.totals} dividends={analysis.dividends} fmt={fmt} />
+          <FundChart points={points} fmt={fmt} />
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] mb-6 items-start [&>*]:min-w-0">
+            <ReturnsTable points={points} fmt={fmt} />
+            <AllocationChart
+              positions={analysis.positions}
+              cash={analysis.totals.in_the_safe}
+              fmt={fmt}
+              displayTicker={displayTicker}
+            />
+          </div>
+          <PositionsTable positions={analysis.positions} fmt={fmt} displayTicker={displayTicker} />
           <DividendsTable dividends={analysis.dividends} fmt={fmt} displayTicker={displayTicker} />
+          <p className="text-xs mt-8" style={{ color: 'hsl(var(--muted-foreground))' }}>
+            {t('analyze.subtitle')}
+          </p>
         </>
       )}
+    </div>
+  );
+}
+
+function AnalysisSkeleton() {
+  const { t } = useTranslation();
+  return (
+    <div aria-busy="true" aria-live="polite">
+      <p className="text-sm mb-4 inline-flex items-center gap-2" style={{ color: 'hsl(var(--muted-foreground))' }}>
+        <RefreshCw className="h-4 w-4 animate-spin" />
+        {t('analyze.loading')}
+      </p>
+      <div className="rounded-2xl border p-6 mb-6 grid gap-6 lg:grid-cols-[1fr_1.6fr]" style={{ borderColor: 'hsl(var(--border))' }}>
+        <div className="space-y-3">
+          <div className="h-4 w-24 rounded bg-muted animate-pulse" />
+          <div className="h-12 w-48 rounded bg-muted animate-pulse" />
+          <div className="h-4 w-56 rounded bg-muted animate-pulse" />
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {Array.from({ length: 6 }, (_, i) => (
+            <div key={i} className="h-16 rounded-lg bg-muted animate-pulse" />
+          ))}
+        </div>
+      </div>
+      <div className="rounded-2xl border p-6 mb-6" style={{ borderColor: 'hsl(var(--border))' }}>
+        <div className="h-[300px] rounded-lg bg-muted animate-pulse" />
+      </div>
     </div>
   );
 }
@@ -103,8 +167,9 @@ function Warnings({
 
   return (
     <div
-      className="rounded-lg border p-4 mb-6 flex gap-3"
+      className="rounded-xl border p-4 mb-6 flex gap-3"
       style={{ borderColor: 'hsl(38 92% 50%)', backgroundColor: 'hsl(38 92% 50% / 0.1)' }}
+      role="status"
     >
       <AlertTriangle className="h-5 w-5 shrink-0" style={{ color: 'hsl(38 92% 40%)' }} />
       <div className="text-sm">

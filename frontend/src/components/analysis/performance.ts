@@ -6,6 +6,10 @@
  *    New money changes these, so they are shown as levels, not returns.
  *  - "How did the portfolio perform?"  → twr_pct (time-weighted return).
  *    New money does not move it, so returns and drawdowns use it.
+ *
+ * Fund view: the portfolio is priced like a mutual fund. Its unit price
+ * starts at 1.0000 and moves only with the time-weighted return — adding
+ * money buys new units at the current price instead of moving the price.
  */
 import type { PerformancePoint } from './types';
 
@@ -13,7 +17,7 @@ export const RANGE_KEYS = ['1M', '3M', '6M', 'YTD', '1Y', 'ALL'] as const;
 export type RangeKey = (typeof RANGE_KEYS)[number];
 
 export interface RangeSlice {
-  /** Last point before the range — the "start value" for returns, if any. */
+  /** Close at the range start (on or before it) — the base for returns, if any. */
   baseline: PerformancePoint | null;
   points: PerformancePoint[];
 }
@@ -49,19 +53,6 @@ export interface PeriodStats {
   maxDrawdown: Drawdown | null;
   /** Drawdown of the last day from the period's running peak, % (≤ 0). */
   currentDrawdownPct: number;
-}
-
-export interface MonthRow {
-  /** YYYY-MM */
-  month: string;
-  endDate: string;
-  totalValue: number;
-  invested: number;
-  totalPl: number;
-  plPct: number;
-  plChange: number;
-  returnPct: number;
-  benchmarkReturnPct: number | null;
 }
 
 // ── Dates (ISO yyyy-mm-dd strings, calendar math in UTC) ─────────────
@@ -110,7 +101,11 @@ export function sliceRange(points: PerformancePoint[], range: RangeKey): RangeSl
   if (start === null) return { baseline: null, points };
 
   const firstIn = points.findIndex((p) => p.date >= start);
-  if (firstIn <= 0) return { baseline: null, points: firstIn === 0 ? points : [] };
+  if (firstIn < 0) return { baseline: null, points: [] };
+  // A close on the start day itself is the base (fund convention: price
+  // today vs. price one period ago); otherwise the last close before it.
+  if (points[firstIn].date === start) return { baseline: points[firstIn], points: points.slice(firstIn) };
+  if (firstIn === 0) return { baseline: null, points };
   return { baseline: points[firstIn - 1], points: points.slice(firstIn) };
 }
 
@@ -207,39 +202,53 @@ export function periodStats(slice: RangeSlice): PeriodStats | null {
   };
 }
 
-/** One row per calendar month, newest first, valued at the month's last day. */
-export function monthlyBreakdown(points: PerformancePoint[]): MonthRow[] {
-  const rows: MonthRow[] = [];
-  let prevEnd: PerformancePoint | null = null;
-  let monthStart = 0;
+// ── Fund view ───────────────────────────────────────────────────────
 
-  for (let i = 0; i < points.length; i++) {
-    const p = points[i];
-    const month = p.date.slice(0, 7);
-    if (i > 0 && points[i - 1].date.slice(0, 7) !== month) monthStart = i;
-    const isMonthEnd = i === points.length - 1 || points[i + 1].date.slice(0, 7) !== month;
-    if (!isMonthEnd) continue;
+/** Unit price of the portfolio "fund" on a day (starts at 1.0000). */
+export const unitPrice = (p: PerformancePoint) => growth(p);
 
-    const monthSlice: RangeSlice = {
-      baseline: prevEnd,
-      points: points.slice(monthStart, i + 1),
+/** Day-over-day unit price change, % (first day: vs. 1.0000). */
+export function dailyReturns(points: PerformancePoint[]): number[] {
+  return points.map((p, i) => (growth(p) / (i > 0 ? growth(points[i - 1]) : 1) - 1) * 100);
+}
+
+const TRADING_DAYS_PER_YEAR = 252;
+
+/** Annualized volatility of daily returns, %; null with < 20 days. */
+export function annualizedVolatility(points: PerformancePoint[]): number | null {
+  const returns = dailyReturns(points).slice(1);
+  if (returns.length < 20) return null;
+  const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
+  const variance = returns.reduce((a, r) => a + (r - mean) ** 2, 0) / (returns.length - 1);
+  return Math.sqrt(variance) * Math.sqrt(TRADING_DAYS_PER_YEAR);
+}
+
+export interface PeriodReturn {
+  range: RangeKey;
+  /** null when the history does not reach back to the period start. */
+  returnPct: number | null;
+  benchmarkPct: number | null;
+}
+
+/**
+ * Fund-style return table (1M, 3M, 6M, YTD, 1Y, since inception). A period
+ * longer than the history is left empty rather than shown as "since start".
+ */
+export function periodReturns(points: PerformancePoint[]): PeriodReturn[] {
+  if (points.length === 0) return [];
+  const first = points[0].date;
+  const last = points[points.length - 1].date;
+
+  return RANGE_KEYS.map((range) => {
+    const start = rangeStart(range, last);
+    if (start !== null && start < first) {
+      return { range, returnPct: null, benchmarkPct: null };
+    }
+    const stats = periodStats(sliceRange(points, range));
+    return {
+      range,
+      returnPct: stats?.returnPct ?? null,
+      benchmarkPct: stats?.benchmarkReturnPct ?? null,
     };
-    const b0 = baseBenchmark(monthSlice);
-
-    rows.push({
-      month,
-      endDate: p.date,
-      totalValue: p.total_value,
-      invested: p.invested,
-      totalPl: p.total_pl,
-      plPct: p.pl_pct,
-      plChange: p.total_pl - (prevEnd?.total_pl ?? 0),
-      returnPct: (growth(p) / baseGrowth(monthSlice) - 1) * 100,
-      benchmarkReturnPct:
-        b0 && p.benchmark_close != null ? (p.benchmark_close / b0 - 1) * 100 : null,
-    });
-    prevEnd = p;
-  }
-
-  return rows.reverse();
+  });
 }

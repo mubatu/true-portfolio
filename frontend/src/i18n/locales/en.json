@@ -3,7 +3,6 @@
     "appName": "PortfolioTracker",
     "signIn": "Sign In",
     "signOut": "Sign Out",
-    "dashboard": "Dashboard",
     "myPortfolios": "My Portfolios",
     "getStarted": "Get Started",
     "learnMore": "Learn More",
@@ -16,7 +15,8 @@
     "error": "An error occurred",
     "noData": "No data available",
     "toggleTheme": "Toggle theme",
-    "language": "Language"
+    "language": "Language",
+    "retry": "Try again"
   },
   "landing": {
     "hero": {
@@ -65,21 +65,30 @@
       "registrationFailed": "Registration failed. Please try again."
     }
   },
-  "dashboard": {
-    "title": "Dashboard",
-    "subtitle": "Select a portfolio to analyze its performance",
-    "selectPortfolio": "Choose a Portfolio",
-    "dropdownPlaceholder": "Select a portfolio…",
-    "analyze": "Analyze",
-    "txns": "txns",
-    "noPortfolios": "You don't have any portfolios yet. Create one to get started.",
-    "goToPortfolios": "Go to My Portfolios"
-  },
   "analyze": {
-    "backToDashboard": "Back to Dashboard",
-    "title": "{{name}} — Analysis",
     "subtitle": "Average cost method · prices exclude today · dividends net of withholding tax · commission included",
     "chart": {
+      "titles": {
+        "unit": "Unit Price",
+        "value": "Total Value",
+        "pl": "Profit / Loss"
+      },
+      "rangeLabel": "Period",
+      "modeLabel": "Chart",
+      "modes": {
+        "unit": "Unit price",
+        "value": "Value vs. invested",
+        "pl": "P/L (₺)"
+      },
+      "showBenchmark": "Compare with BIST 100",
+      "portfolioUnit": "Portfolio unit price",
+      "benchmarkLine": "BIST 100 (same start)",
+      "sinceRangeStart": "Since period start",
+      "hints": {
+        "unit": "Like a fund chart: the unit price moves with the stocks you held on each day. Green dot = period high, red dot = low; the shaded area is the largest drawdown. BIST 100 is a price index (excludes dividends).",
+        "value": "Total value (holdings + cash in the safe) against the money you brought in from outside (dashed).",
+        "pl": "Cumulative profit/loss on each day: realized + unrealized + dividends."
+      },
       "noData": "No historical performance data available for this period.",
       "dailyReturnLabel": "Daily return"
     },
@@ -89,10 +98,6 @@
     "totalPl": "Total P/L",
     "dividendIncome": "Dividend Income",
     "dividendIncomeSub": "Gross {{gross}}",
-    "currentHoldings": "Current Holdings",
-    "closedPositions": "Closed Positions",
-    "noCurrentHoldings": "No stocks currently held.",
-    "noClosedPositions": "No closed positions yet.",
     "dividends": "Dividends Received",
     "dividendsHint": "Credited on the ex-date to shares held the day before, net of withholding tax, into the safe.",
     "noDividends": "No dividends received yet.",
@@ -122,7 +127,6 @@
       "sum": "Total"
     },
     "performance": {
-      "title": "Performance",
       "ranges": {
         "1M": "1M",
         "3M": "3M",
@@ -130,18 +134,6 @@
         "YTD": "YTD",
         "1Y": "1Y",
         "ALL": "All"
-      },
-      "modes": {
-        "pl": "P/L (₺)",
-        "plPct": "P/L (%)",
-        "value": "Value vs. Invested",
-        "performance": "Return vs. BIST 100"
-      },
-      "hints": {
-        "pl": "Cumulative profit/loss on each day: realized + unrealized + dividends. Green dot = highest, red dot = lowest in this period.",
-        "plPct": "Cumulative profit/loss as a percentage of the money you had put in by that day. Adding money changes this ratio even if prices don't move.",
-        "value": "Total value (holdings + cash in the safe) against the money you brought in from outside (dashed).",
-        "performance": "Time-weighted return: how your investments performed with the effect of adding money removed, rebased to 0% at the start of the period. BIST 100 is a price index (excludes dividends). Shaded area = largest drawdown."
       },
       "return": "Return",
       "returnHint": "Time-weighted return: performance of your holdings, not affected by when you added money.",
@@ -165,34 +157,72 @@
       "totalValue": "Total value",
       "invested": "Invested"
     },
-    "monthly": {
-      "title": "Month by Month",
-      "hint": "Values at each month's last trading day. Return is time-weighted (ignores money added); P/L change is in TL.",
-      "month": "Month",
-      "value": "Total Value",
-      "invested": "Invested",
-      "totalPl": "Total P/L",
-      "plChange": "P/L Change",
-      "return": "Return",
-      "benchmark": "BIST 100",
-      "showAll": "Show all {{count}} months",
-      "showLess": "Show fewer"
+    "commissionPaid": "Commission paid: {{amount}}",
+    "refresh": "Refresh",
+    "loading": "Updating market data; the first open of the day can take a few seconds…",
+    "loadError": "Couldn't load the analysis.",
+    "empty": {
+      "title": "No trades to analyze yet",
+      "description": "Add your first buy to see the portfolio's fund-style chart, returns and per-stock profit/loss."
     },
-    "commissionPaid": "Commission paid: {{amount}}"
+    "fund": {
+      "overview": "Portfolio overview",
+      "unitPrice": "Unit price",
+      "asOf": "Close of {{date}}",
+      "sinceStart": "since start",
+      "unitPriceHint": "Your portfolio is priced like a mutual fund: it starts at 1.0000 and moves only with performance. Adding or withdrawing money doesn't move the unit price.",
+      "size": "Total value"
+    },
+    "returns": {
+      "title": "Returns",
+      "hint": "Change in the unit price; not affected by deposits or withdrawals, so it compares directly with funds and the index.",
+      "periods": {
+        "1M": "1 Month",
+        "3M": "3 Months",
+        "6M": "6 Months",
+        "YTD": "Year to date",
+        "1Y": "1 Year",
+        "ALL": "Since start"
+      },
+      "difference": "Difference",
+      "points": "{{value}} pts",
+      "volatility": "Annual volatility",
+      "volatilityHint": "Annualized standard deviation of daily returns; the higher, the bumpier the ride.",
+      "bestDay": "Best day",
+      "worstDay": "Worst day"
+    },
+    "positions": {
+      "title": "Profit / Loss by Stock",
+      "hint": "Unrealized: today's gain on shares still held. Realized: gains locked in by selling (incl. sold rights). Commissions included.",
+      "filterLabel": "Stocks",
+      "filters": {
+        "all": "All ({{count}})",
+        "open": "Held ({{count}})",
+        "closed": "Closed ({{count}})"
+      },
+      "empty": "No stocks in this filter.",
+      "weight": "Weight",
+      "dividends": "Dividends",
+      "totalPct": "Return",
+      "closed": "Closed"
+    },
+    "allocation": {
+      "title": "Allocation",
+      "cash": "Cash in the safe",
+      "other": "Other ({{count}})"
+    }
   },
   "myPortfolios": {
     "title": "My Portfolios",
-    "subtitle": "Manage your investment portfolios",
+    "subtitle": "All your portfolios' performance at a glance. Open their analysis and transactions from here.",
     "createNew": "New Portfolio",
     "empty": {
       "title": "No portfolios yet",
-      "description": "Create your first portfolio to start tracking your investments."
+      "description": "Create your first portfolio, add your trades, and follow its performance here like a fund."
     },
     "card": {
       "transactions": "{{count}} transactions",
-      "noTransactions": "No transactions",
-      "market": "Market: {{market}}",
-      "created": "Created {{date}}"
+      "noTransactions": "No transactions"
     },
     "create": {
       "title": "Create New Portfolio",
@@ -204,7 +234,12 @@
       "title": "Rename Portfolio",
       "nameLabel": "Portfolio Name",
       "namePlaceholder": "Enter portfolio name"
-    }
+    },
+    "totalsLabel": "All portfolios combined",
+    "totalValue": "Total assets",
+    "noTrades": "No trades yet. Add your first buy to see the analysis.",
+    "dailyChange": "Change on the last trading day",
+    "sparklineLabel": "Unit price over the last 90 trading days"
   },
   "portfolio": {
     "title": "Portfolio Details",
@@ -263,6 +298,11 @@
       "title": "Delete Portfolio",
       "message": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone and all transactions will be permanently deleted.",
       "confirm": "Delete Portfolio"
+    },
+    "tabs": {
+      "label": "Portfolio views",
+      "analysis": "Analysis",
+      "transactions": "Transactions"
     }
   },
   "profile": {

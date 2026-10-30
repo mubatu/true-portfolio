@@ -1,22 +1,25 @@
 // Response of GET /portfolios/{id}/analyze (backend/app/services/analysis.py).
 
-export interface CurrentHolding {
+/** One row of the per-stock P/L table (open or fully closed). */
+export interface Position {
   ticker: string;
   quantity: number;
   avg_cost: number;
-  current_price: number | null;
-  current_value: number;
+  price: number | null;
+  market_value: number;
   cost_basis: number;
+  /** Share of the open positions' market value, %. */
+  weight_pct: number;
   unrealized_pl: number;
   unrealized_pl_pct: number;
-}
-
-export interface ClosedPosition {
-  ticker: string;
-  total_invested: number;
-  total_returned: number;
+  /** Realized on sales, incl. sold rights. */
   realized_pl: number;
-  realized_pl_pct: number;
+  dividend_income: number;
+  commission_paid: number;
+  /** Everything ever paid for buys, commission included. */
+  invested: number;
+  total_pl: number;
+  total_pl_pct: number;
 }
 
 export interface AnalysisTotals {
@@ -81,8 +84,7 @@ export interface AnalysisResponse {
   portfolio_id: number;
   market_data: { synced: string[]; failed: string[] };
   performance_series: PerformanceSeries;
-  current_holdings: CurrentHolding[];
-  closed_positions: ClosedPosition[];
+  positions: Position[];
   dividends: DividendSummary;
   totals: AnalysisTotals;
   warnings: AnalysisWarning[];

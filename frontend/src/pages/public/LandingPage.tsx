@@ -25,7 +25,7 @@ export function LandingPage() {
             {t('landing.hero.subtitle')}
           </p>
           <div className="flex justify-center gap-4">
-            <Link to={isAuthenticated ? '/dashboard' : '/auth'}>
+            <Link to={isAuthenticated ? '/my-portfolios' : '/auth'}>
               <Button size="lg" className="gap-2">
                 {t('common.getStarted')} <ArrowRight className="h-4 w-4" />
               </Button>

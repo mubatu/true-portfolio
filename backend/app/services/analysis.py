@@ -30,6 +30,7 @@ from app.services.ledger import (
     DividendEvent,
     Ledger,
     LedgerTransaction,
+    TickerPosition,
     group_by_date,
     replay,
 )
@@ -58,41 +59,13 @@ def build_analysis(
         if any(d <= as_of for d in by_date)
     }
 
-    current_holdings: list[dict] = []
-    closed_positions: list[dict] = []
-
-    for ticker in sorted(ledger.positions):
-        position = ledger.positions[ticker]
-
-        # Any sale → realized result row (partial sales show in both tables)
-        if position.sold_value > 0:
-            closed_positions.append({
-                "ticker": ticker,
-                "total_invested": float(position.sold_cost),
-                "total_returned": float(position.sold_value),
-                "realized_pl": float(position.realized_pl),
-                "realized_pl_pct": _pct(position.realized_pl, position.sold_cost, 2),
-            })
-
-        if position.quantity > 0:
-            price = latest_closes.get(ticker)
-            if price is not None:
-                current_value = position.quantity * price
-                unrealized = position.quantity * (price - position.avg_cost)
-            else:
-                current_value = position.cost_basis
-                unrealized = ZERO
-
-            current_holdings.append({
-                "ticker": ticker,
-                "quantity": float(position.quantity),
-                "avg_cost": float(position.avg_cost),
-                "current_price": float(price) if price is not None else None,
-                "current_value": float(current_value),
-                "cost_basis": float(position.cost_basis),
-                "unrealized_pl": float(unrealized),
-                "unrealized_pl_pct": _pct(unrealized, position.cost_basis, 2),
-            })
+    market_value_total = ledger.market_value(latest_closes)
+    positions = [
+        _position_row(ticker, ledger.positions[ticker], latest_closes.get(ticker), market_value_total)
+        for ticker in sorted(ledger.positions)
+    ]
+    # Open positions first, biggest first; then closed ones by result.
+    positions.sort(key=lambda p: (p["quantity"] <= 0, -p["market_value"], -p["total_pl"]))
 
     realized = ledger.realized_total
     unrealized = ledger.unrealized_total(latest_closes)
@@ -101,7 +74,7 @@ def build_analysis(
 
     totals = {
         "total_invested": _tl(ledger.pocket),
-        "portfolio_value": _tl(ledger.market_value(latest_closes)),
+        "portfolio_value": _tl(market_value_total),
         "in_the_safe": _tl(ledger.safe),
         "realized_pl": _tl(realized),
         "unrealized_pl": _tl(unrealized),
@@ -112,8 +85,7 @@ def build_analysis(
     }
 
     return {
-        "current_holdings": current_holdings,
-        "closed_positions": closed_positions,
+        "positions": positions,
         "dividends": _dividends_payload(ledger),
         "totals": totals,
         "performance_series": build_daily_series(
@@ -212,6 +184,45 @@ def build_daily_series(
         "start_date": first_buy.isoformat(),
         "end_date": as_of.isoformat(),
         "points": points,
+    }
+
+
+def _position_row(
+    ticker: str,
+    position: TickerPosition,
+    price: Decimal | None,
+    market_value_total: Decimal,
+) -> dict:
+    """One row of the per-stock P/L table.
+
+    total_pl = unrealized + realized (incl. sold rights) + net dividends;
+    total_pl_pct is measured against everything ever paid for the ticker.
+    """
+    held = position.quantity > 0
+    if held and price is not None:
+        market_value = position.quantity * price
+        unrealized = market_value - position.cost_basis
+    else:
+        market_value = position.cost_basis if held else ZERO
+        unrealized = ZERO
+    total_pl = unrealized + position.realized_pl + position.dividend_income
+
+    return {
+        "ticker": ticker,
+        "quantity": float(position.quantity),
+        "avg_cost": float(position.avg_cost),
+        "price": float(price) if price is not None else None,
+        "market_value": _tl(market_value),
+        "cost_basis": _tl(position.cost_basis),
+        "weight_pct": _pct(market_value, market_value_total, 2),
+        "unrealized_pl": _tl(unrealized),
+        "unrealized_pl_pct": _pct(unrealized, position.cost_basis, 2),
+        "realized_pl": _tl(position.realized_pl),
+        "dividend_income": _tl(position.dividend_income),
+        "commission_paid": _tl(position.commission_paid),
+        "invested": _tl(position.bought_cost),
+        "total_pl": _tl(total_pl),
+        "total_pl_pct": _pct(total_pl, position.bought_cost, 2),
     }
 
 

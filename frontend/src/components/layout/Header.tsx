@@ -1,6 +1,6 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { TrendingUp, Moon, Sun, LogOut, LayoutDashboard, User, ChevronDown, Briefcase, Languages } from 'lucide-react';
+import { TrendingUp, Moon, Sun, LogOut, User, ChevronDown, Briefcase, Languages } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { LOCALES } from '@/config';
 import { useTheme } from '@/hooks/useTheme';
@@ -35,7 +35,9 @@ export function Header() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const isActive = (path: string) => location.pathname === path;
+  // Portfolio pages live under "My Portfolios".
+  const inPortfolios =
+    location.pathname === '/my-portfolios' || location.pathname.startsWith('/portfolio/');
 
   const getUserInitials = () => {
     const name = user?.user_metadata?.full_name;
@@ -49,8 +51,8 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-20 items-center justify-between px-4">
         {/* Logo */}
-        <Link 
-          to="/" 
+        <Link
+          to={isAuthenticated ? '/my-portfolios' : '/'}
           className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
         >
           <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
@@ -62,31 +64,15 @@ export function Header() {
         {/* Navigation for authenticated users */}
         {isAuthenticated && (
           <nav className="hidden md:flex items-center gap-2 absolute left-1/2 -translate-x-1/2">
-            <Link to="/dashboard">
-              <Button 
-                variant="ghost" 
-                size="default"
-                className={`gap-2 text-base ${
-                  isActive('/dashboard') 
-                    ? 'font-medium' 
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-                style={isActive('/dashboard') ? { color: 'hsl(var(--primary))' } : undefined}
-              >
-                <LayoutDashboard className="h-5 w-5" />
-                {t('common.dashboard')}
-              </Button>
-            </Link>
             <Link to="/my-portfolios">
               <Button 
                 variant="ghost" 
                 size="default"
                 className={`gap-2 text-base ${
-                  isActive('/my-portfolios') 
-                    ? 'font-medium' 
-                    : 'text-muted-foreground hover:text-foreground'
+                  inPortfolios ? 'font-medium' : 'text-muted-foreground hover:text-foreground'
                 }`}
-                style={isActive('/my-portfolios') ? { color: 'hsl(var(--primary))' } : undefined}
+                style={inPortfolios ? { color: 'hsl(var(--primary))' } : undefined}
+                aria-current={inPortfolios ? 'page' : undefined}
               >
                 <Briefcase className="h-5 w-5" />
                 {t('common.myPortfolios')}
@@ -154,14 +140,6 @@ export function Header() {
 
                   {/* Mobile nav items */}
                   <div className="md:hidden py-1 border-b">
-                    <Link 
-                      to="/dashboard" 
-                      onClick={() => setDropdownOpen(false)}
-                      className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent transition-colors"
-                    >
-                      <LayoutDashboard className="h-4 w-4" />
-                      {t('common.dashboard')}
-                    </Link>
                     <Link
                       to="/my-portfolios"
                       onClick={() => setDropdownOpen(false)}

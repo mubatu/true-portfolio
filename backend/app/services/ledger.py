@@ -84,6 +84,8 @@ class TickerPosition:
     sold_cost: Decimal = ZERO
     dividend_income: Decimal = ZERO
     commission_paid: Decimal = ZERO
+    bought_cost: Decimal = ZERO
+    """Everything ever paid for buys of this ticker, commission included."""
 
     @property
     def avg_cost(self) -> Decimal:
@@ -108,6 +110,7 @@ class Ledger:
             paid = txn.gross_amount + commission
             position.quantity += txn.quantity
             position.cost_basis += paid
+            position.bought_cost += paid
 
             from_safe = min(self.safe, paid)
             self.safe -= from_safe

@@ -29,6 +29,15 @@ export function useFormatters(currencyCode: string) {
       maximumFractionDigits: 1,
     });
     const number = new Intl.NumberFormat(numberLocale);
+    const unit = new Intl.NumberFormat(numberLocale, {
+      minimumFractionDigits: 4,
+      maximumFractionDigits: 4,
+    });
+    const signedMoney = new Intl.NumberFormat(numberLocale, {
+      style: 'currency',
+      currency: currencyCode,
+      signDisplay: 'exceptZero',
+    });
     const rate = new Intl.NumberFormat(numberLocale, {
       style: 'percent',
       maximumFractionDigits: 2,
@@ -43,6 +52,11 @@ export function useFormatters(currencyCode: string) {
       signDisplay: 'exceptZero',
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
+    });
+    const share = new Intl.NumberFormat(numberLocale, {
+      style: 'percent',
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
     });
     const axisPct = new Intl.NumberFormat(numberLocale, {
       style: 'percent',
@@ -66,8 +80,14 @@ export function useFormatters(currencyCode: string) {
       money: (v: number) => currency.format(v),
       compactMoney: (v: number) => compactCurrency.format(v),
       number: (v: number) => number.format(v),
+      /** Fund unit price, 4 decimals, e.g. 1,6063 */
+      unit: (v: number) => unit.format(v),
+      /** Money with an explicit sign, e.g. +₺1.234,00 */
+      signedMoney: (v: number) => signedMoney.format(v),
       /** Signed percent from a percent number, e.g. 12.34 → +12.34% / +%12,34 */
       pct: (v: number) => signedPct.format(v / 100),
+      /** Unsigned share of a whole, e.g. 23.45 → %23,5 */
+      share: (v: number) => share.format(v / 100),
       /** Difference of two percentages, in points, e.g. 48.54 → +48.54 */
       points: (v: number) => signedPoints.format(v),
       /** Whole percent for chart axes, e.g. 30 → 30% / %30 */

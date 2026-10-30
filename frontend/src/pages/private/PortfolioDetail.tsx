@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Plus, Loader2, TrendingUp, Calendar } from 'lucide-react';
+import { Plus, Loader2, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   TransactionFormModal,
@@ -19,16 +19,16 @@ import {
   deleteTransaction,
   type Transaction,
 } from '@/services/portfolioService';
-import { getDateLocale, toDisplayTicker } from '@/config';
+import { toDisplayTicker } from '@/config';
+import { PortfolioHeader } from '@/components/portfolio/PortfolioHeader';
 
 type FormState =
   | { mode: 'add'; prefill?: Partial<TransactionFormValues> }
   | { mode: 'edit'; transaction: Transaction };
 
 export function PortfolioDetail() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { slug } = useParams<{ slug: string }>();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const [form, setForm] = useState<FormState | null>(null);
@@ -111,28 +111,18 @@ export function PortfolioDetail() {
   const activeMutation = form?.mode === 'edit' ? updateMutation : createMutation;
   const market = portfolio?.market ?? 'BIST';
 
-  const formatCreatedAt = (timestamp: string) =>
-    new Date(timestamp).toLocaleDateString(getDateLocale(i18n.language), {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-
   const isLoading = portfolioLoading || transactionsLoading;
   const error = portfolioError || transactionsError;
 
-  const backButton = (
-    <Button variant="ghost" onClick={() => navigate('/my-portfolios')} className="gap-2 mb-6">
-      <ArrowLeft className="h-4 w-4" />
-      {t('portfolio.back')}
-    </Button>
-  );
+  useEffect(() => {
+    if (portfolio?.name) document.title = `${portfolio.name} · ${t('portfolio.tabs.transactions')} · ${t('common.appName')}`;
+  }, [portfolio?.name, t]);
 
-  if (!isLoading && !portfolio) {
+  if (!isLoading && !portfolio && !error) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        {backButton}
-        <div className="rounded-lg border p-8 text-center" style={{ borderColor: 'hsl(var(--border))' }}>
+      <div className="container mx-auto px-4 py-6 md:py-8 max-w-7xl">
+        <PortfolioHeader portfolio={null} />
+        <div className="rounded-xl border p-8 text-center" style={{ borderColor: 'hsl(var(--border))' }}>
           <p style={{ color: 'hsl(var(--muted-foreground))' }}>{t('portfolio.notFound')}</p>
         </div>
       </div>
@@ -140,22 +130,33 @@ export function PortfolioDetail() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {backButton}
+    <div className="container mx-auto px-4 py-6 md:py-8 max-w-7xl">
+      <PortfolioHeader
+        portfolio={portfolio}
+        actions={
+          portfolio && (
+            <Button onClick={() => openForm({ mode: 'add' })} className="gap-2">
+              <Plus className="h-4 w-4" />
+              {t('portfolio.addTransaction')}
+            </Button>
+          )
+        }
+      />
 
       {isLoading && (
-        <div className="flex items-center justify-center py-12">
+        <div className="flex items-center justify-center py-12" role="status">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       )}
 
       {error && (
         <div
-          className="rounded-lg border p-4 text-center"
+          className="rounded-xl border p-4 text-center"
           style={{
             borderColor: 'hsl(var(--destructive))',
             backgroundColor: 'hsl(var(--destructive) / 0.1)',
           }}
+          role="alert"
         >
           <p style={{ color: 'hsl(var(--destructive))' }}>
             {t('common.error')}: {(error as Error).message}
@@ -165,36 +166,8 @@ export function PortfolioDetail() {
 
       {!isLoading && portfolio && (
         <>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-            <div>
-              <h1 className="text-3xl font-bold">{portfolio.name}</h1>
-              <div className="mt-2">
-                <span
-                  className="inline-flex items-center px-2.5 py-1 rounded text-sm font-medium"
-                  style={{
-                    backgroundColor: 'hsl(var(--muted))',
-                    color: 'hsl(var(--muted-foreground))',
-                  }}
-                >
-                  {t('portfolio.marketTag', { market: portfolio.market })}
-                </span>
-              </div>
-              <p
-                className="text-sm mt-1 flex items-center gap-2"
-                style={{ color: 'hsl(var(--muted-foreground))' }}
-              >
-                <Calendar className="h-4 w-4" />
-                {t('myPortfolios.card.created', { date: formatCreatedAt(portfolio.created_at) })}
-              </p>
-            </div>
-            <Button onClick={() => openForm({ mode: 'add' })} className="gap-2">
-              <Plus className="h-4 w-4" />
-              {t('portfolio.addTransaction')}
-            </Button>
-          </div>
-
           <div>
-            <h2 className="text-xl font-semibold mb-4">{t('portfolio.transactions.title')}</h2>
+            <h2 className="text-lg font-semibold mb-4">{t('portfolio.transactions.title')}</h2>
 
             {transactions.length === 0 ? (
               <div
