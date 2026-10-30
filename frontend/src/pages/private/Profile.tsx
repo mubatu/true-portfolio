@@ -74,7 +74,7 @@ export function Profile() {
         <Panel className="overflow-hidden lg:sticky lg:top-24">
           <div className="h-20 bg-gradient-to-br from-[hsl(var(--logo-from))] to-[hsl(var(--logo-to))]" aria-hidden="true" />
           <div className="px-6 pb-6 -mt-10">
-            <span className="flex h-20 w-20 items-center justify-center rounded-2xl border-4 border-card bg-primary text-2xl font-bold text-primary-foreground shadow-md">
+            <span className="flex h-20 w-20 items-center justify-center rounded-2xl border-4 border-card bg-primary-fill text-2xl font-bold text-primary-foreground shadow-md">
               {initials}
             </span>
             <h2 className="mt-3 text-lg font-semibold truncate">{fullName || t('profile.noName')}</h2>

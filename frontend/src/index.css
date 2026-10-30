@@ -22,6 +22,7 @@
   --color-popover-foreground: hsl(var(--popover-foreground));
   --color-primary: hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-primary-fill: hsl(var(--primary-fill));
   --color-secondary: hsl(var(--secondary));
   --color-secondary-foreground: hsl(var(--secondary-foreground));
   --color-muted: hsl(var(--muted));
@@ -49,6 +50,8 @@
   --popover-foreground: 222 47% 11%;
   /* Brand blue #1f6ee6 (the logo). */
   --primary: 216 80% 51%;
+  /* Solid brand surfaces (buttons, the sign-in panel) and the text on them. */
+  --primary-fill: 216 80% 51%;
   --primary-foreground: 210 40% 98%;
   --secondary: 220 14% 95%;
   --secondary-foreground: 222 47% 11%;
@@ -83,7 +86,10 @@
   --popover-foreground: 210 40% 98%;
   /* The brand blue, lifted to read on dark surfaces. */
   --primary: 216 86% 62%;
-  --primary-foreground: 222.2 47.4% 11.2%;
+  /* Fills keep the brand blue: white text on it reads (4.7:1), which it
+     would not on the lighter text blue above. */
+  --primary-fill: 216 80% 51%;
+  --primary-foreground: 210 40% 98%;
   --secondary: 223 22% 15%;
   --secondary-foreground: 210 40% 98%;
   --muted: 223 22% 15%;

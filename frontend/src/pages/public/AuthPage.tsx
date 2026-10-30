@@ -113,7 +113,7 @@ export function AuthPage() {
       <Header />
       <main className="flex-1 grid lg:grid-cols-2">
         {/* Brand panel */}
-        <aside className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-primary p-12 text-primary-foreground">
+        <aside className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-primary-fill p-12 text-primary-foreground">
           <div
             className="pointer-events-none absolute inset-0"
             aria-hidden="true"

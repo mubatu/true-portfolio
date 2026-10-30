@@ -130,7 +130,7 @@ export function LandingPage() {
             <ol className="mt-12 grid gap-8 md:grid-cols-3">
               {STEPS.map(({ key, icon: Icon }, i) => (
                 <li key={key} className="relative text-center">
-                  <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-md">
+                  <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-fill text-primary-foreground shadow-md">
                     <Icon className="h-6 w-6" aria-hidden="true" />
                   </span>
                   <span className="mt-4 block text-xs font-semibold uppercase tracking-wider text-primary">
