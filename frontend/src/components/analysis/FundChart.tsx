@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Area,
@@ -84,9 +84,7 @@ const NO_PORTFOLIO_LINES: PortfolioLine[] = [];
  * that can be ticked on, from its first day or the range start.
  *
  * ``hideAmounts`` (Explore): unit price only — no value / P/L views, no
- * TL in the tooltip. Explore also shows the selected period's return and
- * largest drop under the chart (``periodSummary``); portfolio pages have
- * those in their overview and highlights instead.
+ * TL in the tooltip.
  */
 export function FundChart({
   points,
@@ -94,7 +92,6 @@ export function FundChart({
   range,
   onRangeChange,
   hideAmounts = false,
-  periodSummary = false,
   portfolioLines = NO_PORTFOLIO_LINES,
 }: {
   points: PerformancePoint[];
@@ -103,7 +100,6 @@ export function FundChart({
   range: RangeKey;
   onRangeChange: (range: RangeKey) => void;
   hideAmounts?: boolean;
-  periodSummary?: boolean;
   portfolioLines?: PortfolioLine[];
 }) {
   const { t } = useTranslation();
@@ -510,42 +506,6 @@ export function FundChart({
             {mode === 'unit' && drawnPortfolios.length > 0 && <> {t('analyze.chart.portfoliosHint')}</>}
           </InfoNote>
 
-          {periodSummary && (
-            <div className="grid gap-3 sm:grid-cols-2 mt-5">
-              <StatCard
-                label={t('analyze.performance.return')}
-                value={fmt.pct(stats.returnPct)}
-                color={plColor(stats.returnPct)}
-                hint={t('analyze.performance.returnHint')}
-                lines={[
-                  stats.benchmarkReturnPct != null &&
-                    t('analyze.performance.vsBenchmark', {
-                      value: fmt.pct(stats.benchmarkReturnPct),
-                      diff: fmt.points(stats.returnPct - stats.benchmarkReturnPct),
-                    }),
-                ]}
-              />
-              <StatCard
-                label={t('analyze.performance.maxDrawdown')}
-                value={drawdown ? fmt.pct(drawdown.pct) : '—'}
-                color={drawdown ? LOSS : MUTED}
-                hint={t('analyze.performance.drawdownHint')}
-                lines={
-                  drawdown
-                    ? [
-                        t('analyze.performance.drawdownSpan', {
-                          from: drawdown.peakDate ? fmt.date(drawdown.peakDate) : t('analyze.performance.start'),
-                          to: fmt.date(drawdown.troughDate),
-                        }),
-                        drawdown.recoveryDate
-                          ? t('analyze.performance.recovered', { date: fmt.date(drawdown.recoveryDate) })
-                          : t('analyze.performance.notRecovered', { value: fmt.pct(stats.currentDrawdownPct) }),
-                      ]
-                    : [t('analyze.performance.noDrawdown')]
-                }
-              />
-            </div>
-          )}
         </>
       )}
     </Panel>
@@ -572,36 +532,6 @@ function Legend({ items, className }: { items: { color: string; label: string; d
         </li>
       ))}
     </ul>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  color,
-  lines,
-  hint,
-}: {
-  label: string;
-  value: string;
-  color?: string;
-  lines: (ReactNode | false | undefined)[];
-  hint?: string;
-}) {
-  return (
-    <div className="rounded-xl border p-4 flex flex-col gap-1" style={{ borderColor: 'hsl(var(--border))' }} title={hint}>
-      <span className="text-sm" style={{ color: MUTED }}>
-        {label}
-      </span>
-      <span className="text-xl font-bold tabular-nums" style={{ color: color ?? 'hsl(var(--foreground))' }}>
-        {value}
-      </span>
-      {lines.filter(Boolean).map((line, i) => (
-        <span key={i} className="text-xs" style={{ color: MUTED }}>
-          {line}
-        </span>
-      ))}
-    </div>
   );
 }
 

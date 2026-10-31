@@ -5,7 +5,6 @@ import { Panel, PanelHeader } from '@/components/ui/Panel';
 import { plColor, type Formatters } from './format';
 import {
   annualizedVolatility,
-  dailyExtremes,
   periodReturns,
   sameMoneyIn,
   type ComparisonField,
@@ -35,20 +34,16 @@ export function ReturnsTable({
   fmt,
   range,
   hideAmounts = false,
-  dayExtremes = false,
 }: {
   points: PerformancePoint[];
   fmt: Formatters;
   range: RangeKey;
   /** Public view: returns only, without the TL "same money" column. */
   hideAmounts?: boolean;
-  /** Best and worst day under the table, where no highlights show them (Explore). */
-  dayExtremes?: boolean;
 }) {
   const { t } = useTranslation();
   const period = useMemo(() => periodReturns(points).find((r) => r.range === range) ?? null, [points, range]);
   const volatility = useMemo(() => annualizedVolatility(points), [points]);
-  const extremes = useMemo(() => (dayExtremes ? dailyExtremes(points) : null), [points, dayExtremes]);
   const comparisons = useMemo(
     () =>
       COMPARISON_ROWS.map((c) => ({
@@ -147,7 +142,7 @@ export function ReturnsTable({
         </table>
       </div>
 
-      {(volatility != null || extremes) && (
+      {volatility != null && (
         <dl className="flex flex-wrap gap-x-8 gap-y-2 mt-4 text-sm">
           {volatility != null && (
             <div className="flex gap-2">
@@ -156,28 +151,6 @@ export function ReturnsTable({
               </dt>
               <dd className="font-medium tabular-nums">{fmt.share(volatility)}</dd>
             </div>
-          )}
-          {extremes && (
-            <>
-              <div className="flex gap-2">
-                <dt style={{ color: MUTED }}>{t('analyze.returns.bestDay')}</dt>
-                <dd className="font-medium tabular-nums" style={{ color: plColor(extremes.best.pct) }}>
-                  {fmt.pct(extremes.best.pct)}
-                  <span className="font-normal ml-1" style={{ color: MUTED }}>
-                    ({fmt.date(extremes.best.date)})
-                  </span>
-                </dd>
-              </div>
-              <div className="flex gap-2">
-                <dt style={{ color: MUTED }}>{t('analyze.returns.worstDay')}</dt>
-                <dd className="font-medium tabular-nums" style={{ color: plColor(extremes.worst.pct) }}>
-                  {fmt.pct(extremes.worst.pct)}
-                  <span className="font-normal ml-1" style={{ color: MUTED }}>
-                    ({fmt.date(extremes.worst.date)})
-                  </span>
-                </dd>
-              </div>
-            </>
           )}
         </dl>
       )}
