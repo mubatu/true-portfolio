@@ -10,6 +10,7 @@ import { AllocationChart } from '@/components/analysis/AllocationChart';
 import { AnalysisSkeleton } from '@/components/analysis/AnalysisSkeleton';
 import { DailyChange } from '@/components/analysis/DailyChange';
 import { FundChart } from '@/components/analysis/FundChart';
+import { Insights } from '@/components/analysis/Insights';
 import { ReturnsTable } from '@/components/analysis/ReturnsTable';
 import { plColor, useFormatters } from '@/components/analysis/format';
 import { unitPrice, type RangeKey } from '@/components/analysis/performance';
@@ -25,8 +26,8 @@ import { getPublicPortfolio } from '@/lib/api';
 import { getPortfolios } from '@/services/portfolioService';
 
 /**
- * One public portfolio as everyone sees it: unit price chart, returns and
- * current allocation, all in percentages. Its owner gets a link to their
+ * One public portfolio as everyone sees it: unit price chart, highlights,
+ * returns and current allocation, all in percentages. Its owner gets a link to their
  * full analysis.
  */
 export function ExplorePortfolio() {
@@ -140,9 +141,10 @@ export function ExplorePortfolio() {
             </Panel>
           )}
 
-          <FundChart points={points} fmt={fmt} range={range} onRangeChange={setRange} hideAmounts periodSummary />
+          <FundChart points={points} fmt={fmt} range={range} onRangeChange={setRange} hideAmounts />
+          <Insights points={points} positions={positions} fmt={fmt} displayTicker={displayTicker} hideAmounts />
           <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] mb-6 items-start [&>*]:min-w-0">
-            <ReturnsTable points={points} fmt={fmt} range={range} hideAmounts dayExtremes />
+            <ReturnsTable points={points} fmt={fmt} range={range} hideAmounts />
             <AllocationChart
               positions={positions}
               cash={data.allocation.cash_pct}

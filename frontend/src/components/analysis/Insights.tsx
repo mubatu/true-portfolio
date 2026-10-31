@@ -2,6 +2,7 @@ import { useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Activity, Layers, Mountain, Sparkles, Trophy, type LucideIcon } from 'lucide-react';
 import { Panel, PanelHeader } from '@/components/ui/Panel';
+import { cn } from '@/lib/utils';
 import { plColor, type Formatters } from './format';
 import { dailyExtremes, periodStats, sliceRange, type DayMove } from './performance';
 import type { PerformancePoint, Position } from './types';
@@ -14,6 +15,9 @@ import type { PerformancePoint, Position } from './types';
  *
  * ``kind="portfolio"`` (the Overview) reads each "position" as a whole
  * portfolio: best/worst portfolio, and concentration as the largest one.
+ *
+ * ``hideAmounts`` (Explore): no TL P/L per stock is public, so the best and
+ * worst stocks drop out; the rest reads from the unit price and weights.
  */
 export function Insights({
   points,
@@ -21,12 +25,14 @@ export function Insights({
   fmt,
   displayTicker,
   kind = 'stock',
+  hideAmounts = false,
 }: {
   points: PerformancePoint[];
   positions: Position[];
   fmt: Formatters;
   displayTicker: (ticker: string) => string;
   kind?: 'stock' | 'portfolio';
+  hideAmounts?: boolean;
 }) {
   const { t } = useTranslation();
   const topCount = kind === 'portfolio' ? 1 : 3;
@@ -55,7 +61,7 @@ export function Insights({
   return (
     <Panel className="p-4 md:p-6 mb-6" aria-labelledby="insights-title">
       <PanelHeader id="insights-title" icon={Sparkles} title={t('analyze.insights.title')} description={t('analyze.insights.hint')} className="mb-4" />
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className={cn('grid grid-cols-1 gap-3 sm:grid-cols-2', hideAmounts ? 'md:grid-cols-3' : 'xl:grid-cols-4')}>
         <Insight icon={Activity} label={t('analyze.insights.days')}>
           {data.days ? (
             <>
@@ -67,18 +73,20 @@ export function Insights({
           )}
         </Insight>
 
-        <Insight icon={Trophy} label={t('analyze.insights.bestWorst')}>
-          {data.best ? (
-            <Mover label={t('analyze.insights.best')} ticker={displayTicker(data.best.ticker)} value={fmt.signedMoney(data.best.total_pl)} pct={fmt.pct(data.best.total_pl_pct)} tone={1} />
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              {t(kind === 'portfolio' ? 'overview.insights.noWinner' : 'analyze.insights.noWinner')}
-            </p>
-          )}
-          {data.worst && (
-            <Mover label={t('analyze.insights.worst')} ticker={displayTicker(data.worst.ticker)} value={fmt.signedMoney(data.worst.total_pl)} pct={fmt.pct(data.worst.total_pl_pct)} tone={-1} />
-          )}
-        </Insight>
+        {!hideAmounts && (
+          <Insight icon={Trophy} label={t('analyze.insights.bestWorst')}>
+            {data.best ? (
+              <Mover label={t('analyze.insights.best')} ticker={displayTicker(data.best.ticker)} value={fmt.signedMoney(data.best.total_pl)} pct={fmt.pct(data.best.total_pl_pct)} tone={1} />
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                {t(kind === 'portfolio' ? 'overview.insights.noWinner' : 'analyze.insights.noWinner')}
+              </p>
+            )}
+            {data.worst && (
+              <Mover label={t('analyze.insights.worst')} ticker={displayTicker(data.worst.ticker)} value={fmt.signedMoney(data.worst.total_pl)} pct={fmt.pct(data.worst.total_pl_pct)} tone={-1} />
+            )}
+          </Insight>
+        )}
 
         <Insight icon={Mountain} label={t('analyze.insights.fromPeak')}>
           <p className="text-2xl font-semibold tabular-nums" style={{ color: stats.currentDrawdownPct < 0 ? plColor(-1) : plColor(1) }}>
