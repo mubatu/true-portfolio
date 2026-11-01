@@ -46,5 +46,6 @@ Portfolios people chose to share, ranked by return since start. Only percentages
 - **Frontend:** React, TypeScript, Vite, Tailwind CSS, Recharts, TanStack Query
 - **Backend:** FastAPI (Python), prices from Yahoo Finance cached in the database
 - **Database and auth:** Supabase (Postgres with row-level security)
+- **Hosting:** frontend as a Cloudflare Worker with static assets (`frontend/wrangler.toml`, `npm run deploy`), API on Render
 
 Screenshots use made-up demo data.
