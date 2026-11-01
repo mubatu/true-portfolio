@@ -101,36 +101,16 @@
   },
   "auth": {
     "welcome": "Hoş geldin",
-    "welcomeBack": "Tekrar hoş geldin",
-    "enterEmail": "Devam etmek için e-posta adresini gir",
-    "loginSubtitle": "Bu e-posta adresiyle kayıtlı bir hesap var. Lütfen şifreni gir.",
-    "registerSubtitle": "Bu e-posta adresiyle kayıtlı bir hesap bulunamadı. Hesap oluşturmak için aşağıdaki formu doldur.",
-    "email": "E-posta",
-    "emailPlaceholder": "ornek@eposta.com",
-    "password": "Şifre",
-    "passwordPlaceholder": "Şifreni gir",
-    "createPasswordPlaceholder": "Bir şifre oluştur",
-    "name": "Ad Soyad",
-    "namePlaceholder": "Adın ve soyadın",
-    "continue": "Devam Et",
-    "back": "Geri",
-    "signIn": "Giriş Yap",
-    "createAccount": "Hesap Oluştur",
+    "subtitle": "Google hesabınla giriş yap. İlk girişte hesabın kendiliğinden oluşur.",
+    "signingIn": "Giriş yapılıyor...",
+    "privacy": "Gizlilik politikası",
     "errors": {
-      "emailCheck": "E-posta doğrulanamadı. Lütfen tekrar dene.",
-      "invalidCredentials": "E-posta veya şifre hatalı.",
-      "registrationFailed": "Kayıt başarısız oldu. Lütfen tekrar dene.",
-      "invalid_credentials": "E-posta veya şifre hatalı.",
-      "email_not_confirmed": "E-posta adresin henüz doğrulanmamış. Gelen kutundaki bağlantıya tıkla.",
-      "user_already_exists": "Bu e-posta adresiyle zaten bir hesap var.",
-      "email_exists": "Bu e-posta adresiyle zaten bir hesap var.",
-      "weak_password": "Şifre yeterince güçlü değil.",
-      "same_password": "Yeni şifre eskisiyle aynı olamaz.",
-      "email_address_invalid": "Geçerli bir e-posta adresi gir.",
+      "googleFailed": "Google ile giriş yapılamadı. Lütfen tekrar dene.",
+      "googleUnavailable": "Google girişi şu anda açılamıyor. Sayfayı yenileyip tekrar dene.",
+      "provider_disabled": "Google ile giriş şu anda kapalı.",
       "signup_disabled": "Şu anda yeni kayıt alınmıyor.",
+      "user_banned": "Bu hesap kullanıma kapatıldı.",
       "over_request_rate_limit": "Çok fazla deneme yapıldı. Birkaç dakika sonra tekrar dene.",
-      "over_email_send_rate_limit": "Çok fazla e-posta gönderildi. Birkaç dakika sonra tekrar dene.",
-      "reauthentication_needed": "Bu işlem için yeniden giriş yapman gerekiyor.",
       "session_expired": "Oturumun sona erdi. Tekrar giriş yap.",
       "session_not_found": "Oturumun sona erdi. Tekrar giriş yap.",
       "network": "Sunucuya ulaşılamadı. İnternet bağlantını kontrol et."
@@ -143,7 +123,7 @@
         "automatic": "Temettü, stopaj, bölünme ve bedelliler otomatik hesaplanır."
       }
     },
-    "secureNote": "Bağlantın şifrelenir; şifren yalnızca geri çevrilemez biçimde (hash) saklanır.",
+    "secureNote": "Giriş Google ile yapılır; şifren bize hiç ulaşmaz.",
     "showPassword": "Şifreyi göster",
     "hidePassword": "Şifreyi gizle"
   },
@@ -286,7 +266,10 @@
       "totalPct": "Getiri",
       "closed": "Kapandı",
       "closedOn": "Kapandı {{date}}",
-      "short": { "unrealized": "Gerçekleşmemiş", "realized": "Gerçekleşen" },
+      "short": {
+        "unrealized": "Gerçekleşmemiş",
+        "realized": "Gerçekleşen"
+      },
       "closedPricesHint": "Satılan adet; ortalama alış maliyeti → ortalama satış fiyatı (komisyonlar dahil, kapandığı günün bölünme bazında)."
     },
     "allocation": {
@@ -510,27 +493,18 @@
   },
   "profile": {
     "title": "Profil",
-    "subtitle": "Hesabını, şifreni ve tercihlerini buradan yönet.",
+    "subtitle": "Hesabını ve tercihlerini buradan yönet.",
     "noName": "İsimsiz kullanıcı",
     "memberSince": "{{date}} tarihinden beri üye",
-    "saved": "Kaydedildi",
     "stats": {
       "portfolios": "Portföy",
       "transactions": "İşlem"
     },
     "account": {
       "title": "Hesap bilgileri",
-      "description": "Uygulamada görünen adın.",
-      "emailHint": "E-posta adresi değiştirilemez."
-    },
-    "password": {
-      "title": "Şifre",
-      "description": "Yeni bir şifre belirle.",
-      "new": "Yeni şifre",
-      "confirm": "Yeni şifre (tekrar)",
-      "mismatch": "Şifreler eşleşmiyor.",
-      "submit": "Şifreyi değiştir",
-      "changed": "Şifren değiştirildi"
+      "description": "Adın ve e-posta adresin Google hesabından gelir.",
+      "name": "Ad Soyad",
+      "email": "E-posta"
     },
     "preferences": {
       "title": "Tercihler",
@@ -544,21 +518,6 @@
     "session": {
       "title": "Oturum",
       "description": "Bu cihazdaki oturumunu kapat."
-    }
-  },
-  "password": {
-    "requirements": {
-      "minLength": "En az 8 karakter",
-      "uppercase": "En az bir büyük harf",
-      "lowercase": "En az bir küçük harf",
-      "number": "En az bir rakam",
-      "special": "En az bir özel karakter (!@#$%^&*)"
-    },
-    "strength": {
-      "label": "Şifre gücü",
-      "weak": "Zayıf",
-      "medium": "Orta",
-      "strong": "Güçlü"
     }
   },
   "rightsIssues": {

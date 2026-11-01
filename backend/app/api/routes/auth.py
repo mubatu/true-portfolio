@@ -1,26 +1,8 @@
-from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from app.db import get_db
-from app.schemas import (
-    EmailCheckRequest,
-    EmailCheckResponse,
-    UserResponse,
-)
-from app.services import email_exists
+from fastapi import APIRouter
+from app.schemas import UserResponse
 from app.api.deps import CurrentUser
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
-
-
-@router.post("/check-email", response_model=EmailCheckResponse)
-async def check_email(
-    request: EmailCheckRequest,
-    db: Annotated[Session, Depends(get_db)],
-):
-    """Check if an email address is already registered."""
-    exists = email_exists(db, request.email)
-    return EmailCheckResponse(exists=exists)
 
 
 @router.get("/me", response_model=UserResponse)

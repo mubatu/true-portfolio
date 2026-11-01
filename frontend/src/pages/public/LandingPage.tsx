@@ -150,7 +150,13 @@ export function LandingPage() {
       <footer className="border-t bg-card/60">
         <div className="container mx-auto max-w-7xl px-4 py-8 flex flex-col sm:flex-row items-center justify-between gap-3">
           <Logo />
-          <p className="text-sm text-muted-foreground">{t('landing.footer.copyright')}</p>
+          <p className="flex flex-col sm:flex-row items-center gap-1 sm:gap-3 text-center text-sm text-muted-foreground">
+            <a href="/privacy" className="whitespace-nowrap hover:text-foreground transition-colors">
+              {t('auth.privacy')}
+            </a>
+            <span className="hidden sm:inline" aria-hidden="true">·</span>
+            {t('landing.footer.copyright')}
+          </p>
         </div>
       </footer>
     </div>

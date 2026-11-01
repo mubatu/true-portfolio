@@ -41,8 +41,7 @@ const AUTH: AuthContextType = {
   session: null,
   isAuthenticated: true,
   isLoading: false,
-  signIn: async () => ({ error: null }),
-  signUp: async () => ({ error: null }),
+  signInWithGoogle: async () => ({ error: null }),
   signOut: async () => {},
 };
 

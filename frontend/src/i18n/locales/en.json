@@ -102,36 +102,16 @@
   },
   "auth": {
     "welcome": "Welcome",
-    "welcomeBack": "Welcome back",
-    "enterEmail": "Enter your email to continue",
-    "loginSubtitle": "It looks like there's an account registered with this email. Please enter your password.",
-    "registerSubtitle": "It looks like there's no account registered with this email in our system. Please fill out the form below to create your account.",
-    "email": "Email",
-    "emailPlaceholder": "you@example.com",
-    "password": "Password",
-    "passwordPlaceholder": "Enter your password",
-    "createPasswordPlaceholder": "Create a password",
-    "name": "Name",
-    "namePlaceholder": "Your full name",
-    "continue": "Continue",
-    "back": "Back",
-    "signIn": "Sign In",
-    "createAccount": "Create Account",
+    "subtitle": "Sign in with your Google account. Your account is created on first sign-in.",
+    "signingIn": "Signing in...",
+    "privacy": "Privacy policy",
     "errors": {
-      "emailCheck": "Unable to verify email. Please try again.",
-      "invalidCredentials": "Invalid email or password.",
-      "registrationFailed": "Registration failed. Please try again.",
-      "invalid_credentials": "Wrong email or password.",
-      "email_not_confirmed": "Your email address isn't confirmed yet. Click the link in your inbox.",
-      "user_already_exists": "An account with this email already exists.",
-      "email_exists": "An account with this email already exists.",
-      "weak_password": "The password isn't strong enough.",
-      "same_password": "The new password must differ from the old one.",
-      "email_address_invalid": "Enter a valid email address.",
+      "googleFailed": "Couldn't sign in with Google. Please try again.",
+      "googleUnavailable": "Google sign-in can't load right now. Reload the page and try again.",
+      "provider_disabled": "Google sign-in is turned off right now.",
       "signup_disabled": "Sign-ups are closed right now.",
+      "user_banned": "This account has been disabled.",
       "over_request_rate_limit": "Too many attempts. Try again in a few minutes.",
-      "over_email_send_rate_limit": "Too many emails sent. Try again in a few minutes.",
-      "reauthentication_needed": "Please sign in again to do this.",
       "session_expired": "Your session has expired. Please sign in again.",
       "session_not_found": "Your session has expired. Please sign in again.",
       "network": "Couldn't reach the server. Check your internet connection."
@@ -144,7 +124,7 @@
         "automatic": "Dividends, withholding, splits and rights issues are handled automatically."
       }
     },
-    "secureNote": "Your connection is encrypted; your password is only stored as an irreversible hash.",
+    "secureNote": "You sign in with Google; your password never reaches us.",
     "showPassword": "Show password",
     "hidePassword": "Hide password"
   },
@@ -287,7 +267,10 @@
       "totalPct": "Return",
       "closed": "Closed",
       "closedOn": "Closed {{date}}",
-      "short": { "unrealized": "Unrealized", "realized": "Realized" },
+      "short": {
+        "unrealized": "Unrealized",
+        "realized": "Realized"
+      },
       "closedPricesHint": "Shares sold; average cost → average sale price (commission included, in the split basis of the day it closed)."
     },
     "allocation": {
@@ -516,27 +499,18 @@
   },
   "profile": {
     "title": "Profile",
-    "subtitle": "Manage your account, password and preferences.",
+    "subtitle": "Manage your account and preferences.",
     "noName": "Unnamed user",
     "memberSince": "Member since {{date}}",
-    "saved": "Saved",
     "stats": {
       "portfolios": "Portfolios",
       "transactions": "Transactions"
     },
     "account": {
       "title": "Account",
-      "description": "The name shown in the app.",
-      "emailHint": "The email address can't be changed."
-    },
-    "password": {
-      "title": "Password",
-      "description": "Set a new password.",
-      "new": "New password",
-      "confirm": "New password (again)",
-      "mismatch": "Passwords don't match.",
-      "submit": "Change password",
-      "changed": "Your password was changed"
+      "description": "Your name and email come from your Google account.",
+      "name": "Name",
+      "email": "Email"
     },
     "preferences": {
       "title": "Preferences",
@@ -550,21 +524,6 @@
     "session": {
       "title": "Session",
       "description": "Sign out on this device."
-    }
-  },
-  "password": {
-    "requirements": {
-      "minLength": "At least 8 characters",
-      "uppercase": "At least one uppercase letter",
-      "lowercase": "At least one lowercase letter",
-      "number": "At least one number",
-      "special": "At least one special character (!@#$%^&*)"
-    },
-    "strength": {
-      "label": "Password strength",
-      "weak": "Weak",
-      "medium": "Medium",
-      "strong": "Strong"
     }
   },
   "rightsIssues": {

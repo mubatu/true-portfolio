@@ -39,12 +39,7 @@ apiClient.interceptors.response.use(
 // API Functions
 // ============================================
 
-// Auth (email check only - actual auth handled by Supabase client)
-export const checkEmailExists = async (email: string): Promise<{ exists: boolean }> => {
-  const response = await apiClient.post('/auth/check-email', { email });
-  return response.data;
-};
-
+// Auth (sign-in itself is handled by the Supabase client)
 export const getMe = async () => {
   const response = await apiClient.get('/auth/me');
   return response.data;

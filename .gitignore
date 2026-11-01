@@ -11,3 +11,6 @@ venv/
 
 # macOS
 .DS_Store
+
+# Google OAuth client downloads (the client secret is not used)
+client_secret*.json

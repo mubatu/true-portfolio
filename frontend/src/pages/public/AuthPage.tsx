@@ -1,112 +1,45 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import {
-  AlertCircle,
-  ArrowLeft,
-  ArrowRight,
-  CheckCircle2,
-  KeyRound,
-  Loader2,
-  Lock,
-  LogIn,
-  Mail,
-  ShieldCheck,
-  User,
-  UserPlus,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { PasswordRequirements } from '@/components/ui/PasswordRequirements';
-import { TextField } from '@/components/ui/TextField';
-import { validatePassword } from '@/lib/password';
+import { AlertCircle, CheckCircle2, Loader2, LogIn, ShieldCheck } from 'lucide-react';
+import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
 import { Header } from '@/components/layout';
 import { Logo } from '@/components/layout/Logo';
-import { useAuth, useDocumentTitle } from '@/hooks';
-import { checkEmailExists } from '@/lib/api';
+import { useAuth, useDocumentTitle, useTheme } from '@/hooks';
 import { authErrorKey } from '@/lib/authErrors';
 
-type AuthStep = 'email' | 'login' | 'register';
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
 
 export function AuthPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn, signUp } = useAuth();
+  const { signInWithGoogle } = useAuth();
+  const { theme } = useTheme();
   useDocumentTitle(t('common.signIn'));
   // Back to the private page that sent the user here, else Explore.
   const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname;
   const home = from && from !== '/auth' ? from : '/explore';
-  
-  const [step, setStep] = useState<AuthStep>('email');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
+
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(GOOGLE_CLIENT_ID ? '' : t('auth.errors.googleUnavailable'));
 
-  const handleEmailSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCredential = async (credential: string, nonce: string) => {
     setError('');
     setIsLoading(true);
-
     try {
-      const { exists } = await checkEmailExists(email);
-      setStep(exists ? 'login' : 'register');
-    } catch {
-      setError(t('auth.errors.emailCheck'));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleLoginSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setIsLoading(true);
-
-    try {
-      const { error: authError } = await signIn(email, password);
+      const { error: authError } = await signInWithGoogle(credential, nonce);
       if (authError) {
-        setError(t(authErrorKey(authError, 'auth.errors.invalidCredentials')));
+        setError(t(authErrorKey(authError, 'auth.errors.googleFailed')));
       } else {
         navigate(home, { replace: true });
       }
     } catch (err) {
-      setError(t(authErrorKey(err, 'auth.errors.invalidCredentials')));
+      setError(t(authErrorKey(err, 'auth.errors.googleFailed')));
     } finally {
       setIsLoading(false);
     }
   };
-
-  const handleRegisterSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setIsLoading(true);
-
-    try {
-      const { error: authError } = await signUp(email, password, name);
-      if (authError) {
-        setError(t(authErrorKey(authError, 'auth.errors.registrationFailed')));
-      } else {
-        navigate(home, { replace: true });
-      }
-    } catch {
-      setError(t('auth.errors.registrationFailed'));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleBack = () => {
-    setStep('email');
-    setPassword('');
-    setName('');
-    setError('');
-  };
-
-  const subtitle =
-    step === 'email' ? t('auth.enterEmail') : step === 'login' ? t('auth.loginSubtitle') : t('auth.registerSubtitle');
-  const title = step === 'email' ? t('auth.welcome') : step === 'login' ? t('auth.welcomeBack') : t('auth.createAccount');
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -137,82 +70,31 @@ export function AuthPage() {
           <p className="relative text-sm opacity-75">{t('landing.footer.copyright')}</p>
         </aside>
 
-        {/* Form */}
+        {/* Sign in */}
         <div className="flex items-center justify-center px-4 py-12">
           <div className="w-full max-w-sm">
-            {step !== 'email' && (
-              <button
-                type="button"
-                onClick={handleBack}
-                className="inline-flex items-center gap-1 text-sm mb-6 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <ArrowLeft className="h-4 w-4" /> {t('auth.back')}
-              </button>
-            )}
-
             <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-5">
-              {step === 'register' ? <UserPlus className="h-6 w-6" /> : step === 'login' ? <KeyRound className="h-6 w-6" /> : <LogIn className="h-6 w-6" />}
+              <LogIn className="h-6 w-6" />
             </span>
-            <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-            <p className="mt-1.5 text-sm text-muted-foreground">{subtitle}</p>
+            <h1 className="text-2xl font-bold tracking-tight">{t('auth.welcome')}</h1>
+            <p className="mt-1.5 text-sm text-muted-foreground">{t('auth.subtitle')}</p>
 
-            {step !== 'email' && (
-              <p className="mt-4 inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1 text-sm font-medium">
-                <Mail className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
-                {email}
-              </p>
-            )}
-
-            <form
-              onSubmit={step === 'email' ? handleEmailSubmit : step === 'login' ? handleLoginSubmit : handleRegisterSubmit}
-              className="mt-6 space-y-4"
-            >
-              {step === 'email' && (
-                <TextField
-                  id="email"
-                  type="email"
-                  label={t('auth.email')}
-                  icon={Mail}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder={t('auth.emailPlaceholder')}
-                  autoComplete="email"
-                  autoFocus
-                  required
-                />
-              )}
-
-              {step === 'register' && (
-                <TextField
-                  id="name"
-                  label={t('auth.name')}
-                  icon={User}
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder={t('auth.namePlaceholder')}
-                  autoComplete="name"
-                  autoFocus
-                  required
-                />
-              )}
-
-              {step !== 'email' && (
-                <div>
-                  <TextField
-                    id={step === 'login' ? 'password' : 'register-password'}
-                    type="password"
-                    label={t('auth.password')}
-                    icon={Lock}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder={t(step === 'login' ? 'auth.passwordPlaceholder' : 'auth.createPasswordPlaceholder')}
-                    autoComplete={step === 'login' ? 'current-password' : 'new-password'}
-                    autoFocus={step === 'login'}
-                    required
+            <div className="mt-6 space-y-4">
+              {GOOGLE_CLIENT_ID &&
+                (isLoading ? (
+                  <p className="flex h-11 items-center justify-center gap-2 text-sm text-muted-foreground" role="status">
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                    {t('auth.signingIn')}
+                  </p>
+                ) : (
+                  <GoogleSignInButton
+                    clientId={GOOGLE_CLIENT_ID}
+                    onCredential={handleCredential}
+                    onLoadError={() => setError(t('auth.errors.googleUnavailable'))}
+                    theme={theme}
+                    locale={i18n.resolvedLanguage ?? 'tr'}
                   />
-                  {step === 'register' && <PasswordRequirements password={password} show={password.length > 0} />}
-                </div>
-              )}
+                ))}
 
               {error && (
                 <p className="flex items-start gap-2 rounded-xl border px-3 py-2 text-sm" style={{ borderColor: 'hsl(var(--destructive) / 0.4)', backgroundColor: 'hsl(var(--destructive) / 0.08)', color: 'hsl(var(--destructive))' }} role="alert">
@@ -220,29 +102,16 @@ export function AuthPage() {
                   {error}
                 </p>
               )}
+            </div>
 
-              <Button
-                type="submit"
-                className="w-full h-11 rounded-xl gap-2"
-                disabled={isLoading || (step === 'register' && !validatePassword(password))}
-              >
-                {isLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : step === 'email' ? (
-                  <>
-                    {t('auth.continue')} <ArrowRight className="h-4 w-4" />
-                  </>
-                ) : step === 'login' ? (
-                  t('auth.signIn')
-                ) : (
-                  t('auth.createAccount')
-                )}
-              </Button>
-            </form>
-
-            <p className="mt-8 flex items-center gap-2 text-xs text-muted-foreground">
+            <p className="mt-8 flex items-start gap-2 text-xs text-muted-foreground">
               <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
-              {t('auth.secureNote')}
+              <span>
+                {t('auth.secureNote')}{' '}
+                <a href="/privacy" className="underline underline-offset-2 hover:text-foreground">
+                  {t('auth.privacy')}
+                </a>
+              </span>
             </p>
           </div>
         </div>

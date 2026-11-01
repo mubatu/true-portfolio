@@ -1,16 +1,6 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from uuid import UUID
 from datetime import datetime
-
-
-# Request schemas
-class EmailCheckRequest(BaseModel):
-    email: EmailStr
-
-
-# Response schemas
-class EmailCheckResponse(BaseModel):
-    exists: bool
 
 
 class UserResponse(BaseModel):

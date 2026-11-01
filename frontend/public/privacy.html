@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;600;700&display=swap" rel="stylesheet" />
+    <title>Gizlilik Politikası</title>
+    <style>
+      :root {
+        --background: hsl(220 23% 97%);
+        --foreground: hsl(222 47% 11%);
+        --card: hsl(0 0% 100%);
+        --muted: hsl(220 9% 44%);
+        --border: hsl(220 13% 90%);
+        --primary: hsl(216 80% 51%);
+        color-scheme: light;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --background: hsl(224 32% 6%);
+          --foreground: hsl(210 40% 98%);
+          --card: hsl(224 27% 9.5%);
+          --muted: hsl(218 13% 66%);
+          --border: hsl(223 20% 17%);
+          --primary: hsl(216 86% 62%);
+          color-scheme: dark;
+        }
+      }
+
+      body {
+        margin: 0;
+        background: var(--background);
+        color: var(--foreground);
+        font-family: Onest, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        line-height: 1.6;
+      }
+
+      main {
+        box-sizing: border-box;
+        width: min(100%, 720px);
+        margin: 0 auto;
+        padding: 32px 16px 64px;
+      }
+
+      article {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 28px 24px;
+      }
+
+      article + article {
+        margin-top: 24px;
+      }
+
+      a {
+        color: var(--primary);
+      }
+
+      .top {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 20px;
+        font-size: 14px;
+      }
+
+      .top a {
+        text-decoration: none;
+      }
+
+      h1 {
+        margin: 0 0 4px;
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        line-height: 1.2;
+      }
+
+      h2 {
+        margin: 28px 0 6px;
+        font-size: 17px;
+        font-weight: 600;
+      }
+
+      .updated,
+      li::marker {
+        color: var(--muted);
+      }
+
+      .updated {
+        margin: 0 0 20px;
+        font-size: 14px;
+      }
+
+      ul {
+        padding-left: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <nav class="top">
+        <a href="/">← True Portfolio</a>
+        <a href="#en" lang="en">English</a>
+      </nav>
+
+      <article>
+        <h1>Gizlilik Politikası</h1>
+        <p class="updated">Son güncelleme: 1 Kasım 2026</p>
+
+        <p>
+          True Portfolio, Borsa İstanbul hisse ve TEFAS fon portföylerinin zaman
+          içindeki performansını görmen için yapılmış bir uygulamadır. Bu sayfa
+          hangi bilgileri sakladığımızı, neden sakladığımızı ve kimlerin
+          görebildiğini anlatır.
+        </p>
+
+        <h2>Sakladığımız bilgiler</h2>
+        <ul>
+          <li>
+            <strong>Google hesap bilgileri:</strong> Google ile giriş yaptığında
+            Google hesap kimliğini, adını ve e-posta adresini alırız. Bunları
+            yalnızca seni tanımak ve portföylerini hesabına bağlamak için
+            kullanırız.
+          </li>
+          <li>
+            <strong>Portföyler:</strong> portföy adı, oluşturulma tarihi ve
+            ayarları (herkese açık mı, deneysel mi).
+          </li>
+          <li>
+            <strong>İşlemler:</strong> girdiğin alım ve satımların hisse kodu,
+            tarihi, adedi, fiyatı ve komisyon oranı; elle girdiğin bedelli
+            sermaye artırımları ve yüklediğin TEFAS fon fiyatları.
+          </li>
+        </ul>
+        <p>
+          Hisse fiyatları, temettüler ve kıyas verileri (BIST 100, altın, dolar)
+          herkese açık piyasa verisidir; sunucumuz bunları Yahoo Finance'ten alır
+          ve bu sırada senin hakkında hiçbir bilgi göndermez.
+        </p>
+
+        <h2>Bilgilerini kimler görebilir</h2>
+        <ul>
+          <li>
+            Portföylerini ve işlemlerini varsayılan olarak yalnızca sen
+            görebilirsin.
+          </li>
+          <li>
+            Bir portföyü <strong>herkese açık</strong> yaparsan Keşfet sayfasında
+            portföy adı, adının kısaltması (ör. "Ayşe Y.") ve yalnızca yüzde
+            olarak getiri, pay fiyatı grafiği ve dağılım görünür. TL tutarları,
+            adetler, işlemler ve e-posta adresin hiçbir zaman gösterilmez. Bu
+            ayarı istediğin zaman kapatabilirsin.
+          </li>
+          <li>
+            Bilgilerini satmıyoruz; reklam, analiz veya takip araçları
+            kullanmıyoruz.
+          </li>
+        </ul>
+
+        <h2>Tarayıcında tutulanlar</h2>
+        <p>
+          Giriş yapmış kalman için oturum bilgisi, tema ve dil tercihin
+          tarayıcının yerel depolamasında (localStorage) tutulur. Çıkış
+          yaptığında oturum bilgisi silinir. Kendi çerezimizi kullanmıyoruz;
+          Google giriş butonunu kullandığında Google kendi çerezlerini
+          ayarlayabilir.
+        </p>
+
+        <h2>Hizmet sağlayıcılar</h2>
+        <ul>
+          <li>Site Cloudflare Workers üzerinden sunulur.</li>
+          <li>Hesaplamaları yapan sunucu Render'da (Frankfurt) çalışır.</li>
+          <li>Hesap ve portföy verileri Supabase'te (PostgreSQL) saklanır.</li>
+          <li>
+            Giriş Google tarafından sağlanır; Google'ın verilerini nasıl
+            kullandığı
+            <a href="https://policies.google.com/privacy?hl=tr">Google Gizlilik Politikası</a>'nda
+            anlatılır.
+          </li>
+        </ul>
+
+        <h2>Saklama süresi ve silme</h2>
+        <p>
+          Bilgilerini hesabın var olduğu sürece saklarız. Portföylerini
+          uygulamadan istediğin zaman silebilirsin. Hesabını ve tüm verilerini
+          sildirmek için bize e-posta gönderebilirsin. True Portfolio'nun Google
+          hesabına erişimini
+          <a href="https://myaccount.google.com/connections">Google Hesabın</a>
+          üzerinden istediğin zaman kaldırabilirsin.
+        </p>
+
+        <h2>İletişim</h2>
+        <p>
+          Sorular ve silme talepleri için:
+          <a href="mailto:batuhan@buber.tr">batuhan@buber.tr</a>
+        </p>
+      </article>
+
+      <article id="en" lang="en">
+        <h1>Privacy Policy</h1>
+        <p class="updated">Last updated: November 1, 2026</p>
+
+        <p>
+          True Portfolio shows how your Borsa Istanbul stock and TEFAS fund
+          portfolios performed over time. This page explains what we store, why,
+          and who can see it.
+        </p>
+
+        <h2>What we store</h2>
+        <ul>
+          <li>
+            <strong>Google account details:</strong> when you sign in with Google
+            we receive your Google account ID, name and email address, used only
+            to recognize you and link your portfolios to your account.
+          </li>
+          <li>
+            <strong>Portfolios:</strong> name, creation date and settings (public
+            or not, experimental or not).
+          </li>
+          <li>
+            <strong>Trades:</strong> ticker, date, quantity, price and commission
+            rate of the buys and sells you enter, rights issues you add by hand
+            and TEFAS fund prices you upload.
+          </li>
+        </ul>
+        <p>
+          Stock prices, dividends and benchmarks (BIST 100, gold, US dollar) are
+          public market data; our server fetches them from Yahoo Finance without
+          sending anything about you.
+        </p>
+
+        <h2>Who can see your data</h2>
+        <ul>
+          <li>By default only you can see your portfolios and trades.</li>
+          <li>
+            If you make a portfolio <strong>public</strong>, Explore shows its
+            name, your shortened name (e.g. "Jane D.") and its return, unit price
+            chart and allocation as percentages only. Amounts in lira,
+            quantities, trades and your email are never shown. You can turn this
+            off at any time.
+          </li>
+          <li>We don't sell your data and use no ads, analytics or trackers.</li>
+        </ul>
+
+        <h2>Stored in your browser</h2>
+        <p>
+          Your session, theme and language are kept in your browser's local
+          storage (localStorage); the session is removed when you sign out. We
+          set no cookies of our own; Google may set its own cookies when you use
+          its sign-in button.
+        </p>
+
+        <h2>Service providers</h2>
+        <p>
+          The site is served by Cloudflare Workers, the server that runs the
+          calculations is hosted on Render (Frankfurt), and account and portfolio
+          data is stored in Supabase (PostgreSQL). Sign-in is provided by Google;
+          see the <a href="https://policies.google.com/privacy?hl=en">Google Privacy Policy</a>.
+        </p>
+
+        <h2>Retention and deletion</h2>
+        <p>
+          We keep your data while your account exists. You can delete portfolios
+          in the app at any time; to have your account and all its data deleted,
+          email us. You can remove True Portfolio's access in your
+          <a href="https://myaccount.google.com/connections">Google Account</a>.
+        </p>
+
+        <h2>Contact</h2>
+        <p>
+          Questions and deletion requests:
+          <a href="mailto:batuhan@buber.tr">batuhan@buber.tr</a>
+        </p>
+      </article>
+    </main>
+  </body>
+</html>
