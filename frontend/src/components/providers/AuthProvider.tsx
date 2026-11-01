@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
 import { useQueryClient } from '@tanstack/react-query';
+import { disableGoogleAutoSelect } from '@/lib/googleIdentity';
 import { supabase } from '@/lib/supabase';
 import { AuthContext } from '@/hooks/authContext';
 
@@ -33,30 +34,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, [queryClient]);
 
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    // Supabase's AuthError keeps its ``code`` for a translated message.
-    return { error };
-  };
-
-  const signUp = async (email: string, password: string, fullName: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
-        },
-      },
+  const signInWithGoogle = async (credential: string, nonce: string) => {
+    const { error } = await supabase.auth.signInWithIdToken({
+      provider: 'google',
+      token: credential,
+      nonce,
     });
     // Supabase's AuthError keeps its ``code`` for a translated message.
     return { error };
   };
 
   const signOut = async () => {
+    // Google must not pick this account by itself on the next sign-in.
+    disableGoogleAutoSelect();
     await supabase.auth.signOut();
   };
 
@@ -67,8 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         isAuthenticated: !!session,
         isLoading,
-        signIn,
-        signUp,
+        signInWithGoogle,
         signOut,
       }}
     >

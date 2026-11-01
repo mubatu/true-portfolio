@@ -1,15 +1,10 @@
-import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
   Briefcase,
   CalendarDays,
-  CheckCircle2,
-  KeyRound,
   Languages,
-  Loader2,
-  Lock,
   LogOut,
   Mail,
   Moon,
@@ -21,19 +16,15 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Panel, PanelHeader } from '@/components/ui/Panel';
-import { PasswordRequirements } from '@/components/ui/PasswordRequirements';
 import { Segmented } from '@/components/ui/Segmented';
 import { TextField } from '@/components/ui/TextField';
 import { LOCALES } from '@/config';
 import { useAuth } from '@/hooks/useAuth';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useTheme } from '@/hooks/useTheme';
-import { authErrorKey } from '@/lib/authErrors';
-import { validatePassword } from '@/lib/password';
-import { supabase } from '@/lib/supabase';
 import { getPortfolios } from '@/services/portfolioService';
 
-/** Account overview, name and password, language and theme, sign out. */
+/** Account overview, name and email from Google, language and theme, sign out. */
 export function Profile() {
   const { t, i18n } = useTranslation();
   const { user, signOut } = useAuth();
@@ -93,8 +84,7 @@ export function Profile() {
         </Panel>
 
         <div className="space-y-6 min-w-0">
-          <NameForm initial={fullName} email={user?.email ?? ''} />
-          <PasswordForm />
+          <AccountInfo name={fullName} email={user?.email ?? ''} />
           <Preferences />
 
           <Panel className="p-4 md:p-6">
@@ -128,119 +118,16 @@ function Stat({ icon: Icon, label, value }: { icon: typeof Briefcase; label: str
   );
 }
 
-function Saved({ text }: { text: string }) {
-  return (
-    <span className="inline-flex items-center gap-1.5 text-sm" style={{ color: 'hsl(var(--gain))' }} role="status">
-      <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-      {text}
-    </span>
-  );
-}
-
-function ErrorText({ error }: { error: unknown }) {
+/** Name and email come from the Google account; Google sends them again on every sign-in. */
+function AccountInfo({ name, email }: { name: string; email: string }) {
   const { t } = useTranslation();
-  if (!error) return null;
-  return (
-    <p className="text-sm" style={{ color: 'hsl(var(--destructive))' }} role="alert">
-      {t(authErrorKey(error, 'common.error'))}
-    </p>
-  );
-}
-
-function NameForm({ initial, email }: { initial: string; email: string }) {
-  const { t } = useTranslation();
-  const [name, setName] = useState(initial);
-  const mutation = useMutation({
-    mutationFn: async (fullName: string) => {
-      const { error } = await supabase.auth.updateUser({ data: { full_name: fullName } });
-      if (error) throw error;
-    },
-  });
-  const changed = name.trim() !== initial && name.trim().length > 0;
-
-  const submit = (e: FormEvent) => {
-    e.preventDefault();
-    if (changed && !mutation.isPending) mutation.mutate(name.trim());
-  };
-
   return (
     <Panel className="p-4 md:p-6">
       <PanelHeader icon={UserRound} title={t('profile.account.title')} description={t('profile.account.description')} className="mb-5" />
-      <form onSubmit={submit} className="space-y-4">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <TextField id="profile-name" label={t('auth.name')} icon={User} value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
-          <TextField id="profile-email" label={t('auth.email')} icon={Mail} value={email} disabled hint={t('profile.account.emailHint')} />
-        </div>
-        <ErrorText error={mutation.error} />
-        <div className="flex items-center gap-3">
-          <Button type="submit" disabled={!changed || mutation.isPending} className="rounded-xl">
-            {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : t('common.save')}
-          </Button>
-          {mutation.isSuccess && !changed && <Saved text={t('profile.saved')} />}
-        </div>
-      </form>
-    </Panel>
-  );
-}
-
-function PasswordForm() {
-  const { t } = useTranslation();
-  const [password, setPassword] = useState('');
-  const [confirm, setConfirm] = useState('');
-  const mutation = useMutation({
-    mutationFn: async (next: string) => {
-      const { error } = await supabase.auth.updateUser({ password: next });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      setPassword('');
-      setConfirm('');
-    },
-  });
-  const mismatch = confirm.length > 0 && confirm !== password;
-  const valid = validatePassword(password) && confirm === password;
-
-  const submit = (e: FormEvent) => {
-    e.preventDefault();
-    if (valid && !mutation.isPending) mutation.mutate(password);
-  };
-
-  return (
-    <Panel className="p-4 md:p-6">
-      <PanelHeader icon={KeyRound} title={t('profile.password.title')} description={t('profile.password.description')} className="mb-5" />
-      <form onSubmit={submit} className="space-y-4">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <TextField
-              id="new-password"
-              type="password"
-              label={t('profile.password.new')}
-              icon={Lock}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="new-password"
-            />
-            <PasswordRequirements password={password} show={password.length > 0} />
-          </div>
-          <TextField
-            id="confirm-password"
-            type="password"
-            label={t('profile.password.confirm')}
-            icon={Lock}
-            value={confirm}
-            onChange={(e) => setConfirm(e.target.value)}
-            autoComplete="new-password"
-            hint={mismatch ? t('profile.password.mismatch') : undefined}
-          />
-        </div>
-        <ErrorText error={mutation.error} />
-        <div className="flex items-center gap-3">
-          <Button type="submit" disabled={!valid || mutation.isPending} className="rounded-xl">
-            {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : t('profile.password.submit')}
-          </Button>
-          {mutation.isSuccess && <Saved text={t('profile.password.changed')} />}
-        </div>
-      </form>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <TextField id="profile-name" label={t('profile.account.name')} icon={User} value={name} disabled readOnly />
+        <TextField id="profile-email" label={t('profile.account.email')} icon={Mail} value={email} disabled readOnly />
+      </div>
     </Panel>
   );
 }
