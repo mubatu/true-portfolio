@@ -73,7 +73,10 @@ def test_closes_yahoo_left_unadjusted_are_divided():
 @pytest.fixture
 def sync_env(monkeypatch):
     """Fake DB layer + Yahoo; records what would be downloaded and stored."""
-    env = {"windows": {}, "legacy_min": {}, "available": set(), "downloads": [], "stored": {}}
+    env = {
+        "windows": {}, "legacy_min": {}, "available": set(), "pending": {},
+        "downloads": [], "stored": {},
+    }
 
     monkeypatch.setattr(
         market_data, "load_sync_windows",
@@ -86,7 +89,7 @@ def sync_env(monkeypatch):
     def fake_download(tickers, start, end):
         env["downloads"].append((tuple(tickers), start, end))
         return {
-            t: yahoo.TickerHistory(closes={YESTERDAY: D(1)})
+            t: yahoo.TickerHistory(closes={YESTERDAY: D(1)}, pending=env["pending"].get(t))
             for t in tickers
             if t in env["available"]
         }
@@ -181,6 +184,40 @@ def test_parse_batched_download_frame():
     assert history.splits == {date(2023, 4, 4): D("7.0")}
     assert history.dividends == {date(2023, 4, 5): D("6.487455")}
     assert yahoo._parse_ticker(frame, "MISSING.IS") is None
+    assert history.pending is None
+
+
+def test_traded_day_without_a_close_is_pending():
+    # Yahoo on 4 Nov 2026 at night: 3 Nov has an open but no close yet.
+    # 29 Oct (holiday) is in the batched frame for other markets, all empty.
+    index = pd.to_datetime(["2026-10-28", "2026-10-29", "2026-11-02", "2026-11-03"])
+    columns = pd.MultiIndex.from_product([["XU100.IS"], ["Open", "Close"]])
+    nan = float("nan")
+    frame = pd.DataFrame(
+        [[11151.0, 11165.4], [nan, nan], [10765.1, 10961.7], [10921.12, nan]],
+        index=index,
+        columns=columns,
+    )
+
+    history = yahoo._parse_ticker(frame, "XU100.IS")
+    assert max(history.closes) == date(2026, 11, 2)
+    assert history.pending == date(2026, 11, 3)
+
+
+def test_pending_settled_day_is_left_uncovered(sync_env):
+    sync_env["available"] = {"AAA.IS", "BBB.IS"}
+    sync_env["pending"] = {"AAA.IS": YESTERDAY, "BBB.IS": TODAY}
+
+    market_data.ensure_market_data(
+        None,
+        {"AAA.IS": (date(2025, 3, 1), YESTERDAY), "BBB.IS": (date(2025, 3, 1), YESTERDAY)},
+        today=TODAY,
+    )
+
+    # AAA's settled close is still missing → asked again next time.
+    assert sync_env["stored"]["AAA.IS"] == (date(2025, 3, 1), YESTERDAY - timedelta(days=1))
+    # BBB's open bar is today's, not yet settled anyway.
+    assert sync_env["stored"]["BBB.IS"] == (date(2025, 3, 1), YESTERDAY)
 
 
 def test_fund_tickers_are_never_sent_to_yahoo(sync_env):
