@@ -24,6 +24,10 @@ class TickerHistory:
     closes: dict[date, Decimal] = field(default_factory=dict)
     splits: dict[date, Decimal] = field(default_factory=dict)
     dividends: dict[date, Decimal] = field(default_factory=dict)
+    # First day after the last close that has an open but no close yet: it
+    # traded, but Yahoo has not finalised its daily bar (BIST bars can stay
+    # empty into the next morning). Days without trading have no open either.
+    pending: date | None = None
 
 
 def download_histories(
@@ -81,10 +85,23 @@ def _parse_ticker(frame: pd.DataFrame, ticker: str) -> TickerHistory | None:
     if not closes:
         return None
 
+    last_close = max(closes)
+    pending = None
+    if "Open" in sub.columns:
+        pending = min(
+            (
+                _to_date(ts)
+                for ts, row in sub.iterrows()
+                if _to_date(ts) > last_close and pd.notna(row["Open"]) and pd.isna(row["Close"])
+            ),
+            default=None,
+        )
+
     return TickerHistory(
         closes=closes,
         splits=_positive_events(sub, "Stock Splits"),
         dividends=_positive_events(sub, "Dividends"),
+        pending=pending,
     )
 
 

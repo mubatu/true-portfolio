@@ -17,7 +17,9 @@ someone needs (the last settled day for open positions: today once the
 market has closed, else yesterday). A refresh always rewrites
 the *whole* stored window in one transaction, so every stored price and
 corporate action of a ticker shares one basis — also after a new split,
-which makes Yahoo restate the entire raw-close history.
+which makes Yahoo restate the entire raw-close history. A settled day
+whose daily bar Yahoo has not finalised yet is left out of the window, so
+it is asked for again on the next sync.
 
 Before a window is rewritten, the stored copy is compared with the fresh
 one: a constant factor up to some day with no split there is a silent
@@ -113,8 +115,13 @@ def ensure_market_data(
     failed: list[str] = []
     for ticker, start in sorted(stale.items()):
         history = histories.get(ticker)
+        # A settled day Yahoo has no close for yet is left uncovered, so
+        # the next sync asks again instead of waiting for the next day.
+        through = settled
+        if history is not None and history.pending is not None and history.pending <= settled:
+            through = history.pending - timedelta(days=1)
         if history is None or not _store_history(
-            db, ticker, history, start, settled, today
+            db, ticker, history, start, through, today
         ):
             failed.append(ticker)
         else:
