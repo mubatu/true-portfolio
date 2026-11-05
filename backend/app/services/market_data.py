@@ -19,7 +19,7 @@ the *whole* stored window in one transaction, so every stored price and
 corporate action of a ticker shares one basis — also after a new split,
 which makes Yahoo restate the entire raw-close history. A settled day
 whose daily bar Yahoo has not finalised yet is left out of the window, so
-it is asked for again on the next sync.
+it is asked for again, at most once every ``UNPUBLISHED_RETRY``.
 
 Before a window is rewritten, the stored copy is compared with the fresh
 one: a constant factor up to some day with no split there is a silent
@@ -29,7 +29,7 @@ TEFAS funds are not on Yahoo. Their prices come from TEFAS's API
 (tefas_api) and are merged into ``market_prices`` like an Excel upload:
 days TEFAS no longer returns (older than five years) are kept. A fund's
 window ends at its last price, so a day TEFAS has not published yet is
-asked again, at most once every ``FUND_RETRY``.
+asked again the same way.
 
 Analysis code only reads from these tables; it never calls Yahoo or TEFAS.
 """
@@ -41,7 +41,7 @@ from decimal import Decimal
 from sqlalchemy import bindparam, text
 from sqlalchemy.orm import Session
 
-from app.core.markets import uses_tefas_prices
+from app.core.markets import last_settled_day, uses_tefas_prices
 from app.services import rights, tefas_api, yahoo
 from app.services.rights import RightsIssue
 
@@ -100,6 +100,7 @@ def ensure_market_data(
     needs = {t: window for t, window in needs.items() if t not in funds}
     synced_funds = _ensure_fund_prices(db, funds, today, settled)
     windows = load_sync_windows(db, list(needs))
+    now = datetime.now(timezone.utc)
 
     stale: dict[str, date] = {}
     for ticker, (need_from, need_through) in needs.items():
@@ -112,8 +113,10 @@ def ensure_market_data(
             # (they may be dividend-adjusted) by covering them too.
             legacy_from = _stored_min_date(db, ticker)
             stale[ticker] = min(need_from, legacy_from) if legacy_from else need_from
-        elif window.covered_from > need_from or window.covered_through < need_through:
-            stale[ticker] = min(window.covered_from, need_from)
+        elif window.covered_from > need_from:
+            stale[ticker] = need_from
+        elif window.covered_through < need_through and not _asked_recently(window, settled, now):
+            stale[ticker] = window.covered_from
 
     if not stale:
         return SyncResult(synced=synced_funds, failed=[])
@@ -141,8 +144,19 @@ def ensure_market_data(
     return SyncResult(synced=synced_funds + synced, failed=failed)
 
 
-# A fund whose latest price is not out yet is asked again after this long.
-FUND_RETRY = timedelta(hours=1)
+# A settled day Yahoo or TEFAS has not published yet is asked again after
+# this long (asking on every page load would re-download whole windows).
+UNPUBLISHED_RETRY = timedelta(hours=1)
+
+
+def _asked_recently(window: SyncWindow, settled: date, now: datetime) -> bool:
+    """True when the last sync already asked for ``settled`` (it was the
+    last settled day then too) less than ``UNPUBLISHED_RETRY`` ago."""
+    return (
+        window.synced_at is not None
+        and now - window.synced_at < UNPUBLISHED_RETRY
+        and last_settled_day(None, window.synced_at) >= settled
+    )
 
 
 def _ensure_fund_prices(
@@ -156,7 +170,7 @@ def _ensure_fund_prices(
     if not needs:
         return []
     windows = load_sync_windows(db, list(needs))
-    retry_before = datetime.now(timezone.utc) - FUND_RETRY
+    now = datetime.now(timezone.utc)
 
     synced: list[str] = []
     for ticker, (need_from, need_through) in sorted(needs.items()):
@@ -167,9 +181,7 @@ def _ensure_fund_prices(
             since = need_from
         elif window.covered_from > need_from:
             since = need_from
-        elif window.covered_through < need_through and (
-            window.synced_at is None or window.synced_at < retry_before
-        ):
+        elif window.covered_through < need_through and not _asked_recently(window, settled, now):
             since = window.covered_through
         else:
             continue
