@@ -178,7 +178,7 @@
       "title": "Some market data could not be loaded. Results may be incomplete.",
       "market_data_unavailable": "Market data for {{ticker}} could not be refreshed; the last stored data is shown.",
       "rights_issue_review": "A rights issue for {{ticker}} needs review; enter or confirm its terms in the Rights Issues section of the Transactions page.",
-      "fund_prices_outdated": "Uploaded fund prices for {{ticker}} are missing or out of date; upload a fresh TEFAS Excel in the Fund Prices section of the Transactions page."
+      "fund_prices_outdated": "Fund prices for {{ticker}} are missing or out of date and couldn't be fetched from TEFAS; you can upload its TEFAS Excel in the Fund Prices section of the Transactions page."
     },
     "table": {
       "ticker": "Ticker",
@@ -564,10 +564,10 @@
   "fundPrices": {
     "title": "Fund Prices",
     "upload": "Upload Prices",
-    "hint": "Yahoo has no daily prices for funds. On TEFAS, open Fund Data, pick the fund and a date range, download the Excel and upload it here. Re-upload now and then to stay current; a new file is merged with the old one.",
-    "empty": "No funds yet. Add a buy first, then upload its prices.",
+    "hint": "Fund prices update from TEFAS automatically. If TEFAS can't be reached, or you need prices older than 5 years, download the fund's Excel from Fund Data on TEFAS and upload it here; a new file is merged with the old one.",
+    "empty": "No funds yet. Add a buy; its prices come from TEFAS.",
     "range": "{{from}} – {{to}} · {{days}} days",
-    "missing": "No prices uploaded",
+    "missing": "No prices",
     "form": {
       "title": "Upload TEFAS Prices",
       "hint": "TEFAS → Fund Data → pick the fund → Excel. Prices are shared by every portfolio holding the fund.",

@@ -177,7 +177,7 @@
       "title": "Bazı piyasa verileri yüklenemedi. Sonuçlar eksik olabilir.",
       "market_data_unavailable": "{{ticker}} için piyasa verisi güncellenemedi; kayıtlı son veriler gösteriliyor.",
       "rights_issue_review": "{{ticker}} için bir bedelli sermaye artırımı kaydı kontrol bekliyor; İşlemler sayfasındaki Bedelli bölümünden şartlarını gir veya onayla.",
-      "fund_prices_outdated": "{{ticker}} için yüklü fon fiyatları eksik veya güncel değil; TEFAS'tan güncel Excel'i İşlemler sayfasındaki Fon Fiyatları bölümünden yükle."
+      "fund_prices_outdated": "{{ticker}} için fon fiyatları eksik veya güncel değil ve TEFAS'tan alınamadı; TEFAS'tan Excel'i indirip İşlemler sayfasındaki Fon Fiyatları bölümünden yükleyebilirsin."
     },
     "table": {
       "ticker": "Hisse",
@@ -558,10 +558,10 @@
   "fundPrices": {
     "title": "Fon Fiyatları",
     "upload": "Fiyat Yükle",
-    "hint": "Fonların günlük fiyatı Yahoo'da yok. TEFAS'ta Fon Verileri sayfasında fonu seçip tarih aralığını girin, Excel'i indirin ve buradan yükleyin. Güncel kalması için arada bir yeniden yükleyin; yeni dosya eskisiyle birleştirilir.",
-    "empty": "Henüz fon yok. Önce bir alış işlemi ekle, sonra fiyatlarını yükle.",
+    "hint": "Fon fiyatları TEFAS'tan kendiliğinden güncellenir. TEFAS'a ulaşılamazsa ya da 5 yıldan eski fiyat gerekirse Fon Verileri sayfasından fonun Excel'ini indirip buradan yükleyebilirsin; yeni dosya eskisiyle birleştirilir.",
+    "empty": "Henüz fon yok. Bir alış işlemi ekle; fiyatları TEFAS'tan gelir.",
     "range": "{{from}} – {{to}} · {{days}} gün",
-    "missing": "Fiyat yüklenmedi",
+    "missing": "Fiyat yok",
     "form": {
       "title": "TEFAS Fiyatlarını Yükle",
       "hint": "TEFAS → Fon Verileri → fonu seç → Excel. Fiyatlar fonu tutan tüm portföylerde kullanılır.",

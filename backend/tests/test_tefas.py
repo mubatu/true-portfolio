@@ -7,9 +7,9 @@ from io import BytesIO
 import pytest
 from openpyxl import Workbook
 
-from app.core.markets import uses_uploaded_prices
+from app.core.markets import uses_tefas_prices
 from app.services.ledger import LedgerTransaction
-from app.services.portfolio_service import _outdated_uploaded_prices
+from app.services.portfolio_service import _outdated_fund_prices
 from app.services.tefas import InvalidFundPrices, normalize_fund_code, parse_price_export
 
 
@@ -74,10 +74,10 @@ def test_fund_code_is_three_characters():
         normalize_fund_code("THYAO")
 
 
-def test_only_fund_tickers_use_uploaded_prices():
-    assert uses_uploaded_prices("IPB.TEFAS")
-    assert not uses_uploaded_prices("THYAO.IS")
-    assert not uses_uploaded_prices("XU100.IS")
+def test_only_fund_tickers_use_tefas_prices():
+    assert uses_tefas_prices("IPB.TEFAS")
+    assert not uses_tefas_prices("THYAO.IS")
+    assert not uses_tefas_prices("XU100.IS")
 
 
 def test_outdated_fund_prices_are_flagged():
@@ -89,12 +89,12 @@ def test_outdated_fund_prices_are_flagged():
     def prices_through(last: date) -> dict[str, dict[date, D]]:
         return {"IPB.TEFAS": {date(2026, 1, 5): D("0.5"), last: D("0.68")}}
 
-    assert _outdated_uploaded_prices([buy, stock], prices_through(date(2026, 10, 30)), open_days) == []
+    assert _outdated_fund_prices([buy, stock], prices_through(date(2026, 10, 30)), open_days) == []
     # Two market days without a price (28 and 30 Oct) are tolerated...
-    assert _outdated_uploaded_prices([buy], prices_through(date(2026, 10, 27)), open_days) == []
+    assert _outdated_fund_prices([buy], prices_through(date(2026, 10, 27)), open_days) == []
     # ...a third is not.
-    assert _outdated_uploaded_prices([buy], prices_through(date(2026, 10, 26)), open_days) == ["IPB.TEFAS"]
+    assert _outdated_fund_prices([buy], prices_through(date(2026, 10, 26)), open_days) == ["IPB.TEFAS"]
     # Nothing uploaded, or prices that start after the purchase.
-    assert _outdated_uploaded_prices([buy], {}, open_days) == ["IPB.TEFAS"]
+    assert _outdated_fund_prices([buy], {}, open_days) == ["IPB.TEFAS"]
     late = {"IPB.TEFAS": {date(2026, 3, 2): D("0.55"), date(2026, 10, 30): D("0.68")}}
-    assert _outdated_uploaded_prices([buy], late, open_days) == ["IPB.TEFAS"]
+    assert _outdated_fund_prices([buy], late, open_days) == ["IPB.TEFAS"]
