@@ -9,7 +9,9 @@ from app.services import get_profile_by_id
 security = HTTPBearer()
 
 
-async def get_current_user(
+# Plain ``def``: the JWKS fetch and the profile query block, and in an
+# ``async def`` one stuck call would freeze every request, /health included.
+def get_current_user(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
     db: Annotated[Session, Depends(get_db)],
 ) -> Profile:
