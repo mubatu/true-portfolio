@@ -242,9 +242,42 @@ def test_fund_tickers_are_never_sent_to_yahoo(sync_env):
     assert result.failed == []
 
 
-# -- TEFAS funds ----------------------------------------------------------
+def test_unclosed_day_is_asked_again_at_most_hourly(sync_env):
+    sync_env["available"] = {"AAA.IS"}
+    last = date(2026, 10, 28)
+    needs = {"AAA.IS": (date(2025, 3, 1), YESTERDAY)}
+    sync_env["windows"]["AAA.IS"] = SyncWindow(
+        date(2025, 1, 2), last, datetime.now(timezone.utc) - timedelta(minutes=10)
+    )
+    market_data.ensure_market_data(None, needs, today=TODAY)
+    assert sync_env["downloads"] == []
+
+    sync_env["windows"]["AAA.IS"] = SyncWindow(date(2025, 1, 2), last, LONG_AGO)
+    market_data.ensure_market_data(None, needs, today=TODAY)
+    assert sync_env["downloads"] == [(("AAA.IS",), date(2025, 1, 2), TODAY)]
+
+
+def test_sync_before_the_close_settled_does_not_hold_back_its_close():
+    istanbul = ZoneInfo("Europe/Istanbul")
+    friday = date(2026, 10, 30)
+    now = datetime(2026, 10, 30, 19, 10, tzinfo=istanbul)
+
+    def window(synced_at):
+        return SyncWindow(date(2025, 1, 2), friday - timedelta(days=1), synced_at)
+
+    asked = market_data._asked_recently
+    # At 18:30 the last settled day was Thursday: Friday was never asked.
+    assert not asked(window(datetime(2026, 10, 30, 18, 30, tzinfo=istanbul)), friday, now)
+    assert asked(window(datetime(2026, 10, 30, 19, 5, tzinfo=istanbul)), friday, now)
+    assert not asked(window(None), friday, now)
+    later = datetime(2026, 10, 30, 20, 6, tzinfo=istanbul)
+    assert not asked(window(datetime(2026, 10, 30, 19, 5, tzinfo=istanbul)), friday, later)
+
 
 LONG_AGO = datetime(2026, 10, 1, tzinfo=timezone.utc)
+
+
+# -- TEFAS funds ----------------------------------------------------------
 
 
 def test_new_fund_is_fetched_from_its_first_needed_day(sync_env):
