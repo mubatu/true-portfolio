@@ -9,7 +9,7 @@ class MarketConfig:
     code: str
     currency: str
     country: str
-    # Ticker suffix: the yfinance exchange suffix, or for uploaded markets
+    # Ticker suffix: the yfinance exchange suffix, or for non-Yahoo markets
     # just a marker that keeps their codes apart from exchange tickers.
     yfinance_suffix: str
     # Index synced like any holding: its trading days are the market
@@ -21,8 +21,8 @@ class MarketConfig:
     # Yahoo FX quote of the market currency against USD (USD/TRY): drawn as
     # the "dollar" comparison line and used to price gold in that currency.
     usd_ticker: str | None = None
-    # "yahoo": synced daily; "upload": prices come only from files the user
-    # uploads (TEFAS funds — Yahoo has none and TEFAS blocks automated reads).
+    # "yahoo": synced daily; "tefas": fund prices from TEFAS's API (Yahoo has
+    # none), or from its Excel export the user uploads.
     price_source: str = "yahoo"
     # A weekday's closes count from this local time on (BIST closes at
     # 18:00; the margin covers the closing auction and Yahoo's delay).
@@ -50,8 +50,9 @@ MARKETS: dict[str, MarketConfig] = {
             (date(2024, 12, 22), Decimal("0.15")),
         ),
     ),
-    # TEFAS mutual funds. Prices are uploaded from TEFAS's "Fon Verileri"
-    # Excel export; funds pay no cash dividends and never split. Withholding
+    # TEFAS mutual funds. Prices come from TEFAS's API, or are uploaded from
+    # its "Fon Verileri" Excel export; funds pay no cash dividends and never
+    # split. Withholding
     # on fund gains (stopaj) is not modelled: returns are before tax.
     "TEFAS": MarketConfig(
         code="TEFAS",
@@ -60,7 +61,7 @@ MARKETS: dict[str, MarketConfig] = {
         yfinance_suffix=".TEFAS",
         benchmark_ticker="XU100.IS",
         usd_ticker="USDTRY=X",
-        price_source="upload",
+        price_source="tefas",
     ),
 }
 
@@ -87,10 +88,10 @@ def last_settled_day(market_code: str | None, now: datetime | None = None) -> da
     return local.date() - timedelta(days=1)
 
 
-def uses_uploaded_prices(ticker: str) -> bool:
-    """True for tickers of upload-priced markets: never sent to Yahoo."""
+def uses_tefas_prices(ticker: str) -> bool:
+    """True for fund tickers: priced from TEFAS, never sent to Yahoo."""
     return any(
-        config.price_source == "upload" and ticker.endswith(config.yfinance_suffix)
+        config.price_source == "tefas" and ticker.endswith(config.yfinance_suffix)
         for config in MARKETS.values()
     )
 

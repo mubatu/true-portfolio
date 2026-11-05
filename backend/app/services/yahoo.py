@@ -1,5 +1,5 @@
 """
-Yahoo Finance access. The only module that talks to the network.
+Yahoo Finance access. With tefas_api, the only modules that talk to the network.
 
 One batched ``yf.download`` call returns, for every ticker:
   - raw daily closes (``auto_adjust=False``): restated for stock splits,

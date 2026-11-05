@@ -72,10 +72,11 @@ def test_closes_yahoo_left_unadjusted_are_divided():
 
 @pytest.fixture
 def sync_env(monkeypatch):
-    """Fake DB layer + Yahoo; records what would be downloaded and stored."""
+    """Fake DB layer, Yahoo and TEFAS; records what would be downloaded and stored."""
     env = {
         "windows": {}, "legacy_min": {}, "available": set(), "pending": {},
         "downloads": [], "stored": {},
+        "fund_prices": {}, "fund_fetches": [], "fund_stored": {},
     }
 
     monkeypatch.setattr(
@@ -98,8 +99,17 @@ def sync_env(monkeypatch):
         env["stored"][ticker] = (start, through)
         return True
 
+    def fake_fetch(code, since, today):
+        env["fund_fetches"].append((code, since))
+        return env["fund_prices"].get(code)
+
+    def fake_store_fund(db, ticker, prices, covered_from, covered_through):
+        env["fund_stored"][ticker] = (covered_from, covered_through, sorted(prices))
+
     monkeypatch.setattr(market_data.yahoo, "download_histories", fake_download)
     monkeypatch.setattr(market_data, "_store_history", fake_store)
+    monkeypatch.setattr(market_data.tefas_api, "fetch_prices", fake_fetch)
+    monkeypatch.setattr(market_data, "_store_fund_prices", fake_store_fund)
     return env
 
 
@@ -230,6 +240,67 @@ def test_fund_tickers_are_never_sent_to_yahoo(sync_env):
     assert sync_env["downloads"] == [(("AAA.IS",), date(2025, 3, 1), TODAY)]
     assert result.synced == ["AAA.IS"]
     assert result.failed == []
+
+
+# -- TEFAS funds ----------------------------------------------------------
+
+LONG_AGO = datetime(2026, 10, 1, tzinfo=timezone.utc)
+
+
+def test_new_fund_is_fetched_from_its_first_needed_day(sync_env):
+    sync_env["fund_prices"]["IPB"] = {
+        date(2025, 3, 3): D("0.5"), YESTERDAY: D("0.7"), TODAY: D("0.71"),
+    }
+    result = market_data.ensure_market_data(
+        None, {"IPB.TEFAS": (date(2025, 3, 1), YESTERDAY)}, today=TODAY
+    )
+    assert sync_env["fund_fetches"] == [("IPB", date(2025, 3, 1))]
+    # Today's price is not settled yet; the window ends at the last stored price.
+    assert sync_env["fund_stored"]["IPB.TEFAS"] == (
+        date(2025, 3, 1), YESTERDAY, [date(2025, 3, 3), YESTERDAY],
+    )
+    assert result.synced == ["IPB.TEFAS"]
+
+
+def test_covered_fund_is_not_fetched(sync_env):
+    sync_env["windows"]["IPB.TEFAS"] = SyncWindow(date(2025, 3, 1), YESTERDAY, LONG_AGO)
+    market_data.ensure_market_data(None, {"IPB.TEFAS": (date(2025, 3, 1), YESTERDAY)}, today=TODAY)
+    assert sync_env["fund_fetches"] == []
+
+
+def test_fund_missing_its_latest_price_is_asked_at_most_hourly(sync_env):
+    last = date(2026, 10, 27)
+    needs = {"IPB.TEFAS": (date(2025, 3, 1), YESTERDAY)}
+    sync_env["windows"]["IPB.TEFAS"] = SyncWindow(
+        date(2025, 3, 1), last, datetime.now(timezone.utc) - timedelta(minutes=10)
+    )
+    market_data.ensure_market_data(None, needs, today=TODAY)
+    assert sync_env["fund_fetches"] == []
+
+    sync_env["windows"]["IPB.TEFAS"] = SyncWindow(date(2025, 3, 1), last, LONG_AGO)
+    sync_env["fund_prices"]["IPB"] = {last: D("0.7"), date(2026, 10, 28): D("0.71")}
+    market_data.ensure_market_data(None, needs, today=TODAY)
+    assert sync_env["fund_fetches"] == [("IPB", last)]
+    assert sync_env["fund_stored"]["IPB.TEFAS"][:2] == (date(2025, 3, 1), date(2026, 10, 28))
+
+
+def test_older_trade_refetches_a_fund_right_away(sync_env):
+    sync_env["windows"]["IPB.TEFAS"] = SyncWindow(
+        date(2025, 3, 1), YESTERDAY, datetime.now(timezone.utc)
+    )
+    sync_env["fund_prices"]["IPB"] = {date(2024, 6, 3): D("0.4"), YESTERDAY: D("0.7")}
+    market_data.ensure_market_data(None, {"IPB.TEFAS": (date(2024, 6, 1), YESTERDAY)}, today=TODAY)
+    assert sync_env["fund_fetches"] == [("IPB", date(2024, 6, 1))]
+    assert sync_env["fund_stored"]["IPB.TEFAS"][:2] == (date(2024, 6, 1), YESTERDAY)
+
+
+def test_unreadable_tefas_keeps_stored_fund_prices(sync_env):
+    sync_env["fund_prices"]["IPB"] = None
+    result = market_data.ensure_market_data(
+        None, {"IPB.TEFAS": (date(2025, 3, 1), YESTERDAY)}, today=TODAY
+    )
+    assert sync_env["fund_stored"] == {}
+    assert result.synced == result.failed == []
 
 
 # -- settled day ----------------------------------------------------------

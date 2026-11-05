@@ -22,7 +22,7 @@ from app.core.markets import (
     get_market_benchmark,
     get_market_config,
     last_settled_day,
-    uses_uploaded_prices,
+    uses_tefas_prices,
 )
 from app.services import analysis, tefas
 from app.services.ledger import DividendEvent, LedgerTransaction, replay
@@ -149,7 +149,7 @@ def analyze_portfolio(db: Session, portfolio_id: int) -> dict:
         if r["needs_review"]
     ] + [
         {"code": "fund_prices_outdated", "ticker": ticker}
-        for ticker in _outdated_uploaded_prices(transactions, closes, open_days)
+        for ticker in _outdated_fund_prices(transactions, closes, open_days)
     ]
     return {
         "portfolio_id": portfolio_id,
@@ -161,12 +161,12 @@ def analyze_portfolio(db: Session, portfolio_id: int) -> dict:
 
 
 # ------------------------------------------------------------------
-# Uploaded fund prices (TEFAS)
+# Fund prices (TEFAS)
 # ------------------------------------------------------------------
 
-# Market days a held fund may go without an uploaded price before its
+# Market days a held fund may go without a price before its
 # prices count as outdated (weekends and holidays are not market days).
-UPLOADED_PRICES_MAX_MISSING_DAYS = 2
+FUND_PRICES_MAX_MISSING_DAYS = 2
 
 
 def upload_fund_prices(
@@ -178,7 +178,7 @@ def upload_fund_prices(
     fund code or an unreadable file.
     """
     config = get_market_config(_portfolio_market(db, portfolio_id))
-    if config is None or config.price_source != "upload":
+    if config is None or config.price_source != "tefas":
         raise tefas.InvalidFundPrices("not_fund_portfolio")
     ticker = tefas.normalize_fund_code(fund_code) + config.yfinance_suffix
     prices = tefas.parse_price_export(content)
@@ -189,10 +189,10 @@ def upload_fund_prices(
 def list_fund_prices(
     db: Session, portfolio_id: int, extra_tickers: list[str] | None = None
 ) -> list[dict]:
-    """Stored price range of each upload-priced ticker of the portfolio."""
+    """Stored price range of each fund of the portfolio."""
     tickers = {
         t.ticker for t in _load_ledger_transactions(db, portfolio_id)
-        if uses_uploaded_prices(t.ticker)
+        if uses_tefas_prices(t.ticker)
     } | set(extra_tickers or [])
     ranges = load_price_ranges(db, sorted(tickers))
     return [
@@ -206,13 +206,13 @@ def list_fund_prices(
     ]
 
 
-def _outdated_uploaded_prices(
+def _outdated_fund_prices(
     transactions: list[LedgerTransaction],
     closes: dict[str, dict[date, Decimal]],
     open_days: list[date],
 ) -> list[str]:
-    """Upload-priced holdings whose prices miss a trade, or more than
-    ``UPLOADED_PRICES_MAX_MISSING_DAYS`` of the latest market days."""
+    """Fund holdings whose prices miss a trade, or more than
+    ``FUND_PRICES_MAX_MISSING_DAYS`` of the latest market days."""
     ledger = replay(transactions, [])
     first_trade: dict[str, date] = {}
     for txn in transactions:
@@ -220,7 +220,7 @@ def _outdated_uploaded_prices(
 
     outdated = []
     for ticker, position in sorted(ledger.positions.items()):
-        if not uses_uploaded_prices(ticker):
+        if not uses_tefas_prices(ticker):
             continue
         days = closes.get(ticker, {})
         if not days or min(days) > first_trade[ticker]:
@@ -228,7 +228,7 @@ def _outdated_uploaded_prices(
         elif position.quantity > 0:
             last_price = max(days)
             missing = sum(1 for day in open_days if day > last_price)
-            if missing > UPLOADED_PRICES_MAX_MISSING_DAYS:
+            if missing > FUND_PRICES_MAX_MISSING_DAYS:
                 outdated.append(ticker)
     return outdated
 
@@ -340,7 +340,7 @@ def calculate_adjusted_transaction_values(
     Raises ``CorporateActionsUnavailable`` if the ticker's split data is
     neither stored nor downloadable.
     """
-    if uses_uploaded_prices(ticker):  # funds never split
+    if uses_tefas_prices(ticker):  # funds never split
         return _quantize_quantity(quantity), _quantize_price(price), Decimal(1)
 
     today = date.today()

@@ -25,18 +25,24 @@ Before a window is rewritten, the stored copy is compared with the fresh
 one: a constant factor up to some day with no split there is a silent
 rights-issue restatement, recorded in ``rights_issues``.
 
-Analysis code only reads from these tables; it never calls Yahoo.
+TEFAS funds are not on Yahoo. Their prices come from TEFAS's API
+(tefas_api) and are merged into ``market_prices`` like an Excel upload:
+days TEFAS no longer returns (older than five years) are kept. A fund's
+window ends at its last price, so a day TEFAS has not published yet is
+asked again, at most once every ``FUND_RETRY``.
+
+Analysis code only reads from these tables; it never calls Yahoo or TEFAS.
 """
 
 from dataclasses import dataclass
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 
 from sqlalchemy import bindparam, text
 from sqlalchemy.orm import Session
 
-from app.core.markets import uses_uploaded_prices
-from app.services import rights, yahoo
+from app.core.markets import uses_tefas_prices
+from app.services import rights, tefas_api, yahoo
 from app.services.rights import RightsIssue
 
 
@@ -44,6 +50,7 @@ from app.services.rights import RightsIssue
 class SyncWindow:
     covered_from: date
     covered_through: date
+    synced_at: datetime | None = None
 
 
 @dataclass(frozen=True)
@@ -83,11 +90,15 @@ def ensure_market_data(
 
     Stale tickers are downloaded in a single batched Yahoo request.
     Tickers Yahoo returns nothing for keep their stored data and are
-    reported in ``failed``. Upload-priced tickers (TEFAS funds) are skipped.
+    reported in ``failed``. Funds are refreshed from TEFAS instead; one
+    TEFAS could not be read keeps its prices and is not reported (the
+    analysis warns when they get outdated).
     """
-    needs = {t: window for t, window in needs.items() if not uses_uploaded_prices(t)}
     today = today or date.today()
     settled = settled or today - timedelta(days=1)
+    funds = {t: window for t, window in needs.items() if uses_tefas_prices(t)}
+    needs = {t: window for t, window in needs.items() if t not in funds}
+    synced_funds = _ensure_fund_prices(db, funds, today, settled)
     windows = load_sync_windows(db, list(needs))
 
     stale: dict[str, date] = {}
@@ -105,7 +116,7 @@ def ensure_market_data(
             stale[ticker] = min(window.covered_from, need_from)
 
     if not stale:
-        return SyncResult(synced=[], failed=[])
+        return SyncResult(synced=synced_funds, failed=[])
 
     # ``today`` is included so a split taking effect today is not missed;
     # closes after ``settled`` (today's, while unfinished) are dropped.
@@ -127,7 +138,82 @@ def ensure_market_data(
         else:
             synced.append(ticker)
 
-    return SyncResult(synced=synced, failed=failed)
+    return SyncResult(synced=synced_funds + synced, failed=failed)
+
+
+# A fund whose latest price is not out yet is asked again after this long.
+FUND_RETRY = timedelta(hours=1)
+
+
+def _ensure_fund_prices(
+    db: Session,
+    needs: dict[str, tuple[date, date]],
+    today: date,
+    settled: date,
+) -> list[str]:
+    """Fetch funds whose stored window misses a needed day. One TEFAS
+    request per fund; returns the funds that got new prices stored."""
+    if not needs:
+        return []
+    windows = load_sync_windows(db, list(needs))
+    retry_before = datetime.now(timezone.utc) - FUND_RETRY
+
+    synced: list[str] = []
+    for ticker, (need_from, need_through) in sorted(needs.items()):
+        need_from = min(need_from, settled)
+        need_through = min(need_through, settled)
+        window = windows.get(ticker)
+        if window is None:
+            since = need_from
+        elif window.covered_from > need_from:
+            since = need_from
+        elif window.covered_through < need_through and (
+            window.synced_at is None or window.synced_at < retry_before
+        ):
+            since = window.covered_through
+        else:
+            continue
+
+        prices = tefas_api.fetch_prices(ticker.split(".")[0], since, today)
+        prices = {d: p for d, p in (prices or {}).items() if d <= settled}
+        if not prices:
+            continue
+        covered_from = min(need_from, window.covered_from) if window else need_from
+        covered_through = max(prices)
+        if window is not None:
+            covered_through = max(covered_through, window.covered_through)
+        _store_fund_prices(db, ticker, prices, min(covered_from, covered_through), covered_through)
+        synced.append(ticker)
+    return synced
+
+
+def _store_fund_prices(
+    db: Session,
+    ticker: str,
+    prices: dict[date, Decimal],
+    covered_from: date,
+    covered_through: date,
+) -> None:
+    """Merge fetched fund prices and record the window. One transaction."""
+    try:
+        _merge_closes(db, ticker, prices)
+        db.execute(
+            text(
+                """
+                INSERT INTO market_data_sync (ticker, covered_from, covered_through, synced_at)
+                VALUES (:ticker, :start, :through, now())
+                ON CONFLICT (ticker) DO UPDATE SET
+                    covered_from = EXCLUDED.covered_from,
+                    covered_through = EXCLUDED.covered_through,
+                    synced_at = EXCLUDED.synced_at
+                """
+            ),
+            {"ticker": ticker, "start": covered_from, "through": covered_through},
+        )
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
 
 
 def _store_history(
@@ -242,23 +328,27 @@ def save_uploaded_closes(db: Session, ticker: str, closes: dict[date, Decimal]) 
     overwritten; days outside the file are kept). One transaction."""
     if not closes:
         return
-    days = sorted(closes)
     try:
-        db.execute(
-            text(
-                """
-                INSERT INTO market_prices (ticker, date, close)
-                SELECT :ticker, d, c
-                FROM unnest(CAST(:dates AS date[]), CAST(:closes AS numeric[])) AS t(d, c)
-                ON CONFLICT (ticker, date) DO UPDATE SET close = EXCLUDED.close
-                """
-            ),
-            {"ticker": ticker, "dates": days, "closes": [closes[d] for d in days]},
-        )
+        _merge_closes(db, ticker, closes)
         db.commit()
     except Exception:
         db.rollback()
         raise
+
+
+def _merge_closes(db: Session, ticker: str, closes: dict[date, Decimal]) -> None:
+    days = sorted(closes)
+    db.execute(
+        text(
+            """
+            INSERT INTO market_prices (ticker, date, close)
+            SELECT :ticker, d, c
+            FROM unnest(CAST(:dates AS date[]), CAST(:closes AS numeric[])) AS t(d, c)
+            ON CONFLICT (ticker, date) DO UPDATE SET close = EXCLUDED.close
+            """
+        ),
+        {"ticker": ticker, "dates": days, "closes": [closes[d] for d in days]},
+    )
 
 
 def load_price_ranges(
@@ -456,14 +546,14 @@ def load_sync_windows(db: Session, tickers: list[str]) -> dict[str, SyncWindow]:
     rows = db.execute(
         text(
             """
-            SELECT ticker, covered_from, covered_through
+            SELECT ticker, covered_from, covered_through, synced_at
             FROM market_data_sync
             WHERE ticker IN :tickers
             """
         ).bindparams(bindparam("tickers", expanding=True)),
         {"tickers": tickers},
     ).fetchall()
-    return {t: SyncWindow(f, th) for t, f, th in rows}
+    return {t: SyncWindow(f, th, at) for t, f, th, at in rows}
 
 
 def load_closes(
