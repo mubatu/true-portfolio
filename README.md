@@ -37,14 +37,14 @@ Portfolios people chose to share, ranked by return since start. Only percentages
 - Period returns, peak, largest drawdown and recovery, volatility
 - Realized and unrealized P/L per stock, net dividends after withholding tax
 - Split, bonus issue and rights issue corrections
-- TEFAS fund prices from the "Fon Verileri" Excel export
+- TEFAS fund prices updated automatically, with the "Fon Verileri" Excel export as a fallback
 - Overview of all portfolios as one fund
 - Turkish and English, light and dark theme, phone layout
 
 ## Stack
 
 - **Frontend:** React, TypeScript, Vite, Tailwind CSS, Recharts, TanStack Query
-- **Backend:** FastAPI (Python), prices from Yahoo Finance cached in the database
+- **Backend:** FastAPI (Python), prices from Yahoo Finance and TEFAS cached in the database
 - **Database and auth:** Supabase (Postgres with row-level security), sign-in with Google
 - **Hosting:** frontend as a Cloudflare Worker with static assets (`frontend/wrangler.toml`, `npm run deploy`), API on Render
 
