@@ -5,7 +5,7 @@
   </picture>
 </h1>
 
-<p align="center"><strong>▶ Live: <a href="https://portfolio.mubatu.com">portfolio.mubatu.com</a></strong></p>
+<p align="center"><strong>▶ Live: <a href="https://trueportfolio.net">trueportfolio.net</a></strong></p>
 
 See how your Borsa Istanbul (BIST) stock and TEFAS fund portfolios really did over time, not just today's profit and loss.
 

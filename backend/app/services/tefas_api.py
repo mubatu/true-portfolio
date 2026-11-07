@@ -16,7 +16,7 @@ from decimal import Decimal
 import httpx
 
 PRICES_URL = "https://www.tefas.gov.tr/api/funds/fonFiyatBilgiGetir"
-USER_AGENT = "TruePortfolio/1.0 (+https://portfolio.mubatu.com)"
+USER_AGENT = "TruePortfolio/1.0 (+https://trueportfolio.net)"
 TIMEOUT_SECONDS = 10
 LOOKBACK_MONTHS = (1, 3, 6, 12, 36, 60)
 # A short month, so the chosen look-back always reaches back far enough.

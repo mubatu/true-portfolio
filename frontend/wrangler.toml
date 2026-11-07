@@ -1,10 +1,16 @@
 name = "true-portfolio"
 compatibility_date = "2026-10-01"
-routes = [{ pattern = "portfolio.mubatu.com", custom_domain = true }]
+# trueportfolio.net is the canonical address. www.trueportfolio.net and the old portfolio.mubatu.com stay
+# attached so Cloudflare keeps answering them; a Redirect Rule in each zone sends them to trueportfolio.net (301).
+routes = [
+  { pattern = "trueportfolio.net", custom_domain = true },
+  { pattern = "www.trueportfolio.net", custom_domain = true },
+  { pattern = "portfolio.mubatu.com", custom_domain = true },
+]
 workers_dev = false
 preview_urls = false
 
-# Static site only: the API runs on Render (api.portfolio.mubatu.com), so there is no Worker script.
+# Static site only: the API runs on Render (api.trueportfolio.net), so there is no Worker script.
 [assets]
 directory = "./dist"
 not_found_handling = "single-page-application"
